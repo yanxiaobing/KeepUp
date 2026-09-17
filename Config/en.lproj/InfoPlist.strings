@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "Take a photo for your profile or check-in record.";
+"NSPhotoLibraryUsageDescription" = "Choose a photo for your profile or check-in record.";
+
+"NSPhotoLibraryAddUsageDescription" = "Save your KeepUp record cards to Photos.";

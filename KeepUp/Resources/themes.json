@@ -1,0 +1,142 @@
+[
+  {
+    "id": 0,
+    "city_name": "起始点",
+    "city_pinyin": "Departure",
+    "city_image": "calendar_city",
+    "city_description": "在宇宙深处中有一颗香蕉星球，那里的居民叫做打卡星人",
+    "calendar_background_color": "006db7",
+    "month_color": "e6f1f8",
+    "day_color": "5abcff"
+  },
+  {
+    "id": 1,
+    "city_name": "北京",
+    "city_pinyin": "Beijing",
+    "city_image": "calendar_city_beijing",
+    "city_description": "我爱北京天安门，天安门上太阳升\n你好，这里是帝都\n",
+    "calendar_background_color": "aae6f0",
+    "month_color": "f7fdfe",
+    "day_color": "a3eaf6"
+  },
+  {
+    "id": 2,
+    "city_name": "青岛",
+    "city_pinyin": "Qingdao",
+    "city_image": "calendar_city_qingdao",
+    "city_description": "红瓦绿树，碧海蓝天，啤酒飘香，帆的故乡",
+    "calendar_background_color": "cdeeff",
+    "month_color": "fafdff",
+    "day_color": "c0f6fe"
+  },
+  {
+    "id": 3,
+    "city_name": "上海",
+    "city_pinyin": "Shanghai",
+    "city_image": "calendar_city_shanghai",
+    "city_description": "浪奔，浪流，万里滔滔江水永不休...... \n这个国际化大都市的骨子里沉淀着浪漫的味道\n",
+    "calendar_background_color": "8fa7d6",
+    "month_color": "f4f6fb",
+    "day_color": "8fa7d6"
+  },
+  {
+    "id": 4,
+    "city_name": "武汉",
+    "city_pinyin": "Wuhan",
+    "city_image": "calendar_city_wuhan",
+    "city_description": "神奇的热干面之都啊，请给我来一打鸭脖",
+    "calendar_background_color": "f7d8cb",
+    "month_color": "fefbfa",
+    "day_color": "f7d8cb"
+  },
+  {
+    "id": 5,
+    "city_name": "台北",
+    "city_pinyin": "Taipei",
+    "city_image": "calendar_city_taibei",
+    "city_description": "在台湾电影里，永远少不了机车的身影，多少的青春悸动从这里发酵",
+    "calendar_background_color": "e0f0e7",
+    "month_color": "fcfefd",
+    "day_color": "e0f0e7"
+  },
+  {
+    "id": 6,
+    "city_name": "广州",
+    "city_pinyin": "Guangzhou",
+    "city_image": "calendar_city_guangzhou",
+    "city_description": "一座让人迷失自我的城市，青年人在这里都是靓仔靓女，中年人在这里都是老板",
+    "calendar_background_color": "2ad3d5",
+    "month_color": "eafbfb",
+    "day_color": "42eaec"
+  },
+  {
+    "id": 7,
+    "city_name": "重庆",
+    "city_pinyin": "Chongqing",
+    "city_image": "calendar_city_chongqing",
+    "city_description": "世界上最大的内陆山水之城，这里的冬天是属于火锅的\n",
+    "calendar_background_color": "e29256",
+    "month_color": "fcf4ee",
+    "day_color": "ffb362"
+  },
+  {
+    "id": 8,
+    "city_name": "泸沽湖",
+    "city_pinyin": "LuguLake",
+    "city_image": "calendar_city_lijiang",
+    "city_description": "一个爱情至上的地方，泸沽湖是格姆女神的最后一滴眼泪",
+    "calendar_background_color": "3c9688",
+    "month_color": "ecf5f3",
+    "day_color": "38d7bf"
+  },
+  {
+    "id": 9,
+    "city_name": "拉萨",
+    "city_pinyin": "Lhasa",
+    "city_image": "calendar_city_lasa",
+    "city_description": "世界屋脊上的另一片乐土，在这里彻底地放空一次吧",
+    "calendar_background_color": "dff1fb",
+    "month_color": "fcfeff",
+    "day_color": "8ee0ff"
+  },
+  {
+    "id": 10,
+    "city_name": "乌鲁木齐",
+    "city_pinyin": "Urumqi",
+    "city_image": "calendar_city_wulumuqi",
+    "city_description": "乌鲁木齐是丝绸之路上的璀璨明珠，也是世界上离海洋最远的城市",
+    "calendar_background_color": "f1c962",
+    "month_color": "fefaf0",
+    "day_color": "f1c962"
+  },
+  {
+    "id": 11,
+    "city_name": "西宁",
+    "city_pinyin": "Sining",
+    "city_image": "calendar_city_xining",
+    "city_description": "不必去玻利维亚，在茶卡盐湖，就可以见到中国的「天空之境」",
+    "calendar_background_color": "f1e9ba",
+    "month_color": "fefdf8",
+    "day_color": "f1e9ba"
+  },
+  {
+    "id": 12,
+    "city_name": "呼和浩特",
+    "city_pinyin": "Hohhot",
+    "city_image": "calendar_city_huhehaote",
+    "city_description": "每逢盛夏，呼伦贝尔大草原上鸟语花香，「风吹草低见牛羊」",
+    "calendar_background_color": "b7dc82",
+    "month_color": "f8fcf3",
+    "day_color": "a9d965"
+  },
+  {
+    "id": 13,
+    "city_name": "沈阳",
+    "city_pinyin": "Shenyang",
+    "city_image": "calendar_city_shenyang",
+    "city_description": "在刘老根大舞台听一曲二人转：「正月里来是新年呀，大年初一头一天啊~啊~」",
+    "calendar_background_color": "8dddfb",
+    "month_color": "f4fcff",
+    "day_color": "8dddfb"
+  }
+]

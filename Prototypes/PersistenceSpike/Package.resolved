@@ -1,0 +1,24 @@
+{
+  "originHash" : "d9c632f07d82c426e57817ffa3870cb62c8bae051ab41405517b2db653219244",
+  "pins" : [
+    {
+      "identity" : "sqlcipher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Tencent/sqlcipher",
+      "state" : {
+        "revision" : "5d8825c22feedb421ad6f9ecfc1399460e10d299",
+        "version" : "1.4.7"
+      }
+    },
+    {
+      "identity" : "wcdb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Tencent/wcdb.git",
+      "state" : {
+        "revision" : "df808591b9f9a9ab42156006819c3550d5af13a3",
+        "version" : "2.1.16"
+      }
+    }
+  ],
+  "version" : 3
+}

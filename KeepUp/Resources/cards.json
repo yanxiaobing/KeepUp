@@ -1,0 +1,589 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "number": 1,
+      "card": {
+        "id": "punchcard.1",
+        "titleKey": "original.card.1",
+        "symbol": "",
+        "unit": "steps",
+        "sortOrder": 0
+      },
+      "artwork": "card_icon_walk",
+      "sport": "sport_ic_walk"
+    },
+    {
+      "number": 2,
+      "card": {
+        "id": "punchcard.2",
+        "titleKey": "original.card.2",
+        "symbol": "",
+        "unit": "kilometers",
+        "sortOrder": 1
+      },
+      "artwork": "card_icon_run",
+      "sport": "sport_ic_run"
+    },
+    {
+      "number": 3,
+      "card": {
+        "id": "preset.exercise",
+        "titleKey": "card.exercise",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 2
+      },
+      "artwork": "card_icon_gym",
+      "sport": "sport_ic_take_exercise"
+    },
+    {
+      "number": 4,
+      "card": {
+        "id": "punchcard.4",
+        "titleKey": "original.card.4",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 3
+      },
+      "artwork": "card_icon_basketball",
+      "sport": "sport_ic_basketball"
+    },
+    {
+      "number": 5,
+      "card": {
+        "id": "punchcard.5",
+        "titleKey": "original.card.5",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 4
+      },
+      "artwork": "card_icon_housework",
+      "sport": "sport_ic_housework"
+    },
+    {
+      "number": 6,
+      "card": {
+        "id": "punchcard.6",
+        "titleKey": "original.card.6",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 5
+      },
+      "artwork": "card_icon_shopping",
+      "sport": "sport_ic_shopping"
+    },
+    {
+      "number": 7,
+      "card": {
+        "id": "punchcard.7",
+        "titleKey": "original.card.7",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 6
+      },
+      "artwork": "card_icon_swim",
+      "sport": "sport_ic_swimming"
+    },
+    {
+      "number": 8,
+      "card": {
+        "id": "punchcard.8",
+        "titleKey": "original.card.8",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 7
+      },
+      "artwork": "card_icon_yoga",
+      "sport": "sport_ic_yoga"
+    },
+    {
+      "number": 9,
+      "card": {
+        "id": "punchcard.9",
+        "titleKey": "original.card.9",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 8
+      },
+      "artwork": "card_icon_walk_dog",
+      "sport": "sport_ic_walk_a_dog"
+    },
+    {
+      "number": 10,
+      "card": {
+        "id": "punchcard.10",
+        "titleKey": "original.card.10",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 9
+      },
+      "artwork": "card_icon_football",
+      "sport": "sport_ic_football"
+    },
+    {
+      "number": 11,
+      "card": {
+        "id": "punchcard.11",
+        "titleKey": "original.card.11",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 10
+      },
+      "artwork": "card_icon_badminton",
+      "sport": "sport_ic_badminton"
+    },
+    {
+      "number": 12,
+      "card": {
+        "id": "punchcard.12",
+        "titleKey": "original.card.12",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 11
+      },
+      "artwork": "card_icon_love",
+      "sport": "sport_ic_papapa"
+    },
+    {
+      "number": 13,
+      "card": {
+        "id": "punchcard.13",
+        "titleKey": "original.card.13",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 12
+      },
+      "artwork": "card_icon_table_tennis",
+      "sport": "sport_ic_table_tennis"
+    },
+    {
+      "number": 14,
+      "card": {
+        "id": "punchcard.14",
+        "titleKey": "original.card.14",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 13
+      },
+      "artwork": "card_icon_climbing",
+      "sport": "sport_ic_climbing"
+    },
+    {
+      "number": 15,
+      "card": {
+        "id": "punchcard.15",
+        "titleKey": "original.card.15",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 14
+      },
+      "artwork": "card_icon_dancing",
+      "sport": "sport_ic_dancing"
+    },
+    {
+      "number": 16,
+      "card": {
+        "id": "preset.pushUps",
+        "titleKey": "card.pushUps",
+        "symbol": "",
+        "unit": "count",
+        "sortOrder": 15
+      },
+      "artwork": "card_icon_pushup",
+      "sport": "sport_ic_push_up"
+    },
+    {
+      "number": 17,
+      "card": {
+        "id": "punchcard.17",
+        "titleKey": "original.card.17",
+        "symbol": "",
+        "unit": "count",
+        "sortOrder": 16
+      },
+      "artwork": "card_icon_situp",
+      "sport": "sport_ic_sit_ups"
+    },
+    {
+      "number": 18,
+      "card": {
+        "id": "punchcard.18",
+        "titleKey": "original.card.18",
+        "symbol": "",
+        "unit": "floors",
+        "sortOrder": 17
+      },
+      "artwork": "card_icon_walkup",
+      "sport": "sport_ic_climb_stairs"
+    },
+    {
+      "number": 19,
+      "card": {
+        "id": "preset.walk",
+        "titleKey": "card.walk",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 18
+      },
+      "artwork": "card_icon_stroll",
+      "sport": "sport_ic_take_awalk"
+    },
+    {
+      "number": 48,
+      "card": {
+        "id": "punchcard.48",
+        "titleKey": "original.card.48",
+        "symbol": "",
+        "unit": "count",
+        "sortOrder": 19
+      },
+      "artwork": "card_icon_squat",
+      "sport": "sport_ic_squat"
+    },
+    {
+      "number": 49,
+      "card": {
+        "id": "punchcard.49",
+        "titleKey": "original.card.49",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 20
+      },
+      "artwork": "card_icon_plank",
+      "sport": "sport_ic_plank"
+    },
+    {
+      "number": 50,
+      "card": {
+        "id": "punchcard.50",
+        "titleKey": "original.card.50",
+        "symbol": "",
+        "unit": "kilograms",
+        "sortOrder": 21
+      },
+      "artwork": "card_icon_weight",
+      "sport": "sport_ic_weight"
+    },
+    {
+      "number": 51,
+      "card": {
+        "id": "punchcard.51",
+        "titleKey": "original.card.51",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 22
+      },
+      "artwork": "card_icon_spinning",
+      "sport": "sport_ic_spinning"
+    },
+    {
+      "number": 52,
+      "card": {
+        "id": "punchcard.52",
+        "titleKey": "original.card.52",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 23
+      },
+      "artwork": "card_icon_tennis",
+      "sport": "sport_ic_tennis"
+    },
+    {
+      "number": 53,
+      "card": {
+        "id": "punchcard.53",
+        "titleKey": "original.card.53",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 24
+      },
+      "artwork": "card_icon_rope_skipping",
+      "sport": "sport_ic_rope"
+    },
+    {
+      "number": 54,
+      "card": {
+        "id": "punchcard.54",
+        "titleKey": "original.card.54",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 25
+      },
+      "artwork": "card_icon_shuttlecock",
+      "sport": "sport_ic_shuttlecock"
+    },
+    {
+      "number": 55,
+      "card": {
+        "id": "punchcard.55",
+        "titleKey": "original.card.55",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 26
+      },
+      "artwork": "card_icon_rock_climb",
+      "sport": "sport_ic_rock_climbing"
+    },
+    {
+      "number": 56,
+      "card": {
+        "id": "punchcard.56",
+        "titleKey": "original.card.56",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 27
+      },
+      "artwork": "card_icon_bowling",
+      "sport": "sport_ic_bowling"
+    },
+    {
+      "number": 57,
+      "card": {
+        "id": "punchcard.57",
+        "titleKey": "original.card.57",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 28
+      },
+      "artwork": "card_icon_billiards",
+      "sport": "sport_ic_billiards"
+    },
+    {
+      "number": 58,
+      "card": {
+        "id": "punchcard.58",
+        "titleKey": "original.card.58",
+        "symbol": "",
+        "unit": "count",
+        "sortOrder": 29
+      },
+      "artwork": "card_icon_crunches",
+      "sport": "sport_ic_crunches"
+    },
+    {
+      "number": 59,
+      "card": {
+        "id": "punchcard.59",
+        "titleKey": "original.card.59",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 30
+      },
+      "artwork": "card_icon_high_knees",
+      "sport": "sport_ic_high_knees"
+    },
+    {
+      "number": 60,
+      "card": {
+        "id": "punchcard.60",
+        "titleKey": "original.card.60",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 31
+      },
+      "artwork": "card_icon_hola_hoop",
+      "sport": "sport_ic_hola_hoop"
+    },
+    {
+      "number": 61,
+      "card": {
+        "id": "punchcard.61",
+        "titleKey": "original.card.61",
+        "symbol": "",
+        "unit": "count",
+        "sortOrder": 32
+      },
+      "artwork": "card_icon_jumping_jack",
+      "sport": "sport_ic_jumping_jack"
+    },
+    {
+      "number": 62,
+      "card": {
+        "id": "punchcard.62",
+        "titleKey": "original.card.62",
+        "symbol": "",
+        "unit": "minutes",
+        "sortOrder": 33
+      },
+      "artwork": "card_icon_cross_body_crunch",
+      "sport": "sport_ic_cross_body_crunch"
+    },
+    {
+      "number": 63,
+      "card": {
+        "id": "punchcard.63",
+        "titleKey": "original.card.63",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 34
+      },
+      "artwork": "card_icon_gym",
+      "sport": "sport_ic_wake_up"
+    },
+    {
+      "number": 64,
+      "card": {
+        "id": "punchcard.64",
+        "titleKey": "original.card.64",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 35
+      },
+      "artwork": "card_detail_stay_up_late",
+      "sport": "sport_ic_stay_up_late"
+    },
+    {
+      "number": 65,
+      "card": {
+        "id": "preset.fruit",
+        "titleKey": "card.fruit",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 36
+      },
+      "artwork": "card_detail_ic_fruits",
+      "sport": "sport_ic_fruits"
+    },
+    {
+      "number": 72,
+      "card": {
+        "id": "punchcard.72",
+        "titleKey": "original.card.72",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 37
+      },
+      "artwork": "card_detail_no_lol",
+      "sport": "sport_ic_no_lol"
+    },
+    {
+      "number": 67,
+      "card": {
+        "id": "punchcard.67",
+        "titleKey": "original.card.67",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 38
+      },
+      "artwork": "card_detail_face_mask",
+      "sport": "sport_ic_face_mask"
+    },
+    {
+      "number": 68,
+      "card": {
+        "id": "preset.noSoda",
+        "titleKey": "card.noSoda",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 39
+      },
+      "artwork": "card_detail_drinks",
+      "sport": "sport_ic_drinks"
+    },
+    {
+      "number": 70,
+      "card": {
+        "id": "punchcard.70",
+        "titleKey": "original.card.70",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 40
+      },
+      "artwork": "card_detail_smoke",
+      "sport": "sport_ic_smoke"
+    },
+    {
+      "number": 71,
+      "card": {
+        "id": "punchcard.71",
+        "titleKey": "original.card.71",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 41
+      },
+      "artwork": "card_detail_legs",
+      "sport": "sport_ic_legs"
+    },
+    {
+      "number": 66,
+      "card": {
+        "id": "preset.noLateSnacks",
+        "titleKey": "card.noLateSnacks",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 42
+      },
+      "artwork": "card_detail_supper",
+      "sport": "sport_ic_supper"
+    },
+    {
+      "number": 73,
+      "card": {
+        "id": "punchcard.73",
+        "titleKey": "original.card.73",
+        "symbol": "",
+        "unit": "none",
+        "sortOrder": 43
+      },
+      "artwork": "card_detail_snacks",
+      "sport": "sport_ic_snacks"
+    },
+    {
+      "number": 96,
+      "card": {
+        "id": "punchcard.96",
+        "titleKey": "original.card.96",
+        "symbol": "",
+        "unit": "kilometers",
+        "sortOrder": 44
+      },
+      "artwork": "card_detail_riding",
+      "sport": "sport_ic_riding"
+    }
+  ],
+  "legacyStarters": [
+    {
+      "id": "preset.exercise",
+      "titleKey": "card.exercise",
+      "symbol": "figure.strengthtraining.traditional",
+      "unit": "minutes",
+      "sortOrder": 0
+    },
+    {
+      "id": "preset.walk",
+      "titleKey": "card.walk",
+      "symbol": "figure.walk",
+      "unit": "minutes",
+      "sortOrder": 1
+    },
+    {
+      "id": "preset.fruit",
+      "titleKey": "card.fruit",
+      "symbol": "carrot",
+      "unit": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "preset.noSoda",
+      "titleKey": "card.noSoda",
+      "symbol": "waterbottle",
+      "unit": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "preset.noLateSnacks",
+      "titleKey": "card.noLateSnacks",
+      "symbol": "moon.stars",
+      "unit": "none",
+      "sortOrder": 4
+    },
+    {
+      "id": "preset.pushUps",
+      "titleKey": "card.pushUps",
+      "symbol": "figure.core.training",
+      "unit": "count",
+      "sortOrder": 5
+    }
+  ]
+}

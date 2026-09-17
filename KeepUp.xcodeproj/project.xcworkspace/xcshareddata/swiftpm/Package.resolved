@@ -1,0 +1,33 @@
+{
+  "originHash" : "1bbe394a42b9f3ee548e2677fd37aa43c434e63af9dbf8e782ae9a2573c23128",
+  "pins" : [
+    {
+      "identity" : "sqlcipher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Tencent/sqlcipher",
+      "state" : {
+        "revision" : "5d8825c22feedb421ad6f9ecfc1399460e10d299",
+        "version" : "1.4.7"
+      }
+    },
+    {
+      "identity" : "tocropviewcontroller",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/TimOliver/TOCropViewController.git",
+      "state" : {
+        "revision" : "9782ecf30b5d16dfc95c89c939180adf457a2e82",
+        "version" : "3.2.0"
+      }
+    },
+    {
+      "identity" : "wcdb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Tencent/wcdb.git",
+      "state" : {
+        "revision" : "df808591b9f9a9ab42156006819c3550d5af13a3",
+        "version" : "2.1.16"
+      }
+    }
+  ],
+  "version" : 3
+}

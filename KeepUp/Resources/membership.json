@@ -1,0 +1,11 @@
+{
+  "offers": [
+    {"id": "com.bestlife.keepup.premium.lifetime", "kind": "lifetime", "months": 0},
+    {"id": "com.bestlife.keepup.premium.year", "kind": "subscription", "months": 12},
+    {"id": "com.bestlife.keepup.premium.quarter", "kind": "subscription", "months": 3},
+    {"id": "com.bestlife.keepup.premium.month", "kind": "subscription", "months": 1}
+  ],
+  "carouselInterval": 5,
+  "closeAlpha": 0.5,
+  "priceAlpha": 0.5
+}

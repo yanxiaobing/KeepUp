@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "用于拍摄头像或打卡记录的照片。";
+"NSPhotoLibraryUsageDescription" = "用于选择头像或打卡记录的照片。";
+
+"NSPhotoLibraryAddUsageDescription" = "将 KeepUp 打卡图片保存到相册。";

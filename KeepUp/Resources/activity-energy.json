@@ -1,0 +1,360 @@
+{
+  "version": 1,
+  "coefficients": [
+    {
+      "cardNumber": 3,
+      "calories": 350.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 4,
+      "calories": 360.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 5,
+      "calories": 200.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 6,
+      "calories": 180.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 7,
+      "calories": 550.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 8,
+      "calories": 120.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 9,
+      "calories": 130.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 10,
+      "calories": 450.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 11,
+      "calories": 400.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 12,
+      "calories": 600.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 13,
+      "calories": 300.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 14,
+      "calories": 400.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 15,
+      "calories": 360.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 16,
+      "calories": 15.0,
+      "units": 10.0
+    },
+    {
+      "cardNumber": 17,
+      "calories": 15.0,
+      "units": 10.0
+    },
+    {
+      "cardNumber": 18,
+      "calories": 13.0,
+      "units": 1.0
+    },
+    {
+      "cardNumber": 19,
+      "calories": 120.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 48,
+      "calories": 15.0,
+      "units": 10.0
+    },
+    {
+      "cardNumber": 49,
+      "calories": 200.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 51,
+      "calories": 250.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 52,
+      "calories": 350.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 53,
+      "calories": 450.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 54,
+      "calories": 500.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 55,
+      "calories": 300.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 56,
+      "calories": 180.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 57,
+      "calories": 121.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 58,
+      "calories": 2.0,
+      "units": 1.0
+    },
+    {
+      "cardNumber": 59,
+      "calories": 300.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 60,
+      "calories": 168.0,
+      "units": 60.0
+    },
+    {
+      "cardNumber": 61,
+      "calories": 2.0,
+      "units": 1.0
+    },
+    {
+      "cardNumber": 62,
+      "calories": 360.0,
+      "units": 60.0
+    }
+  ],
+  "foods": [
+    {
+      "id": "pistachio",
+      "calories": 7.5,
+      "localizationKey": "energy.food.pistachio"
+    },
+    {
+      "id": "peanut",
+      "calories": 8,
+      "localizationKey": "energy.food.peanut"
+    },
+    {
+      "id": "jellyCup",
+      "calories": 13,
+      "localizationKey": "energy.food.jellyCup"
+    },
+    {
+      "id": "chestnut",
+      "calories": 30,
+      "localizationKey": "energy.food.chestnut"
+    },
+    {
+      "id": "toffee",
+      "calories": 30,
+      "localizationKey": "energy.food.toffee"
+    },
+    {
+      "id": "chickenNugget",
+      "calories": 45,
+      "localizationKey": "energy.food.chickenNugget"
+    },
+    {
+      "id": "tofuPudding",
+      "calories": 62,
+      "localizationKey": "energy.food.tofuPudding"
+    },
+    {
+      "id": "bubbleTea",
+      "calories": 160,
+      "localizationKey": "energy.food.bubbleTea"
+    },
+    {
+      "id": "colaCan",
+      "calories": 145,
+      "localizationKey": "energy.food.colaCan"
+    },
+    {
+      "id": "corn",
+      "calories": 150,
+      "localizationKey": "energy.food.corn"
+    },
+    {
+      "id": "creamPuff",
+      "calories": 200,
+      "localizationKey": "energy.food.creamPuff"
+    },
+    {
+      "id": "rice",
+      "calories": 210,
+      "localizationKey": "energy.food.rice"
+    },
+    {
+      "id": "friedDough",
+      "calories": 230,
+      "localizationKey": "energy.food.friedDough"
+    },
+    {
+      "id": "vanillaIceCream",
+      "calories": 230,
+      "localizationKey": "energy.food.vanillaIceCream"
+    },
+    {
+      "id": "porkBun",
+      "calories": 250,
+      "localizationKey": "energy.food.porkBun"
+    },
+    {
+      "id": "eggTart",
+      "calories": 255,
+      "localizationKey": "energy.food.eggTart"
+    },
+    {
+      "id": "sirloinSteak",
+      "calories": 330,
+      "localizationKey": "energy.food.sirloinSteak"
+    },
+    {
+      "id": "seafoodRice",
+      "calories": 357,
+      "localizationKey": "energy.food.seafoodRice"
+    },
+    {
+      "id": "hotDog",
+      "calories": 300,
+      "localizationKey": "energy.food.hotDog"
+    },
+    {
+      "id": "popcornChicken",
+      "calories": 420,
+      "localizationKey": "energy.food.popcornChicken"
+    },
+    {
+      "id": "instantNoodles",
+      "calories": 470,
+      "localizationKey": "energy.food.instantNoodles"
+    },
+    {
+      "id": "beefNoodles",
+      "calories": 540,
+      "localizationKey": "energy.food.beefNoodles"
+    },
+    {
+      "id": "chocolateBar",
+      "calories": 550,
+      "localizationKey": "energy.food.chocolateBar"
+    },
+    {
+      "id": "chickenWrap",
+      "calories": 600,
+      "localizationKey": "energy.food.chickenWrap"
+    },
+    {
+      "id": "curryRice",
+      "calories": 550,
+      "localizationKey": "energy.food.curryRice"
+    },
+    {
+      "id": "fries",
+      "calories": 300,
+      "localizationKey": "energy.food.fries"
+    },
+    {
+      "id": "sausageEggBurger",
+      "calories": 440,
+      "localizationKey": "energy.food.sausageEggBurger"
+    },
+    {
+      "id": "roastChicken",
+      "calories": 900,
+      "localizationKey": "energy.food.roastChicken"
+    },
+    {
+      "id": "porkRice",
+      "calories": 600,
+      "localizationKey": "energy.food.porkRice"
+    },
+    {
+      "id": "bigMac",
+      "calories": 560,
+      "localizationKey": "energy.food.bigMac"
+    },
+    {
+      "id": "pistachioBag",
+      "calories": 614,
+      "localizationKey": "energy.food.pistachioBag"
+    },
+    {
+      "id": "peanutBag",
+      "calories": 563,
+      "localizationKey": "energy.food.peanutBag"
+    },
+    {
+      "id": "jellyBag",
+      "calories": 650,
+      "localizationKey": "energy.food.jellyBag"
+    },
+    {
+      "id": "chestnutBag",
+      "calories": 1000,
+      "localizationKey": "energy.food.chestnutBag"
+    },
+    {
+      "id": "toffeeTin",
+      "calories": 1500,
+      "localizationKey": "energy.food.toffeeTin"
+    },
+    {
+      "id": "chickenNuggetBox",
+      "calories": 450,
+      "localizationKey": "energy.food.chickenNuggetBox"
+    },
+    {
+      "id": "colaCase",
+      "calories": 3480,
+      "localizationKey": "energy.food.colaCase"
+    },
+    {
+      "id": "porkBunBag",
+      "calories": 3000,
+      "localizationKey": "energy.food.porkBunBag"
+    },
+    {
+      "id": "eggTartDozen",
+      "calories": 3060,
+      "localizationKey": "energy.food.eggTartDozen"
+    }
+  ],
+  "maxFoodServings": 5,
+  "smallCalorieFoodID": "peanut",
+  "overflowFoodID": "eggTartDozen"
+}
