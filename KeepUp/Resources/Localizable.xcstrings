@@ -285,6 +285,22 @@
         }
       }
     },
+    "calendar.cardActions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Card actions"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡片操作"
+          }
+        }
+      }
+    },
     "calendar.chooseCard": {
       "extractionState": "manual",
       "localizations": {
@@ -315,6 +331,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择日期"
+          }
+        }
+      }
+    },
+    "calendar.deleteCancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点错了"
+          }
+        }
+      }
+    },
+    "calendar.deleteCardConfirmation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this card?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确定要删掉卡片么？"
           }
         }
       }
@@ -383,6 +431,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "当天记录"
+          }
+        }
+      }
+    },
+    "calendar.removePinnedConfirmation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove this pinned card from the calendar? You can still check in using the + button."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即将删除日历上的固定卡片哦，删除后可以点击“＋”号打卡。"
           }
         }
       }

@@ -18,6 +18,7 @@
 		182620EFF382BF07E0D13BFC /* DatabaseRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74025DA5FD3A9DA02A489351 /* DatabaseRows.swift */; };
 		18834563147D392B0E5B2222 /* MembershipTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22F860348AE64B9D24006C26 /* MembershipTheme.swift */; };
 		1AE5365FBEF022FD6633D8A9 /* ProfileNicknameField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA0494AFB26A8B8D4E9BE3B /* ProfileNicknameField.swift */; };
+		1BDDB376E64D2A801A540006 /* CalendarCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116000172E219144EBE553C4 /* CalendarCardView.swift */; };
 		23029487C498378F3E2DAA5E /* WCDBSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 561AF796A10AAC7D4750C73D /* WCDBSwift */; };
 		2E242424CE586CB491EDD5A9 /* EntryContentUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59D8C030E4D7A9EE6984AFAF /* EntryContentUITests.swift */; };
 		315E6556029290E5EBDFE9F6 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FDB3FF841C06902173FCC0 /* AppModel.swift */; };
@@ -29,6 +30,7 @@
 		3D72799290A9859E4EE08A86 /* KeepUpUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AF02B82F6250A425696148D /* KeepUpUITests.swift */; };
 		429DB28CAA439B7748120874 /* AvatarPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED664BDADA56D2E7CD6EB574 /* AvatarPicker.swift */; };
 		4519148F369F3A1154896B1F /* CalendarHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2759C4F8E51906EF33E053 /* CalendarHomeView.swift */; };
+		463C49CE5CFFEC0B1F9B5786 /* CalendarCardUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 706D2602D86755BEF7057278 /* CalendarCardUITests.swift */; };
 		513431C756911D5F9BE9C7C2 /* ProfileInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F53F25ED6897168C841BA2 /* ProfileInfoView.swift */; };
 		51913652DDC48FD655C26B94 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB0703E6AC8F4BB90DCA74D /* ProfileView.swift */; };
 		52D256FEB41F1B7A9C2BD4B0 /* WeightTargetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF3A3F41D84CBDFCB4701773 /* WeightTargetView.swift */; };
@@ -46,6 +48,7 @@
 		8770BEAA85985AB34E407C1F /* WakeUpViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFCF6DB42F025D6AF35499C /* WakeUpViews.swift */; };
 		8FF6D3ADA9D267CA27B3E9EF /* MembershipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3D5D05B620F5BA81216994 /* MembershipView.swift */; };
 		9775009E85AED4596FFC5A1A /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C52BD911F9902B0887EF348 /* HistoryView.swift */; };
+		99222AF8C21F5F1AA8B607B5 /* CalendarCardMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5464D0F4E8EA6AD951B440CB /* CalendarCardMenu.swift */; };
 		9B82ECEEAB0A31AF3BD2624C /* CardTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 086695A1F8B0B47176083711 /* CardTarget.swift */; };
 		9C09A3CEB4803BE08945AE08 /* CustomCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E8DE09EDA0E1D7923A0102 /* CustomCard.swift */; };
 		A1B0EDF59DEC1BA606DFB83C /* ActivityEnergyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 052C941A857ED7F0B1ACC31C /* ActivityEnergyTests.swift */; };
@@ -97,6 +100,7 @@
 /* Begin PBXFileReference section */
 		052C941A857ED7F0B1ACC31C /* ActivityEnergyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActivityEnergyTests.swift; sourceTree = "<group>"; };
 		086695A1F8B0B47176083711 /* CardTarget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CardTarget.swift; sourceTree = "<group>"; };
+		116000172E219144EBE553C4 /* CalendarCardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalendarCardView.swift; sourceTree = "<group>"; };
 		11D1AB61A667CF4C95696B62 /* KeepUpUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KeepUpUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		17204415E2F1E9B946F58E68 /* en */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1AD838484C63B1F1B4D16B65 /* CalendarTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalendarTheme.swift; sourceTree = "<group>"; };
@@ -113,16 +117,18 @@
 		3E0FBF9A79CB4C59C76DB863 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		44FDB3FF841C06902173FCC0 /* AppModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		464E683A9861ADB4AF74AEC6 /* Models.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		475BF78260D55CA3A6E27874 /* cards.json */ = {isa = PBXFileReference; includeInIndex = 1; path = cards.json; sourceTree = "<group>"; };
+		475BF78260D55CA3A6E27874 /* cards.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; path = cards.json; sourceTree = "<group>"; };
 		4AFE1B94EAF16A6EC0752EE4 /* BundledJSON.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BundledJSON.swift; sourceTree = "<group>"; };
 		4C52BD911F9902B0887EF348 /* HistoryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		4DA3B218A187BEEB06898DF8 /* ProfileRulerOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileRulerOverlay.swift; sourceTree = "<group>"; };
 		4E08701FAD479F8EE3ED2867 /* Localizable.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		4E17916D922001F0C3C585E7 /* EntryContentEditor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EntryContentEditor.swift; sourceTree = "<group>"; };
 		53CF92D47A696DB6045B3768 /* KeepUp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeepUp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5464D0F4E8EA6AD951B440CB /* CalendarCardMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalendarCardMenu.swift; sourceTree = "<group>"; };
 		59D8C030E4D7A9EE6984AFAF /* EntryContentUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EntryContentUITests.swift; sourceTree = "<group>"; };
 		63E744E0CB133D1BD72DFC44 /* ProfileMembershipUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileMembershipUITests.swift; sourceTree = "<group>"; };
-		70C8836AF39DD063AA82C93A /* activity-energy.json */ = {isa = PBXFileReference; includeInIndex = 1; path = "activity-energy.json"; sourceTree = "<group>"; };
+		706D2602D86755BEF7057278 /* CalendarCardUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalendarCardUITests.swift; sourceTree = "<group>"; };
+		70C8836AF39DD063AA82C93A /* activity-energy.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; path = "activity-energy.json"; sourceTree = "<group>"; };
 		724D445E500BA2C9D9F4BAA7 /* membership.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; path = membership.json; sourceTree = "<group>"; };
 		74025DA5FD3A9DA02A489351 /* DatabaseRows.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DatabaseRows.swift; sourceTree = "<group>"; };
 		754F1E4C3C376F24A6569BBD /* ComposeEntryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ComposeEntryView.swift; sourceTree = "<group>"; };
@@ -319,6 +325,8 @@
 			isa = PBXGroup;
 			children = (
 				CB2759C4F8E51906EF33E053 /* CalendarHomeView.swift */,
+				116000172E219144EBE553C4 /* CalendarCardView.swift */,
+				5464D0F4E8EA6AD951B440CB /* CalendarCardMenu.swift */,
 			);
 			path = Calendar;
 			sourceTree = "<group>";
@@ -423,6 +431,7 @@
 				63E744E0CB133D1BD72DFC44 /* ProfileMembershipUITests.swift */,
 				FBB5C52905A0294AAED02957 /* ScheduleWakeUITests.swift */,
 				F5E42A924BCCD256B68252CC /* WeightUITests.swift */,
+				706D2602D86755BEF7057278 /* CalendarCardUITests.swift */,
 			);
 			path = KeepUpUITests;
 			sourceTree = "<group>";
@@ -607,6 +616,7 @@
 				DDE8571932C4A0B2C335A234 /* ProfileMembershipUITests.swift in Sources */,
 				684121F3C983B775BE258B94 /* ScheduleWakeUITests.swift in Sources */,
 				DBBAAD97213912540FB4437F /* WeightUITests.swift in Sources */,
+				463C49CE5CFFEC0B1F9B5786 /* CalendarCardUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -657,6 +667,8 @@
 				52D256FEB41F1B7A9C2BD4B0 /* WeightTargetView.swift in Sources */,
 				15FDB440C5369C9E57074F93 /* ActivityEnergy.swift in Sources */,
 				390ED2230FB7ABE4B4E03521 /* BundledJSON.swift in Sources */,
+				1BDDB376E64D2A801A540006 /* CalendarCardView.swift in Sources */,
+				99222AF8C21F5F1AA8B607B5 /* CalendarCardMenu.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

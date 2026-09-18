@@ -6,11 +6,12 @@ struct CalendarHomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("preference.monthMode") private var isMonthMode = false
     @State private var showingTheme = false
     @State private var scheduleDetail: ScheduledCard?
     @State private var detail: CheckInEntry?
-    @State private var editing: CheckInEntry?
+    @State private var pendingDay = LocalDay(date: .now)
     @State private var pendingCard: HabitCard?
     @State private var reminderCard: HabitCard?
 
@@ -25,6 +26,25 @@ struct CalendarHomeView: View {
         let year = calendar.component(.year, from: selectedDate)
         let month = selectedDate.formatted(.dateTime.month(.wide).locale(locale))
         return "\(year) | \(month)"
+    }
+
+    private var dayEntries: [CheckInEntry] { model.entries(on: selectedDay) }
+    private var daySchedules: [ScheduledCard] { model.snapshot.schedules.filter { $0.day == selectedDay } }
+    private var pendingCards: [HabitCard] {
+        guard selectedDay == LocalDay(date: .now) else { return [] }
+        let recorded = Set(dayEntries.map(\.cardID))
+        let scheduled = Set(daySchedules.map(\.cardID))
+        return model.snapshot.targets.filter { $0.isPinned }.compactMap { target in
+            guard !recorded.contains(target.cardID), !scheduled.contains(target.cardID),
+                  !model.snapshot.archivedCardIDs.contains(target.cardID) else { return nil }
+            return model.snapshot.cards.first { $0.id == target.cardID }
+        }
+    }
+    private var showsAddCard: Bool {
+        selectedDay > LocalDay(date: .now) || selectedDay < LocalDay(date: calendar.date(byAdding: .day, value: -1, to: .now)!)
+    }
+    private var visibleCardCount: Int {
+        dayEntries.count + daySchedules.count + pendingCards.count + (showsAddCard ? 1 : 0)
     }
 
     var body: some View {
@@ -46,7 +66,7 @@ struct CalendarHomeView: View {
             .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(isPresented: $showingTheme) { ThemeListView() }
             .fullScreenCover(item: $pendingCard) { card in
-                ComposeEntryView(card: card, day: selectedDay, onSaved: { pendingCard = nil }, onCancel: { pendingCard = nil })
+                ComposeEntryView(card: card, day: pendingDay, onSaved: { pendingCard = nil }, onCancel: { pendingCard = nil })
             }
             .fullScreenCover(item: $reminderCard) { card in ReminderSettingsView(card: card, target: model.snapshot.targets.first { $0.cardID == card.id }) }
             .fullScreenCover(item: $scheduleDetail) { schedule in
@@ -55,9 +75,7 @@ struct CalendarHomeView: View {
             .fullScreenCover(item: $detail) { entry in
                 if let card = model.card(for: entry) { EntryDetailView(entry: entry, card: card) }
             }
-            .fullScreenCover(item: $editing) { entry in
-                if let card = model.card(for: entry) { EntryContentEditor(entry: entry, card: card) }
-            }
+
         }
     }
 
@@ -107,15 +125,17 @@ struct CalendarHomeView: View {
                         let selected = day == selectedDay
                         let today = calendar.isDateInToday(date)
                         let recorded = daysWithRecords.contains(day)
+                        let planned = plannedDays.contains(day) && !recorded && !today
+                        let selectionColor = today ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : (planned ? Color(hex: 0xBABDC2) : KeepUpStyle.day))
                         Button { selectedDate = date } label: {
                             Text(calendar.component(.day, from: date), format: .number)
                                 .font(.custom("HelveticaNeue-Light", size: 12))
                                 .foregroundStyle(recorded && !today ? Color.white : Color.primary.opacity(0.7))
                                 .frame(width: 26, height: 26)
                                 .background(today ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : .clear), in: Circle())
-                                .overlay(Circle().stroke(plannedDays.contains(day) ? Color(hex: 0xBABDC2) : .clear, lineWidth: 1))
+                                .overlay(Circle().stroke(planned ? Color(hex: 0xBABDC2) : .clear, style: StrokeStyle(lineWidth: 1, dash: [2, 2])))
                                 .padding(3)
-                                .overlay(Circle().stroke(selected ? KeepUpStyle.day : .clear, lineWidth: 1))
+                                .overlay(Circle().stroke(selected ? selectionColor : .clear, lineWidth: 1))
                                 .frame(maxWidth: .infinity).frame(height: 32).contentShape(Rectangle())
                         }.buttonStyle(.plain)
                             .opacity(calendar.isDate(date, equalTo: selectedDate, toGranularity: .month) ? 1 : 0.35)
@@ -125,7 +145,7 @@ struct CalendarHomeView: View {
                             .accessibilityIdentifier("day.\(day.rawValue)")
                     }
                 }.padding(.horizontal, 8).padding(.top, 9)
-                Button { isMonthMode.toggle() } label: {
+                Button { setMonthMode(!isMonthMode) } label: {
                     HStack(spacing: 4) {
                         Image(isMonthMode ? "homepage_tips_ic_up" : "homepage_tips_ic_down")
                             .resizable().scaledToFit().frame(width: 10, height: 10)
@@ -139,7 +159,7 @@ struct CalendarHomeView: View {
         .accessibilityIdentifier("calendar.grid")
         .gesture(DragGesture(minimumDistance: 30).onEnded { value in
             if abs(value.translation.width) > abs(value.translation.height) { movePage(value.translation.width < 0 ? 1 : -1) }
-            else { isMonthMode = value.translation.height > 0 }
+            else { setMonthMode(value.translation.height > 0) }
         })
     }
 
@@ -148,122 +168,121 @@ struct CalendarHomeView: View {
         let itemWidth = 88 * scale
         let spacing = (width - itemWidth * 3 - 34) / 4
         return ZStack(alignment: .bottom) {
-            if !isMonthMode && model.entries(on: selectedDay).count <= 3 {
+            if !isMonthMode && visibleCardCount <= 3 {
                 Image("pic_week_pass").resizable().scaledToFit().frame(height: 100).accessibilityHidden(true)
             }
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(itemWidth), spacing: spacing), count: 3), spacing: 20) {
-                    ForEach(model.entries(on: selectedDay).reversed()) { entry in
+                    ForEach(dayEntries.sorted { lhs, rhs in
+                        if (lhs.cardID == "punchcard.63") != (rhs.cardID == "punchcard.63") { return lhs.cardID == "punchcard.63" }
+                        return lhs.createdAt < rhs.createdAt
+                    }) { entry in
                         if let card = model.card(for: entry) {
-                            Button { detail = entry } label: {
-                                CalendarRecordCard(entry: entry, card: card, scale: scale, wake: model.snapshot.wakeUps[entry.id])
-                                    .overlay(alignment: .bottom) { weeklyProgress(card: card, day: selectedDay).padding(.bottom, 19) }
-                            }.buttonStyle(.plain).accessibilityIdentifier("entry.\(entry.id)")
-                                .contextMenu {
-                                    if !model.snapshot.archivedCardIDs.contains(card.id) { Button("reminder.title") { reminderCard = card }.accessibilityIdentifier("entry.reminder") }
-                                    Button("entry.viewCard") { detail = entry }.accessibilityIdentifier("entry.viewCard")
-                                    Button("content.edit") { editing = entry }.accessibilityIdentifier("entry.editContent")
-                                }
-                        }
-                    }
-                    ForEach(model.snapshot.schedules.filter { $0.day == selectedDay }) { schedule in
-                        if let card = model.snapshot.cards.first(where: { $0.id == schedule.cardID }) {
-                            Button { if schedule.day == LocalDay(date: .now), !model.snapshot.archivedCardIDs.contains(card.id), ![1,2,96].contains(OriginalCatalog.item(card)?.number ?? 0) { pendingCard = card } else { scheduleDetail = schedule } } label: {
-                                ScheduledCalendarCard(schedule: schedule, card: card, scale: scale)
-                            }.buttonStyle(.plain).accessibilityIdentifier("schedule.card.\(card.id)")
-                                .contextMenu { Button("schedule.title") { scheduleDetail = schedule } }
-                        }
-                    }
-                    if selectedDay == LocalDay(date: .now) {
-                        ForEach(model.snapshot.targets.filter { $0.isPinned }) { target in
-                            if let card = model.snapshot.cards.first(where: { $0.id == target.cardID }), !model.entries(on: selectedDay).contains(where: { $0.cardID == card.id }), !model.snapshot.schedules.contains(where: { $0.cardID == card.id && $0.day == selectedDay }) {
-                                Button { pendingCard = card } label: {
-                                    VStack(spacing: 0) {
-                                        Image(card.id == "punchcard.63" ? "ic_early_card_undone" : card.id == "punchcard.50" ? "home_heavy_pic_todo" : "card_icon_todo").resizable().scaledToFit().frame(width: 74*scale, height: 87*scale)
-                                            .frame(maxHeight: .infinity)
-                                        Text(LocalizedStringKey(card.titleKey)).font(.system(size: 11)).foregroundStyle(.white)
-                                            .frame(maxWidth: .infinity).frame(height: 18).background(Color(white: 0.72))
-                                    }.frame(width: itemWidth, height: 116*scale).background(.white)
-                                        .overlay(alignment: .topLeading) {
-                                            Text("reminder.todo").font(.custom("HelveticaNeue-Light", size: 12)).foregroundStyle(.white).padding(.horizontal, 6).frame(height: 18)
-                                                .background { HStack(spacing: 0) { Color(hex: 0xBABDC2); Image("babdc2").resizable().frame(width: 10) } }
-                                                .overlay(alignment: .leading) { Image("homepage_tag_light").resizable().frame(width: 6, height: 18) }
-                                        }
-                                        .overlay(alignment: .topTrailing) {
-                                            if target.reminderEnabled { Image("card_detail_ic_clock").resizable().frame(width: 16, height: 16).padding(3) }
-                                        }
-                                        .overlay { Image("xbcalendarItemCover").resizable().allowsHitTesting(false) }
-                                        .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
-                                        .overlay(alignment: .bottom) { weeklyProgress(card: card, day: selectedDay).padding(.bottom, 19) }
-                                }.buttonStyle(.plain).accessibilityIdentifier("target.pending.\(card.id)")
-                                    .contextMenu { Button("reminder.title") { reminderCard = card } }
+                            CalendarInteractiveCard(identifier: "entry.\(entry.id)", label: entryLabel(entry, card: card),
+                                actions: menuActions(card: card, entry: entry), tap: { detail = entry }) {
+                                CalendarTicketCard(card: card, scale: scale, entry: entry, wake: model.snapshot.wakeUps[entry.id], progress: weeklyProgress(card))
                             }
                         }
                     }
-                    if selectedDay > LocalDay(date: .now) || selectedDay < LocalDay(date: calendar.date(byAdding: .day, value: -1, to: .now)!) {
+                    ForEach(daySchedules) { schedule in
+                        if let card = model.snapshot.cards.first(where: { $0.id == schedule.cardID }) {
+                            CalendarInteractiveCard(identifier: "schedule.card.\(card.id)", label: localized(card.titleKey, locale) + ", " + schedule.note,
+                                actions: menuActions(card: card, schedule: schedule), tap: {
+                                    if schedule.day == LocalDay(date: .now), canCheckIn(card) { checkInToday(card) }
+                                    else { scheduleDetail = schedule }
+                                }) {
+                                CalendarTicketCard(card: card, scale: scale,
+                                    badge: localized(schedule.day < LocalDay(date: .now) ? "schedule.expiredBadge" : "reminder.todo", locale),
+                                    reminder: model.snapshot.targets.first { $0.cardID == card.id }?.reminderEnabled ?? false,
+                                    progress: weeklyProgress(card))
+                            }
+                        }
+                    }
+                    ForEach(pendingCards.sorted { $0.id == "punchcard.63" && $1.id != "punchcard.63" }) { card in
+                        CalendarInteractiveCard(identifier: "target.pending.\(card.id)", label: localized(card.titleKey, locale) + ", " + localized("reminder.todo", locale),
+                            actions: menuActions(card: card), tap: { checkInToday(card) }) {
+                            CalendarTicketCard(card: card, scale: scale,
+                                badge: card.id == "punchcard.63" ? nil : localized("reminder.todo", locale),
+                                reminder: model.snapshot.targets.first { $0.cardID == card.id }?.reminderEnabled ?? false,
+                                progress: weeklyProgress(card))
+                        }
+                    }
+                    if showsAddCard {
                         Button(action: openCatalog) {
-                            VStack(spacing: 0) {
-                                Image(selectedDay > LocalDay(date: .now) ? "home_note_ic_plus" : "homepage_ic_budacard").resizable().scaledToFit()
-                                    .frame(width: 45, height: 45).frame(maxWidth: .infinity, maxHeight: .infinity)
-                                Text(selectedDay > LocalDay(date: .now) ? "schedule.add" : "calendar.backfill").font(.system(size: 11)).foregroundStyle(.white)
-                                    .frame(maxWidth: .infinity).frame(height: 18).background(Color.gray.opacity(0.45))
-                            }.frame(width: itemWidth, height: 116 * scale)
-                                .overlay(Rectangle().strokeBorder(Color.gray.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+                            CalendarAddCard(future: selectedDay > LocalDay(date: .now), scale: scale)
                         }.buttonStyle(.plain).accessibilityIdentifier("calendar.add")
                     }
                 }.padding(.horizontal, spacing).padding(.vertical, 15)
             }
+            .id(selectedDay)
         }.frame(maxWidth: .infinity, maxHeight: .infinity).background(KeepUpStyle.background)
+            .contentShape(Rectangle())
+            .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+                selectedDate = calendar.date(byAdding: .day, value: value.translation.width < 0 ? 1 : -1, to: selectedDate)!
+            })
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("calendar.records")
     }
 
-    @ViewBuilder private func weeklyProgress(card: HabitCard, day: LocalDay) -> some View {
-        if day == LocalDay(date: .now), let target = model.snapshot.targets.first(where: { $0.cardID == card.id && $0.showsProgress }) {
-            let count = target.completedDays(entries: model.snapshot.entries, day: day).count
-            GeometryReader { geometry in
-                HStack(spacing: 1) {
-                    ForEach(0..<count, id: \.self) { _ in Capsule().fill(KeepUpStyle.card).frame(width: max(0, (geometry.size.width-8)/7), height: 2) }
-                }.frame(maxWidth: .infinity)
-            }.frame(height: 2).accessibilityElement(children: .ignore).accessibilityLabel(Text("reminder.progressCount \(count)"))
-                .accessibilityIdentifier("target.progress.\(card.id)")
+    private func setMonthMode(_ expanded: Bool) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { isMonthMode = expanded }
+    }
+
+    private func weeklyProgress(_ card: HabitCard) -> Int? {
+        guard selectedDay == LocalDay(date: .now),
+              let target = model.snapshot.targets.first(where: { $0.cardID == card.id && $0.showsProgress }) else { return nil }
+        return target.completedDays(entries: model.snapshot.entries, day: selectedDay).count
+    }
+
+    private func entryLabel(_ entry: CheckInEntry, card: HabitCard) -> String {
+        var label = localized(card.titleKey, locale)
+        if let quantity = entry.quantity {
+            label += ", " + quantity.formatted(.number.precision(.fractionLength(0...1)).locale(locale)) + localized(entry.unit.titleKey, locale)
         }
+        return label
+    }
+
+    private func canCheckIn(_ card: HabitCard) -> Bool {
+        guard !model.snapshot.archivedCardIDs.contains(card.id),
+              ![1, 2, 96].contains(OriginalCatalog.item(card)?.number ?? 0) else { return false }
+        return card.id != "punchcard.63" || !model.entries(on: LocalDay(date: .now)).contains { $0.cardID == card.id }
+    }
+
+    private func checkInToday(_ card: HabitCard) {
+        guard canCheckIn(card) else { return }
+        // Original long-press check-in always records today, even on a past/future card.
+        pendingDay = LocalDay(date: .now)
+        pendingCard = card
+    }
+
+    private func menuActions(card: HabitCard, entry: CheckInEntry? = nil, schedule: ScheduledCard? = nil) -> [CalendarCardMenuAction] {
+        let pinned = entry == nil && schedule == nil
+        var actions = [CalendarCardMenuAction(kind: .delete,
+            confirmation: localized(pinned ? "calendar.removePinnedConfirmation" : "calendar.deleteCardConfirmation", locale)) {
+                Task {
+                    if let entry { await model.delete(entry) }
+                    else if let schedule { _ = await model.deleteSchedule(id: schedule.id) }
+                    else if var target = model.snapshot.targets.first(where: { $0.cardID == card.id }) {
+                        target.isPinned = false
+                        target.reminderEnabled = false
+                        target.showsProgress = false
+                        _ = await model.saveTarget(target)
+                    }
+                }
+            }]
+        if canCheckIn(card), card.id != "punchcard.63" || (entry == nil && selectedDay == LocalDay(date: .now)) {
+            actions.append(.init(kind: .checkIn) { checkInToday(card) })
+        }
+        if !model.snapshot.archivedCardIDs.contains(card.id), OriginalCatalog.item(card)?.number != 1 {
+            actions.append(.init(kind: .reminder) { reminderCard = card })
+        }
+        return actions
     }
 
     private func movePage(_ offset: Int) {
         let component: Calendar.Component = isMonthMode ? .month : .weekOfYear
         let candidate = calendar.date(byAdding: component, value: offset, to: selectedDate)!
         selectedDate = candidate
-    }
-}
-
-struct CalendarRecordCard: View {
-    let entry: CheckInEntry
-    let card: HabitCard
-    var scale: CGFloat = 1
-    var wake: WakeUpRecord? = nil
-    private var cardColor: Color { card.id == "punchcard.50" ? Color(hex: 0xF5D039) : KeepUpStyle.card }
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.white
-            if let wake { WakeUpClock(time: wake.time, timeZoneID: wake.timeZoneID, compact: true).frame(width: 72*scale, height: 72*scale).frame(maxHeight: .infinity).offset(y: -9*scale) } else {
-            Image(card.cardImage).resizable().frame(width: 74 * scale, height: 87 * scale)
-                .frame(maxHeight: .infinity).offset(y: scale > 1 ? -11 : -8)
-            }
-            if let quantity = entry.quantity {
-                HStack(spacing: 1) {
-                    Text(quantity, format: .number.precision(.fractionLength(card.id == "punchcard.50" ? 1...1 : 0...1)))
-                    Text(LocalizedStringKey(entry.unit.titleKey))
-                }.font(.system(size: 10)).foregroundStyle(cardColor)
-                    .padding(.horizontal, 4).padding(.vertical, 2).background(.white)
-                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(cardColor, lineWidth: 1))
-                    .padding(.bottom, 22)
-            }
-            Text(LocalizedStringKey(card.titleKey)).font(.system(size: 11)).foregroundStyle(.white)
-                .lineLimit(1).frame(maxWidth: .infinity).frame(height: 18).background(wake == nil ? cardColor : Color(hex: 0x3DB9A9))
-        }.frame(width: 88 * scale, height: 116 * scale)
-            .overlay(alignment: .topLeading) {
-                if wake?.isEarly == true { Text("wake.earlyBadge").font(.system(size: 12)).foregroundStyle(.white).padding(.horizontal, 6).frame(height: 18).background(Color(hex: 0x3DB9A9)) }
-            }
-            .overlay { Image("xbcalendarItemCover").resizable().allowsHitTesting(false) }
-            .shadow(color: .black.opacity(0.05), radius: 4, y: 1).accessibilityElement(children: .combine)
     }
 }

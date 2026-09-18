@@ -101,6 +101,39 @@ final class KeepUpUITests: XCTestCase {
         app.buttons["entry.cancel"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.15)).tap()
     }
 
+    func testHomeCardAreaChangesDayAndReturnsToToday() throws {
+        let app = app()
+        app.launch()
+        let records = app.otherElements["calendar.records"]
+        XCTAssertTrue(records.waitForExistence(timeout: 20))
+        let today = Date()
+        let calendar = Calendar(identifier: .gregorian)
+        func dayID(_ offset: Int) -> String {
+            let date = calendar.date(byAdding: .day, value: offset, to: today)!
+            let parts = calendar.dateComponents([.year, .month, .day], from: date)
+            return String(format: "day.%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+        }
+        records.swipeLeft()
+        XCTAssertTrue(app.buttons["calendar.add"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[dayID(1)].isSelected)
+        attach("KeepUp-Home-Swipe-Future")
+        app.buttons["calendar.today"].tap()
+        XCTAssertTrue(app.buttons["calendar.today"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[dayID(0)].isSelected)
+        records.swipeRight()
+        XCTAssertTrue(app.buttons["calendar.today"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[dayID(-1)].isSelected)
+        records.swipeRight()
+        XCTAssertTrue(app.buttons["calendar.add"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[dayID(-2)].isSelected)
+        attach("KeepUp-Home-Swipe-Past")
+        app.buttons["calendar.add"].tap()
+        XCTAssertTrue(app.buttons["catalog.close"].waitForExistence(timeout: 5))
+        app.buttons["catalog.close"].tap()
+        XCTAssertTrue(records.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[dayID(-2)].isSelected)
+    }
+
     func testCalendarScopeAndBackfill() throws {
         let app = app()
         app.launch()

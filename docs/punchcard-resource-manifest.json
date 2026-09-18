@@ -3688,5 +3688,80 @@
     "source": "Assets.xcassets/XBCalendar/xbcalendarItemCover.imageset/xbcalendarItemCover@3x.png",
     "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/xbcalendarItemCover.imageset/xbcalendarItemCover@3x.png",
     "sha256": "f7ac76666a8f08e114deca9770f63086fba93723de5edc24c712e30e60e5f485"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_delete.imageset/homepage_btn_longpress_delete@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_delete.imageset/homepage_btn_longpress_delete@2x.png",
+    "sha256": "8484cc019264ccb81b64dbb19c1a0cb39e0f297a70bd2300b57e44ec2506cf10"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_delete.imageset/homepage_btn_longpress_delete@3x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_delete.imageset/homepage_btn_longpress_delete@3x.png",
+    "sha256": "c4e15c2d5b9e9e5be6ec0220295dc39e1c9e247c9ac4babe4dc53b44dccfea60"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_delete.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_delete.imageset/Contents.json",
+    "sha256": "1729d58784ec33b880c73f130e594cff7c516c08a6aeb0c4f48042675a287d76"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_add.imageset/homepage_btn_longpress_add@3x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_add.imageset/homepage_btn_longpress_add@3x.png",
+    "sha256": "8485604da93d326296dd9f4aaed5d21f5fa9e89bf15a635e807bd1f63bd50f43"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_add.imageset/homepage_btn_longpress_add@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_add.imageset/homepage_btn_longpress_add@2x.png",
+    "sha256": "d6ebf45683579ac71d4579b71d00c48a09357142fb8204d3af5330a97e194985"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_add.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_add.imageset/Contents.json",
+    "sha256": "9431ca183ad2c6872849c9b39d07892af5975c6a7e8e31c245b21bf0339beebf"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_clock.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_clock.imageset/Contents.json",
+    "sha256": "fa18119370313b56645015b8189ee799a15ea0e2acfaf942ea03fa3bac1e3595"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_clock.imageset/homepage_btn_longpress_clock@3x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_clock.imageset/homepage_btn_longpress_clock@3x.png",
+    "sha256": "1d4e7cdb0a38e39bc7505b36c27f98c8b0aefcd76d23caf3d52601d926c94b22"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/homepage_btn_longpress_clock.imageset/homepage_btn_longpress_clock@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/homepage_btn_longpress_clock.imageset/homepage_btn_longpress_clock@2x.png",
+    "sha256": "1e07a0d12da869b915bca6d9485da89af0c2e7f6df895e5b85994ef524ccafb5"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/color/5fc6dc.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/5fc6dc.imageset/Contents.json",
+    "sha256": "17ba1a8d24508693ec97f12d1412b9670f89fb48a919eab88c76a68cbbcc6c22"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/color/5fc6dc.imageset/5fc6dc.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/5fc6dc.imageset/5fc6dc.png",
+    "sha256": "a7bc92615c9c090b5c6e10159aa735e30e3a0e58fb05b468d7f3169abc0d2be0"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/color/f5d039.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/f5d039.imageset/Contents.json",
+    "sha256": "88451e907ce9e16f4bec664aaccbe3d23b8c5e9043c8e0ad4b34e250a4af3cdb"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/color/f5d039.imageset/f5d039.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/f5d039.imageset/f5d039.png",
+    "sha256": "ffe9b8278642915ca7b778ef4630e36cf9371abc1ee28791a5150ab00e6f84be"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/color/5fdcc9.imageset/5fdcc9.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/5fdcc9.imageset/5fdcc9.png",
+    "sha256": "0a0342a5d9497a76af16a06f849c37838f6bfeab183ad7cc475c3c696260fdba"
+  },
+  {
+    "source": "Assets.xcassets/XBCalendar/color/5fdcc9.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/5fdcc9.imageset/Contents.json",
+    "sha256": "be6fb7622dda13b1ee1eec1e6ede747436b251ddc8be0ebd7d022c52cc4bd12b"
   }
 ]

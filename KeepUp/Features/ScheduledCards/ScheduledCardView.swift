@@ -71,22 +71,3 @@ struct ScheduledCardView: View {
         else { error = model.actionError; model.actionError = nil }
     }
 }
-
-struct ScheduledCalendarCard: View {
-    let schedule: ScheduledCard
-    let card: HabitCard
-    let scale: CGFloat
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                Image("card_icon_todo").resizable().scaledToFit().padding(.horizontal, 7*scale)
-                Text(schedule.day < LocalDay(date: .now) ? "schedule.expiredBadge" : "reminder.todo")
-                    .font(.system(size: 11)).foregroundStyle(.white).padding(.horizontal, 6).frame(height: 18).background(Color(hex: 0xBABDC2))
-            }.frame(maxHeight: .infinity)
-            Text(LocalizedStringKey(card.titleKey)).font(.system(size: 11)).foregroundStyle(.white).lineLimit(1)
-                .frame(maxWidth: .infinity).frame(height: 18).background(Color(hex: 0xBABDC2))
-        }.frame(width: 88*scale, height: 116*scale).background(.white)
-            .overlay { Image("xbcalendarItemCover").resizable().allowsHitTesting(false) }
-            .accessibilityElement(children: .combine).accessibilityValue(schedule.note)
-    }
-}

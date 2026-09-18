@@ -16,6 +16,7 @@ for key, entry in catalog.items():
 
 for path in (root / "KeepUp").rglob("*.swift"):
     source = re.sub(r'\.accessibilityIdentifier\("[^"\n]*"\)', "", path.read_text())
+    source = re.sub(r'\baccessibilityIdentifier\s*=.*', "", source)
     for key in re.findall(r'"((?:app|nav|calendar|entry|history|profile|settings|stats|action|error|language|card|unit)\.[A-Za-z][A-Za-z0-9.]*)"', source):
         if key not in catalog:
             errors.append(f"{path.relative_to(root)}: missing key {key}")

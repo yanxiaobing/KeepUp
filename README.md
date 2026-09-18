@@ -47,6 +47,7 @@ python3 Scripts/validate_configuration.py
 11. [未来待办与起床卡](docs/scheduled-cards-wake-up.md)
 12. [体重记录与目标](docs/weight-cards.md)
 13. [预置 JSON 配置与维护](docs/bundled-configuration.md)
+14. [首页卡片与长按操作还原](docs/calendar-cards-restoration.md)
 
 ## 验证原型
 
