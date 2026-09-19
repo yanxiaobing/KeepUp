@@ -17,7 +17,7 @@ struct CalendarTheme: Decodable, Identifiable, Equatable {
         }
     }
     static var selected: CalendarTheme {
-        all.first { $0.id == UserDefaults.standard.integer(forKey: "preference.themeID") } ?? all[0]
+        all.first { $0.id == Defaults[.themeID] } ?? all[0]
     }
 }
 
@@ -46,7 +46,7 @@ struct ThemeListView: View {
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { dismiss() }.accessibilityIdentifier("theme.close") } }
                 .fullScreenCover(item: $selected) { theme in
-                    ThemePreviewView(theme: theme) { UserDefaults.standard.set(theme.id, forKey: "preference.themeID"); selected = nil; dismiss() }
+                    ThemePreviewView(theme: theme) { Defaults[.themeID] = theme.id; selected = nil; dismiss() }
                         .presentationBackground(.ultraThinMaterial)
                 }
         }

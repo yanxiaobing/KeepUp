@@ -8,6 +8,9 @@ project.root_object.development_region = 'en'
 project.root_object.known_regions = ['en', 'zh-Hans']
 
 app = project.new_target(:application, 'KeepUp', :ios, '26.0')
+project.root_object.attributes['TargetAttributes'] = {
+  app.uuid => { 'SystemCapabilities' => { 'com.apple.ApplicationGroups.iOS' => { 'enabled' => 1 } } }
+}
 unit_tests = project.new_target(:unit_test_bundle, 'KeepUpTests', :ios, '26.0')
 ui_tests = project.new_target(:ui_test_bundle, 'KeepUpUITests', :ios, '26.0')
 unit_tests.add_dependency(app)
@@ -38,6 +41,20 @@ app.package_product_dependencies << crop_product
 crop_build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
 crop_build_file.product_ref = crop_product
 app.frameworks_build_phase.files << crop_build_file
+
+defaults = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+defaults.repositoryURL = 'https://github.com/sindresorhus/Defaults'
+defaults.requirement = { 'kind' => 'revision', 'revision' => '00a7465a0668a87fa159e779b9d80f1f9652357e' }
+project.root_object.package_references << defaults
+[app, unit_tests].each do |target|
+  product = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+  product.package = defaults
+  product.product_name = 'Defaults'
+  target.package_product_dependencies << product
+  build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
+  build_file.product_ref = product
+  target.frameworks_build_phase.files << build_file
+end
 
 def add_directory(group, path, target)
   Dir.children(path).sort.each do |name|
@@ -79,6 +96,7 @@ end
 app.build_configurations.each do |config|
   config.build_settings.delete('ASSETCATALOG_COMPILER_APPICON_NAME')
   config.build_settings['INFOPLIST_FILE'] = 'Config/Info.plist'
+  config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Config/KeepUp.entitlements'
   config.build_settings['ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME'] = 'AccentColor'
 end
 unit_tests.build_configurations.each do |config|
@@ -88,6 +106,7 @@ end
 ui_tests.build_configurations.each { |config| config.build_settings['TEST_TARGET_NAME'] = 'KeepUp' }
 config_group = project.main_group.new_group('Config', 'Config')
 config_group.new_file('Info.plist')
+config_group.new_file('KeepUp.entitlements')
 privacy_strings = config_group.new_variant_group('InfoPlist.strings')
 ['en', 'zh-Hans'].each do |locale|
   file = privacy_strings.new_file("#{locale}.lproj/InfoPlist.strings")

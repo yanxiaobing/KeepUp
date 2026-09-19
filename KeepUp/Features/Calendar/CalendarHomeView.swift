@@ -7,7 +7,7 @@ struct CalendarHomeView: View {
     @Environment(\.locale) private var locale
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AppStorage("preference.monthMode") private var isMonthMode = false
+    @Default(.monthMode) private var isMonthMode
     @State private var showingTheme = false
     @State private var scheduleDetail: ScheduledCard?
     @State private var detail: CheckInEntry?

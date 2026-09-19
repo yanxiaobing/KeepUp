@@ -20,8 +20,8 @@ enum AppLanguage: String, CaseIterable {
 
 @main
 struct KeepUpApp: App {
-    @AppStorage("appLanguage") private var language = AppLanguage.system.rawValue
-    @AppStorage("preference.themeID") private var themeID = 0
+    @Default(.appLanguage) private var language
+    @Default(.themeID) private var themeID
     @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab = AppTab.calendar
@@ -36,9 +36,7 @@ struct KeepUpApp: App {
             databaseURL = support.appendingPathComponent("ui-tests/keepup.sqlite")
             if ProcessInfo.processInfo.arguments.contains("-reset-test-data") {
                 try? FileManager.default.removeItem(at: databaseURL.deletingLastPathComponent())
-                UserDefaults.standard.removeObject(forKey: "appLanguage")
-                UserDefaults.standard.removeObject(forKey: "preference.monthMode")
-                UserDefaults.standard.removeObject(forKey: "preference.themeID")
+                AppPreferences.reset()
             }
         }
         #endif

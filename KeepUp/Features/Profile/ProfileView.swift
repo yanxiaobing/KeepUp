@@ -100,7 +100,7 @@ struct ProfileView: View {
 struct ProfileSettingsView: View {
     @Environment(AppModel.self) private var model
     @State private var editProfile = false
-    @AppStorage("appLanguage") private var language = AppLanguage.system.rawValue
+    @Default(.appLanguage) private var language
     var body: some View {
         List {
             Section {
@@ -121,7 +121,7 @@ struct ProfileSettingsView: View {
     }
 }
 struct LanguageSettingsView: View {
-    @AppStorage("appLanguage") private var language = AppLanguage.system.rawValue
+    @Default(.appLanguage) private var language
     var body: some View {
         List {
             ForEach(AppLanguage.allCases, id: \.rawValue) { item in

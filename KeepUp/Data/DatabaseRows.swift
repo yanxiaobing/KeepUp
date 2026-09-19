@@ -71,19 +71,19 @@ enum DatabaseSchema {
             let existingVersion = try database.getValue(from: StatementPragma().pragma(.userVersion))?.intValue ?? 0
             guard existingVersion <= version else { throw StoreError.newerSchema }
             try database.run(transaction: { handle in
-                try handle.create(table: "weight_operations", of: WeightOperationRow.self)
-                try handle.create(table: "weight_target", of: WeightRow.self)
-                try handle.create(table: "weight_records", of: WeightRow.self)
-                try handle.create(table: "scheduled_cards", of: ScheduleRow.self)
-                try handle.create(table: "wake_records", of: WakeRow.self)
-                try handle.create(table: "cards", of: CardRow.self)
-                try handle.create(table: "entries", of: EntryRow.self)
-                try handle.create(table: "profile", of: ProfileRow.self)
-                try handle.create(table: "entry_content", of: EntryContentRow.self)
-                try handle.create(table: "card_targets", of: TargetRow.self)
-                try handle.create(table: "archived_cards", of: ArchivedCardRow.self)
-                try handle.insertOrIgnore(HabitCard.starters.map(CardRow.init), intoTable: "cards")
-                try handle.insertOrIgnore(OriginalCatalog.items.map { CardRow($0.card) }, intoTable: "cards")
+                try handle.create(table: StoreTables.weightOperations.name, of: WeightOperationRow.self)
+                try handle.create(table: StoreTables.weightTarget.name, of: WeightRow.self)
+                try handle.create(table: StoreTables.weightRecords.name, of: WeightRow.self)
+                try handle.create(table: StoreTables.schedules.name, of: ScheduleRow.self)
+                try handle.create(table: StoreTables.wakeRecords.name, of: WakeRow.self)
+                try handle.create(table: StoreTables.cards.name, of: CardRow.self)
+                try handle.create(table: StoreTables.entries.name, of: EntryRow.self)
+                try handle.create(table: StoreTables.profile.name, of: ProfileRow.self)
+                try handle.create(table: StoreTables.content.name, of: EntryContentRow.self)
+                try handle.create(table: StoreTables.targets.name, of: TargetRow.self)
+                try handle.create(table: StoreTables.archivedCards.name, of: ArchivedCardRow.self)
+                try handle.insertOrIgnore(HabitCard.starters.map(CardRow.init), intoTable: StoreTables.cards.name)
+                try handle.insertOrIgnore(OriginalCatalog.items.map { CardRow($0.card) }, intoTable: StoreTables.cards.name)
                 if existingVersion < version {
                     try handle.exec(StatementPragma().pragma(.userVersion).to(version))
                 }

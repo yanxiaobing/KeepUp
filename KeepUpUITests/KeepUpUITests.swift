@@ -86,6 +86,12 @@ final class KeepUpUITests: XCTestCase {
         app.buttons["language.en"].tap()
         XCTAssertTrue(app.staticTexts["Premium"].waitForExistence(timeout: 5))
         attach("PunchCard-Profile-English")
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
+        app.buttons["tab.profile"].tap()
+        XCTAssertTrue(app.staticTexts["Premium"].waitForExistence(timeout: 5))
     }
 
     func testLargeTextAndDarkAppearance() throws {
