@@ -10,7 +10,11 @@ struct CardCatalogView: View {
     @State private var category = Category.recommended
     @State private var scheduledCard: HabitCard?
     @State private var showingSteps = false
-    @State private var showingRunning = false
+    @State private var runningRequest: RunningRequest?
+    private struct RunningRequest: Identifiable {
+        let kind: RunningKind
+        var id: RunningKind { kind }
+    }
     @State private var wakeIntro = false
     @State private var wakeReminder = false
     @State private var selectedCard: HabitCard?
@@ -92,7 +96,7 @@ struct CardCatalogView: View {
                     }
                 }
                 .fullScreenCover(isPresented: $showingSteps) { StepsView(day: day) }
-                .fullScreenCover(isPresented: $showingRunning) { RunningView() }
+                .fullScreenCover(item: $runningRequest) { request in RunningView(kind: request.kind) }
                 .fullScreenCover(item: $scheduledCard) { card in
                     ScheduledCardView(card: card, day: day, existing: model.snapshot.schedules.first { $0.cardID == card.id && $0.day == day }, onSaved: { dismiss() })
                 }
@@ -209,14 +213,10 @@ struct CardCatalogView: View {
             if !model.snapshot.targets.contains(where: { $0.cardID == card.id && $0.isPinned }) { wakeIntro = true; return }
         }
         if card.id == "punchcard.1" { showingSteps = true; return }
-        if card.id == "punchcard.2" {
+        if ["punchcard.2", "punchcard.96"].contains(card.id) {
             guard day == LocalDay(date: .now) else { pendingFeature = "running.todayOnly"; return }
-            showingRunning = true
+            runningRequest = RunningRequest(kind: card.id == "punchcard.96" ? .cycling : .outdoor)
             return
-        }
-        // Cycling will use its own recording flow.
-        guard ![96].contains(OriginalCatalog.item(card)?.number ?? 0) else {
-            pendingFeature = card.titleKey; return
         }
         selectedCard = card
     }

@@ -3,6 +3,6 @@
 
 "NSPhotoLibraryAddUsageDescription" = "将 KeepUp 打卡图片保存到相册。";
 
-"NSMotionUsageDescription" = "读取步数和步行距离，用于展示每日步数并记录计步目标完成情况。";
+"NSMotionUsageDescription" = "读取步数和距离，用于每日计步目标和室内跑步记录。";
 
-"NSLocationWhenInUseUsageDescription" = "在运动期间记录跑步轨迹、距离和配速。";
+"NSLocationWhenInUseUsageDescription" = "在运动期间记录户外跑步或骑行的轨迹、距离和速度。";

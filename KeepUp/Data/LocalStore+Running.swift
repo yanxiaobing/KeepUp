@@ -18,6 +18,7 @@ extension LocalStore {
             // A delayed checkpoint must never resurrect a discarded or finished workout.
             guard existing.phase != "deleted", existing.phase != RunningPhase.finished.rawValue else { return }
             guard session.revision > existing.revision else { return }
+            guard try StoredJSON.decode(RunningSession.self, from: existing.payload).kind == session.kind else { throw StoreError.invalidContent }
         }
         let other = try database.table(StoreTables.running).getObjects(where:
             RunningRow.Properties.id != session.id &&
@@ -29,18 +30,19 @@ extension LocalStore {
     func finishRunning(_ session: RunningSession) throws {
         guard let database else { throw StoreError.notOpen }
         try validateRunning(session)
-        guard session.phase == .finished, session.distanceMeters >= 100 else { throw StoreError.invalidQuantity }
+        guard session.phase == .finished, session.distanceMeters >= session.kind.minimumDistanceMeters else { throw StoreError.invalidQuantity }
         let previous = try database.table(StoreTables.running).getObjects(where: RunningRow.Properties.id == session.id, limit: 1).first
         if let previous {
             guard previous.phase != "deleted" else { throw StoreError.invalidContent }
             if previous.phase == RunningPhase.finished.rawValue { return }
             guard session.revision > previous.revision else { throw StoreError.invalidContent }
+            guard try StoredJSON.decode(RunningSession.self, from: previous.payload).kind == session.kind else { throw StoreError.invalidContent }
         }
         let occupied = try database.table(StoreTables.entries).getObjects(where: EntryRow.Properties.id == session.id, limit: 1)
         guard occupied.isEmpty else { throw StoreError.invalidCard }
-        let scheduleID = "punchcard.2:" + session.day.rawValue
+        let scheduleID = session.kind.cardID + ":" + session.day.rawValue
         let plan = try database.table(StoreTables.schedules).getObjects(where: ScheduleRow.Properties.id == scheduleID, limit: 1).first
-        let entry = CheckInEntry(id: session.id, cardID: "punchcard.2", day: session.day,
+        let entry = CheckInEntry(id: session.id, cardID: session.kind.cardID, day: session.day,
                                  timeZoneID: session.timeZoneID, createdAt: session.startedAt,
                                  quantity: session.distanceMeters / 1_000, unit: .kilometers, note: plan?.note ?? "")
         try database.run(transaction: { handle in
@@ -68,6 +70,8 @@ extension LocalStore {
               session.day == LocalDay(date: session.startedAt, timeZone: zone),
               session.activeSince.map({ $0.timeIntervalSince1970.isFinite && $0 >= session.startedAt && $0 <= session.updatedAt }) ?? true,
               session.finishedAt.map({ $0.timeIntervalSince1970.isFinite && $0 >= session.startedAt && $0 <= session.updatedAt }) ?? true else { throw StoreError.invalidDate }
+        guard session.steps >= 0, session.steps <= 10_000_000,
+              session.kind.usesGPS ? session.steps == 0 : session.segments.allSatisfy(\.isEmpty) else { throw StoreError.invalidContent }
         guard session.distanceMeters.isFinite, (0...1_000_000).contains(session.distanceMeters),
               session.elapsedSeconds.isFinite, (0...604_800).contains(session.elapsedSeconds),
               session.phase == .running ? session.activeSince != nil : session.activeSince == nil,

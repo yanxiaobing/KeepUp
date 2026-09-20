@@ -8,8 +8,13 @@ enum RunningLocationEvent: Sendable { case authorization(RunningAuthorization), 
     var authorization: RunningAuthorization { get }
     var onEvent: (@MainActor (RunningLocationEvent) -> Void)? { get set }
     func requestPermission()
+    func configure(kind: RunningKind)
     func start(background: Bool)
     func stop()
+}
+
+@MainActor extension RunningLocationSource {
+    func configure(kind: RunningKind) {}
 }
 
 @MainActor enum RunningLocationSources {
@@ -29,9 +34,11 @@ enum RunningLocationEvent: Sendable { case authorization(RunningAuthorization), 
     let authorization: RunningAuthorization
     private let mode: String
     private var emittedRoute = false
+    private var kind = RunningKind.outdoor
     var onEvent: (@MainActor (RunningLocationEvent) -> Void)?
     init(mode: String) { self.mode = mode; authorization = mode == "denied" ? .denied : .authorized }
     func requestPermission() { onEvent?(.authorization(authorization)) }
+    func configure(kind: RunningKind) { self.kind = kind }
     func start(background: Bool) {
         guard mode == "route" else { return }
         let now = Date.now
@@ -39,8 +46,8 @@ enum RunningLocationEvent: Sendable { case authorization(RunningAuthorization), 
             guard !emittedRoute else { return }
             emittedRoute = true
             let points = (0...12).map { index in
-                RunningPoint(latitude: 31.23 + Double(index) * 0.0001, longitude: 121.47,
-                             horizontalAccuracy: 5, timestamp: now.addingTimeInterval(Double(index) - 12), speed: 11)
+                RunningPoint(latitude: 31.23 + Double(index) * (kind == .cycling ? 0.0004 : 0.0001), longitude: 121.47,
+                             horizontalAccuracy: 5, timestamp: now.addingTimeInterval(Double(index) - 12), speed: kind == .cycling ? 44 : 11)
             }
             onEvent?(.points(points))
         } else {

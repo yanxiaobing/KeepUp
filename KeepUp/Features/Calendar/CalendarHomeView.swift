@@ -61,7 +61,7 @@ struct CalendarHomeView: View {
                         calendarBody
                         if model.running.session != nil {
                             Button { showingRunning = true } label: {
-                                Label("running.resumeActivity", systemImage: "figure.run")
+                                Label("running.resumeActivity", systemImage: model.running.session?.kind == .cycling ? "bicycle" : "figure.run")
                                     .font(.system(size: 14, weight: .medium))
                                     .frame(maxWidth: .infinity).padding(.vertical, 12)
                             }.buttonStyle(.plain).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
@@ -77,7 +77,7 @@ struct CalendarHomeView: View {
             .fullScreenCover(isPresented: $showingRunning) { RunningView() }
             .fullScreenCover(item: $pendingCard) { card in
                 if card.id == "punchcard.1" { StepsView(day: pendingDay) }
-                else if card.id == "punchcard.2" { RunningView() }
+                else if ["punchcard.2", "punchcard.96"].contains(card.id) { RunningView(kind: card.id == "punchcard.96" ? .cycling : .outdoor) }
                 else { ComposeEntryView(card: card, day: pendingDay, onSaved: { pendingCard = nil }, onCancel: { pendingCard = nil }) }
             }
             .fullScreenCover(item: $reminderCard) { card in ReminderSettingsView(card: card, target: model.snapshot.targets.first { $0.cardID == card.id }) }
@@ -87,7 +87,7 @@ struct CalendarHomeView: View {
             .fullScreenCover(item: $detail) { entry in
                 if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
                 else if let card = model.card(for: entry) {
-                    if entry.cardID == "punchcard.2" { RunningRecordView(entry: entry, card: card) }
+                    if ["punchcard.2", "punchcard.96"].contains(entry.cardID) { RunningRecordView(entry: entry, card: card) }
                     else { EntryDetailView(entry: entry, card: card) }
                 }
             }
@@ -264,7 +264,7 @@ struct CalendarHomeView: View {
 
     private func canCheckIn(_ card: HabitCard) -> Bool {
         guard !model.snapshot.archivedCardIDs.contains(card.id),
-              ![1, 96].contains(OriginalCatalog.item(card)?.number ?? 0) else { return false }
+              ![1].contains(OriginalCatalog.item(card)?.number ?? 0) else { return false }
         return card.id != "punchcard.63" || !model.entries(on: LocalDay(date: .now)).contains { $0.cardID == card.id }
     }
 

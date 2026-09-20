@@ -3848,5 +3848,15 @@
     "source": "Assets.xcassets/RunIcon/gps_3.imageset/gps_3.png",
     "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_3.imageset/gps_3.png",
     "sha256": "3a4e018a013ee501618fbe67e707a8cd018e0600d25c758c461b05b651ee9721"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_pre_indoor_des.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_pre_indoor_des.imageset/Contents.json",
+    "sha256": "14a7c29fa072f7ce2be5cdcfe976a568e07fb0f8d29378b475fcd61a39cbfa24"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_pre_indoor_des.imageset/running_pre_indoor_des@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_pre_indoor_des.imageset/running_pre_indoor_des@2x.png",
+    "sha256": "836974f8634429e74343c8dee3959692d8960c4d967a2efaf02483286bd61715"
   }
 ]

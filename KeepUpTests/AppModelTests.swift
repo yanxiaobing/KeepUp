@@ -41,7 +41,7 @@ private actor SuspendedRepository: CheckInRepository {
         if failRunningFinish { throw StoreError.invalidContent }
         if finishedRuns[session.id] == nil {
             finishedRuns[session.id] = session
-            entries.append(CheckInEntry(id: session.id, cardID: "punchcard.2", day: session.day,
+            entries.append(CheckInEntry(id: session.id, cardID: session.kind.cardID, day: session.day,
                                         timeZoneID: session.timeZoneID, createdAt: session.startedAt,
                                         quantity: session.distanceMeters / 1_000, unit: .kilometers, note: ""))
         }

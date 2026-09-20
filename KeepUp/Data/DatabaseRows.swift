@@ -63,7 +63,7 @@ struct EntryRow: TableCodable {
 }
 
 enum DatabaseSchema {
-    static let version = 8
+    static let version = 9
     private static let initializationLock = NSLock()
 
     static func prepare(_ database: Database) throws {

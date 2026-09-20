@@ -26,7 +26,7 @@ struct HistoryView: View {
                                     ForEach(model.entries(on: day)) { entry in
                                         if let card = model.card(for: entry) {
                                             Button {
-                                                if ["punchcard.1", "punchcard.2"].contains(entry.cardID) { detail = entry }
+                                                if ["punchcard.1", "punchcard.2", "punchcard.96"].contains(entry.cardID) { detail = entry }
                                                 else if model.snapshot.publishedContent(for: entry).isEmpty || model.snapshot.content[entry.id]?.draft != nil { editing = entry }
                                                 else { detail = entry }
                                             } label: {
@@ -67,7 +67,7 @@ struct HistoryView: View {
             .fullScreenCover(item: $detail) { entry in
                 if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
                 else if let card = model.card(for: entry) {
-                    if entry.cardID == "punchcard.2" { RunningRecordView(entry: entry, card: card) }
+                    if ["punchcard.2", "punchcard.96"].contains(entry.cardID) { RunningRecordView(entry: entry, card: card) }
                     else { EntryDetailView(entry: entry, card: card) }
                 }
             }

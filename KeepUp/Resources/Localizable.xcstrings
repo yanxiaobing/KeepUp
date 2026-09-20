@@ -5722,6 +5722,23 @@
         }
       }
     },
+    "running.averageCadence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Average cadence · steps/min"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均步频 · 步/分钟"
+          }
+        }
+      }
+    },
     "running.averagePace": {
       "extractionState": "manual",
       "localizations": {
@@ -5739,19 +5756,70 @@
         }
       }
     },
+    "running.averageSpeed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Average speed · km/h"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均速度 · 公里/小时"
+          }
+        }
+      }
+    },
     "running.closeHint": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You can close this page and return to the run from its card."
+            "value": "You can close this page and return to your activity from the calendar."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "关闭页面后，可通过跑步卡片回到本次运动。"
+            "value": "关闭页面后，可通过日历返回本次运动。"
+          }
+        }
+      }
+    },
+    "running.cycling": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycling"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "骑行"
+          }
+        }
+      }
+    },
+    "running.cyclingTooShort": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ride at least 500 meters before saving. You can continue or discard this activity."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "骑行至少 500 米后才能保存。可以继续运动或丢弃本次记录。"
           }
         }
       }
@@ -5762,13 +5830,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Location access is off. Enable it in Settings to record a run."
+            "value": "Location access is off. Enable it in Settings to record an outdoor activity."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "定位权限已关闭，请在设置中开启后记录跑步。"
+            "value": "定位权限已关闭，请在设置中开启后记录户外运动。"
           }
         }
       }
@@ -5779,13 +5847,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Discard run"
+            "value": "Discard activity"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "丢弃本次跑步"
+            "value": "丢弃本次运动"
           }
         }
       }
@@ -5796,13 +5864,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Discard this run? This cannot be undone."
+            "value": "Discard this activity? This cannot be undone."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "丢弃本次跑步？此操作无法撤销。"
+            "value": "丢弃本次运动？此操作无法撤销。"
           }
         }
       }
@@ -5847,13 +5915,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Finish this run?"
+            "value": "Finish this activity?"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "结束本次跑步？"
+            "value": "结束本次运动？"
           }
         }
       }
@@ -5864,13 +5932,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your route and active time will be saved."
+            "value": "Your recorded activity and active time will be saved."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "将保存本次轨迹与有效运动时长。"
+            "value": "将保存本次运动数据与有效运动时长。"
           }
         }
       }
@@ -5915,13 +5983,98 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Running"
+            "value": "Recording"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步中"
+            "value": "运动中"
+          }
+        }
+      }
+    },
+    "running.indoor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indoor run"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "室内跑步"
+          }
+        }
+      }
+    },
+    "running.indoorArtworkTip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secure phone\nto your arm"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定在手臂上\n记录更准确"
+          }
+        }
+      }
+    },
+    "running.indoorCarryPhone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep your phone with you while running so it can measure your steps and distance."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步时请随身携带手机，以便记录步数和距离。"
+          }
+        }
+      }
+    },
+    "running.indoorDistanceHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Distance is estimated by your phone’s motion sensor."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距离由手机运动传感器估算。"
+          }
+        }
+      }
+    },
+    "running.indoorPrepare": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record your run with your phone’s motion sensor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用手机运动传感器记录跑步"
           }
         }
       }
@@ -5949,13 +6102,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The run could not be loaded. Please try again."
+            "value": "The activity could not be loaded. Please try again."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步记录读取失败，请重试。"
+            "value": "运动记录读取失败，请重试。"
           }
         }
       }
@@ -5966,13 +6119,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Loading run…"
+            "value": "Loading activity…"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在读取跑步记录…"
+            "value": "正在读取运动记录…"
           }
         }
       }
@@ -5990,6 +6143,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "暂时无法获取定位，请到开阔处重试。"
+          }
+        }
+      }
+    },
+    "running.motionAuthorize": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow motion access"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许运动权限"
+          }
+        }
+      }
+    },
+    "running.motionDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motion & Fitness access is off. Enable it in Settings to record an indoor run."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运动与健身权限已关闭，请在设置中开启后记录室内跑步。"
+          }
+        }
+      }
+    },
+    "running.motionFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read motion data. Please retry."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取运动数据，请重试。"
+          }
+        }
+      }
+    },
+    "running.motionPermission": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Motion & Fitness access to record an indoor run."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许访问运动与健身，以记录室内跑步。"
+          }
+        }
+      }
+    },
+    "running.motionPermissionRequired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motion & Fitness access is required to continue this indoor run."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续室内跑步需要运动与健身权限。"
+          }
+        }
+      }
+    },
+    "running.motionReady": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motion sensor ready"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运动传感器已就绪"
+          }
+        }
+      }
+    },
+    "running.motionUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motion-based distance is unavailable on this device."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备暂不支持运动传感器距离测量。"
           }
         }
       }
@@ -6017,13 +6289,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Complete a kilometer to see splits."
+            "value": "Complete a kilometer to see split data."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完成一公里后显示分段配速。"
+            "value": "完成一公里后显示分段数据。"
           }
         }
       }
@@ -6102,13 +6374,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Run ended · waiting to save"
+            "value": "Activity ended · waiting to save"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步已结束，等待保存"
+            "value": "运动已结束，等待保存"
           }
         }
       }
@@ -6119,13 +6391,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Allow location access to record your outdoor run."
+            "value": "Allow location access to record your outdoor activity."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "允许定位后即可记录户外跑步轨迹。"
+            "value": "允许定位后即可记录户外运动轨迹。"
           }
         }
       }
@@ -6136,13 +6408,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Location access is required to continue. Your run is paused."
+            "value": "Location access is required to continue this outdoor activity."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "继续跑步需要定位权限，当前记录已暂停。"
+            "value": "继续户外运动需要定位权限。"
           }
         }
       }
@@ -6170,13 +6442,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "An unfinished run was recovered and paused. Continue when you are ready."
+            "value": "An unfinished activity was recovered and paused. Continue when you are ready."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已恢复未完成的跑步并暂停，准备好后可以继续。"
+            "value": "已恢复未完成的运动并暂停，准备好后可以继续。"
           }
         }
       }
@@ -6187,13 +6459,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Run summary"
+            "value": "Activity summary"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步记录"
+            "value": "运动记录"
           }
         }
       }
@@ -6221,13 +6493,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Return to unfinished run"
+            "value": "Return to unfinished activity"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "返回未完成的跑步"
+            "value": "返回未完成的运动"
           }
         }
       }
@@ -6262,6 +6534,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "重新定位"
+          }
+        }
+      }
+    },
+    "running.retryMotion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry motion sensor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重试运动传感器"
           }
         }
       }
@@ -6340,13 +6629,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Could not save this run. Your current session is still here; please retry."
+            "value": "Could not save this activity. Your current session is still here; please retry."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步记录保存失败，当前会话仍保留，请重试。"
+            "value": "运动记录保存失败，当前会话仍保留，请重试。"
           }
         }
       }
@@ -6364,6 +6653,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "前往设置"
+          }
+        }
+      }
+    },
+    "running.speedUnit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "km/h"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公里/小时"
           }
         }
       }
@@ -6402,19 +6708,36 @@
         }
       }
     },
+    "running.steps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "步数"
+          }
+        }
+      }
+    },
     "running.todayOnly": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Outdoor runs can only be recorded today."
+            "value": "Activities can only be recorded today."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "户外跑步仅支持记录今天的运动。"
+            "value": "运动仅支持记录今天的数据。"
           }
         }
       }

@@ -24,13 +24,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Record your running route, distance and pace while a workout is active.</string>
+	<string>Record your outdoor running or cycling route, distance and speed while an activity is in progress.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
 	<key>NSMotionUsageDescription</key>
-	<string>Read your steps and walking distance to track your daily goal.</string>
+	<string>Read your steps and distance for daily goals and indoor running.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo for your profile or check-in record.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

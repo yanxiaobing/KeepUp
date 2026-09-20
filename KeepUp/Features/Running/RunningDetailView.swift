@@ -34,27 +34,47 @@ struct RunningSessionSummary: View {
                         Text("running.kilometers").font(.system(size: 14)).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    Text("running.outdoor").font(.system(size: 13, weight: .medium))
+                    Text(LocalizedStringKey(session.kind.titleKey)).font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 14).padding(.vertical, 10)
-                        .foregroundStyle(.white).background(Color(hex: 0xFF6440), in: Capsule())
+                        .foregroundStyle(.white).background(Color(hex: session.kind == .cycling ? 0x5866E3 : session.kind == .indoor ? 0x6889FF : 0xFF6440), in: Capsule())
+                        .accessibilityIdentifier("running.result.kind")
                 }
                 Text(session.startedAt, format: .dateTime.year().month().day().hour().minute())
                     .font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 4)
                 HStack(spacing: 12) {
                     resultMetric(RunningDisplay.duration(session.elapsed(at: .now)), label: "running.duration")
-                    resultMetric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: .now)), label: "running.averagePace")
+                    if session.kind == .cycling {
+                        resultMetric(RunningDisplay.speed(distance: session.distanceMeters, seconds: session.elapsed(at: .now), locale: locale), label: "running.averageSpeed")
+                    } else {
+                        resultMetric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: .now)), label: "running.averagePace")
+                    }
                 }.padding(.vertical, 22)
-                RunningRouteMap(segments: session.segments, showsUser: false)
-                    .frame(height: 270).clipShape(RoundedRectangle(cornerRadius: 8))
-                    .accessibilityIdentifier("running.result.route")
-                if session.segments.flatMap({ $0 }).isEmpty {
-                    Text("running.noRoute").font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 10)
+                if session.kind.usesGPS {
+                    RunningRouteMap(segments: session.segments, showsUser: false)
+                        .frame(height: 270).clipShape(RoundedRectangle(cornerRadius: 8))
+                        .accessibilityIdentifier("running.result.route")
+                    if session.segments.allSatisfy({ $0.isEmpty }) {
+                        Text("running.noRoute").font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 10)
+                    }
+                } else {
+                    HStack {
+                        Text("running.steps")
+                        Spacer()
+                        Text(session.steps.formatted(.number.locale(locale))).monospacedDigit().accessibilityIdentifier("running.result.steps")
+                    }.padding(.vertical, 18)
+                    HStack {
+                        Text("running.averageCadence")
+                        Spacer()
+                        Text(RunningDisplay.cadence(steps: session.steps, seconds: session.elapsed(at: .now), locale: locale))
+                            .monospacedDigit().accessibilityIdentifier("running.result.cadence")
+                    }.padding(.bottom, 18)
+                    Text("running.indoorDistanceHint").font(.system(size: 13)).foregroundStyle(.secondary)
                 }
                 Text("running.splits").font(.system(size: 22, weight: .medium)).padding(.top, 28).padding(.bottom, 18)
                 HStack {
                     Text("running.kilometers")
                     Spacer()
-                    Text("running.paceUnit")
+                    Text(LocalizedStringKey(session.kind == .cycling ? "running.speedUnit" : "running.paceUnit"))
                 }.font(.system(size: 12)).foregroundStyle(.secondary).padding(.bottom, 12)
                 if session.splits.isEmpty {
                     Text("running.noSplits").font(.system(size: 14)).foregroundStyle(.secondary).padding(.vertical, 18)
@@ -63,7 +83,9 @@ struct RunningSessionSummary: View {
                         HStack {
                             Text(split.kilometer.formatted(.number.locale(locale)))
                             Spacer()
-                            Text(RunningDisplay.paceSeconds(split.elapsedSeconds)).monospacedDigit()
+                            Text(session.kind == .cycling
+                                 ? RunningDisplay.speed(distance: 1_000, seconds: split.elapsedSeconds, locale: locale)
+                                 : RunningDisplay.paceSeconds(split.elapsedSeconds)).monospacedDigit()
                         }.font(.system(size: 16)).padding(14)
                             .background(Color(hex: 0xFFD838).opacity(0.25))
                             .padding(.bottom, 6)
@@ -112,6 +134,14 @@ struct RunningRouteMap: View {
 enum RunningDisplay {
     static func distance(_ meters: Double, locale: Locale) -> String {
         (meters / 1_000).formatted(.number.precision(.fractionLength(2)).locale(locale))
+    }
+    static func speed(distance: Double, seconds: TimeInterval, locale: Locale) -> String {
+        guard distance > 0, seconds > 0 else { return "—" }
+        return (distance / seconds * 3.6).formatted(.number.precision(.fractionLength(1)).locale(locale))
+    }
+    static func cadence(steps: Int, seconds: TimeInterval, locale: Locale) -> String {
+        guard seconds > 0 else { return "—" }
+        return (Double(steps) / seconds * 60).formatted(.number.precision(.fractionLength(0)).locale(locale))
     }
     static func duration(_ seconds: TimeInterval) -> String {
         let value = max(0, Int(seconds))

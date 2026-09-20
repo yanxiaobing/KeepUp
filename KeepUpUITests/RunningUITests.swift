@@ -102,4 +102,86 @@ import XCTest
         app.buttons["running.resume"].tap()
         XCTAssertTrue(app.buttons["running.pause"].waitForExistence(timeout: 5))
     }
+
+    private func openCycling(_ app: XCUIApplication) {
+        app.buttons["tab.calendar"].tap()
+        XCTAssertTrue(app.buttons["catalog.featured.96"].waitForExistence(timeout: 5))
+        app.buttons["catalog.featured.96"].tap()
+        XCTAssertTrue(app.buttons["running.close"].waitForExistence(timeout: 5))
+    }
+
+    private func finishAndOpenHistory(_ app: XCUIApplication) {
+        app.buttons["running.pause"].tap()
+        XCTAssertTrue(app.buttons["running.finish"].waitForExistence(timeout: 5))
+        app.buttons["running.finish"].tap()
+        XCTAssertTrue(app.buttons["running.confirmFinish"].firstMatch.waitForExistence(timeout: 5))
+        app.buttons["running.confirmFinish"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 10))
+        leaveRunning(app)
+        app.buttons["tab.history"].tap()
+        let entries = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "entry.running."))
+        XCTAssertTrue(entries.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertEqual(entries.count, 1)
+        entries.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
+    }
+
+    func testIndoorUsesMotionAndSavesStepsWithoutMap() {
+        let app = launch(mode: "motion")
+        openRunning(app)
+        app.buttons["running.mode.indoor"].tap()
+        XCTAssertTrue(app.staticTexts["running.motionStatus"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["running.gpsWaiting"].exists)
+        XCTAssertFalse(app.maps.firstMatch.exists)
+        capture("KeepUp-Indoor-Prepare-English")
+        start(app)
+        XCTAssertTrue(app.staticTexts["running.steps"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitFor(app.staticTexts["running.distance"], predicate: "label != '0.00'"))
+        app.buttons["running.pause"].tap()
+        XCTAssertTrue(app.buttons["running.resume"].waitForExistence(timeout: 5))
+        capture("KeepUp-Indoor-Paused-English")
+        // Opening another sport returns to the same active indoor session.
+        leaveRunning(app)
+        openCycling(app)
+        XCTAssertTrue(app.staticTexts["running.steps"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["running.speed"].exists)
+        app.buttons["running.resume"].tap()
+        XCTAssertTrue(app.buttons["running.pause"].waitForExistence(timeout: 5))
+        finishAndOpenHistory(app)
+        XCTAssertEqual(app.staticTexts["running.result.kind"].label, "Indoor run")
+        XCTAssertTrue(app.staticTexts["running.result.steps"].exists)
+        XCTAssertTrue(app.staticTexts["running.result.cadence"].exists)
+        XCTAssertFalse(app.maps.firstMatch.exists)
+        capture("KeepUp-Indoor-Result-English")
+    }
+
+    func testIndoorDeniedMotionBlocksStartWithoutRequestingGPS() {
+        let app = launch(mode: "motion-denied")
+        openRunning(app)
+        app.buttons["running.mode.indoor"].tap()
+        XCTAssertTrue(app.staticTexts["running.denied"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["running.settings"].exists)
+        XCTAssertFalse(app.buttons["running.start"].isEnabled)
+        XCTAssertFalse(app.maps.firstMatch.exists)
+        capture("KeepUp-Indoor-Permission-Denied-English")
+    }
+
+    func testCyclingShowsSpeedAndSavesCyclingHistory() {
+        let app = launch(mode: "route")
+        openCycling(app)
+        XCTAssertTrue(app.navigationBars["Cycling"].waitForExistence(timeout: 5))
+        capture("KeepUp-Cycling-Prepare-English")
+        XCTAssertTrue(app.buttons["running.mode.cycling"].isSelected)
+        XCTAssertTrue(app.buttons["running.mode.indoor"].exists)
+        start(app)
+        XCTAssertTrue(app.staticTexts["running.speed"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["running.pace"].exists)
+        XCTAssertTrue(waitFor(app.staticTexts["running.distance"], predicate: "label != '0.00'"))
+        capture("KeepUp-Cycling-Active-English")
+        finishAndOpenHistory(app)
+        XCTAssertEqual(app.staticTexts["running.result.kind"].label, "Cycling")
+        XCTAssertFalse(app.staticTexts["running.result.steps"].exists)
+        capture("KeepUp-Cycling-Result-English")
+    }
+
 }

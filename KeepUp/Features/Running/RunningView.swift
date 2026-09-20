@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RunningView: View {
+    var kind: RunningKind = .outdoor
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
@@ -9,6 +10,10 @@ struct RunningView: View {
     @State private var confirmingDiscard = false
     @State private var result: RunningSession?
     private var controller: RunningController { model.running }
+    private var currentKind: RunningKind { controller.session?.kind ?? controller.selectedKind }
+    private var readyToStart: Bool {
+        controller.authorization == .authorized && (currentKind.usesGPS ? controller.locationReady : controller.motionReady)
+    }
 
     var body: some View {
         NavigationStack {
@@ -18,7 +23,7 @@ struct RunningView: View {
                 else { preparation }
             }
             .background(.white)
-            .navigationTitle(LocalizedStringKey(result == nil ? "running.outdoor" : "running.result"))
+            .navigationTitle(LocalizedStringKey(result == nil ? currentKind.titleKey : "running.result"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -39,10 +44,10 @@ struct RunningView: View {
                     .accessibilityIdentifier("running.confirmDiscard")
                 Button("action.cancel", role: .cancel) {}
             }
-            .task { controller.prepare() }
+            .task { controller.selectKind(kind); controller.prepare() }
             .onDisappear { controller.stopPreparing() }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { controller.prepare() }
+                if phase == .active, result == nil { controller.prepare() }
                 else { controller.stopPreparing() }
             }
         }.tint(Color(hex: 0x222222))
@@ -50,10 +55,25 @@ struct RunningView: View {
 
     private var preparation: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .top) {
-                RunningRouteMap(segments: [], showsUser: controller.authorization == .authorized)
-                permissionStatus.padding(18).frame(maxWidth: .infinity)
-                    .background(.regularMaterial).padding(16)
+            Group {
+                if currentKind.usesGPS {
+                    ZStack(alignment: .top) {
+                        RunningRouteMap(segments: [], showsUser: controller.authorization == .authorized)
+                        permissionStatus.padding(18).frame(maxWidth: .infinity)
+                            .background(.regularMaterial).padding(16)
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            permissionStatus.padding(18).frame(maxWidth: .infinity)
+                            indoorArtwork
+                            Text("running.indoorPrepare").font(.system(size: 16, weight: .semibold))
+                                .multilineTextAlignment(.center)
+                            Text("running.indoorCarryPhone").font(.system(size: 13)).foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }.padding(24).frame(maxWidth: .infinity)
+                    }.background(Color(hex: 0xF6F6F6))
+                }
             }.frame(maxHeight: .infinity)
             VStack(spacing: 14) {
                 errorStatus
@@ -63,10 +83,10 @@ struct RunningView: View {
                         .background(Color(hex: 0xFFD838), in: Circle())
                         .background(Image("run_prepare_oval_shadow").resizable().frame(width: 100, height: 100))
                 }.buttonStyle(.plain).accessibilityIdentifier("running.start")
-                    .disabled(controller.authorization != .authorized || !controller.locationReady || controller.isBusy)
-                    .opacity(controller.authorization == .authorized && controller.locationReady ? 1 : 0.45)
-                Text("running.outdoor").font(.system(size: 16, weight: .medium))
-                Text("running.prepareHint").font(.system(size: 12)).foregroundStyle(.secondary)
+                    .disabled(!readyToStart || controller.isBusy)
+                    .opacity(readyToStart ? 1 : 0.45)
+                modeSelector
+                Text(LocalizedStringKey(currentKind.usesGPS ? "running.prepareHint" : "running.indoorDistanceHint")).font(.system(size: 12)).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }.padding(24).frame(maxWidth: .infinity)
                 .background(.white, in: UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12))
@@ -74,22 +94,57 @@ struct RunningView: View {
         }
     }
 
+    private var indoorArtwork: some View {
+        // The source artwork contains Chinese lettering. Cover only the lettering inside
+        // its original speech bubble so every locale keeps the same illustration.
+        Image("running_pre_indoor_des").resizable().aspectRatio(528.0 / 374.0, contentMode: .fit)
+            .overlay {
+                GeometryReader { geometry in
+                    let scale = geometry.size.width / 528
+                    Text("running.indoorArtworkTip")
+                        .font(.system(size: 25 * scale, weight: .medium))
+                        .foregroundStyle(.white).multilineTextAlignment(.center)
+                        .lineLimit(2).minimumScaleFactor(0.8)
+                        .frame(width: 210 * scale, height: 67 * scale)
+                        .background(Color(.sRGB, red: 53 / 255.0, green: 184 / 255.0, blue: 207 / 255.0))
+                        .position(x: 397 * scale, y: 41.5 * scale)
+                }
+            }.frame(width: 220, height: 220 * 374 / 528).accessibilityHidden(true)
+    }
+
+    private var modeSelector: some View {
+        HStack(spacing: 0) {
+            ForEach(RunningKind.allCases, id: \.self) { mode in
+                Button { controller.selectKind(mode); controller.prepare() } label: {
+                    Text(LocalizedStringKey(mode.titleKey)).font(.system(size: 14, weight: currentKind == mode ? .semibold : .regular))
+                        .lineLimit(1).minimumScaleFactor(0.75)
+                        .padding(.horizontal, 16).padding(.vertical, 12)
+                        .background(currentKind == mode ? Color(hex: 0xFFCB11) : .clear, in: Capsule())
+                }.buttonStyle(.plain)
+                    .accessibilityIdentifier(mode == .indoor ? "running.mode.indoor" : mode == .cycling ? "running.mode.cycling" : "running.mode.outdoor")
+                    .accessibilityAddTraits(currentKind == mode ? .isSelected : [])
+            }
+        }.padding(2).overlay(Capsule().stroke(Color(hex: 0xDCDCE4), lineWidth: 0.5))
+            .disabled(controller.isBusy)
+    }
+
     @ViewBuilder private var permissionStatus: some View {
         VStack(spacing: 10) {
             switch controller.authorization {
             case .notDetermined:
-                Text("running.permission")
-                Button("running.authorize") { controller.requestPermission() }.fontWeight(.semibold)
+                Text(LocalizedStringKey(currentKind.usesGPS ? "running.permission" : "running.motionPermission"))
+                Button(LocalizedStringKey(currentKind.usesGPS ? "running.authorize" : "running.motionAuthorize")) { controller.requestPermission() }.fontWeight(.semibold)
                     .accessibilityIdentifier("running.authorize")
             case .denied, .restricted:
-                Text("running.denied").accessibilityIdentifier("running.denied")
+                Text(LocalizedStringKey(currentKind.usesGPS ? "running.denied" : "running.motionDenied")).accessibilityIdentifier("running.denied")
                 Button("running.settings") { openSettings() }.fontWeight(.semibold)
                     .accessibilityIdentifier("running.settings")
             case .unavailable:
-                Text("running.unavailable").accessibilityIdentifier("running.unavailable")
+                Text(LocalizedStringKey(currentKind.usesGPS ? "running.unavailable" : "running.motionUnavailable")).accessibilityIdentifier("running.unavailable")
                 Button("running.settings") { openSettings() }
             case .authorized:
-                gpsStatus
+                if currentKind.usesGPS { gpsStatus }
+                else { Text(LocalizedStringKey(controller.motionReady ? "running.motionReady" : "running.motionUnavailable")).accessibilityIdentifier("running.motionStatus") }
             }
         }.font(.system(size: 14)).multilineTextAlignment(.center)
     }
@@ -125,12 +180,22 @@ struct RunningView: View {
                         HStack {
                             metric(RunningDisplay.distance(session.distanceMeters, locale: locale), label: "running.kilometers", identifier: "running.distance")
                             Rectangle().fill(.black.opacity(0.15)).frame(width: 1, height: 42)
-                            metric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: context.date)), label: "running.paceUnit")
+                            if session.kind == .cycling {
+                                metric(RunningDisplay.speed(distance: session.distanceMeters, seconds: session.elapsed(at: context.date), locale: locale), label: "running.speedUnit", identifier: "running.speed")
+                            } else {
+                                metric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: context.date)), label: "running.paceUnit")
+                            }
                         }
                     }
                 }
-                RunningRouteMap(segments: session.segments, showsUser: controller.authorization == .authorized)
-                    .frame(height: 200).clipShape(RoundedRectangle(cornerRadius: 8))
+                if session.kind.usesGPS {
+                    RunningRouteMap(segments: session.segments, showsUser: controller.authorization == .authorized)
+                        .frame(height: 200).clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    metric(session.steps.formatted(.number.locale(locale)), label: "running.steps", identifier: "running.steps")
+                        .padding(.vertical, 20)
+                    Text("running.indoorDistanceHint").font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                }
                 errorStatus
                 controls(session)
                 Text("running.closeHint").font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
@@ -178,11 +243,14 @@ struct RunningView: View {
     @ViewBuilder private var errorStatus: some View {
         if let key = controller.errorKey {
             VStack(spacing: 10) {
-                Text(LocalizedStringKey(key)).font(.system(size: 14)).foregroundStyle(.red).multilineTextAlignment(.center)
+                Text(LocalizedStringKey(key == "running.tooShort" && currentKind == .cycling ? "running.cyclingTooShort" : key)).font(.system(size: 14)).foregroundStyle(.red).multilineTextAlignment(.center)
                     .accessibilityIdentifier("running.error")
                 if key == "running.saveFailed", controller.session?.phase != .finished {
                     Button("running.retrySave") { Task { await controller.tick() } }
                         .accessibilityIdentifier("running.retrySave").disabled(controller.isBusy)
+                } else if key == "running.motionFailed" {
+                    Button("running.retryMotion") { controller.prepare() }
+                        .accessibilityIdentifier("running.retryMotion").disabled(controller.isBusy)
                 } else if key == "running.locationFailed" {
                     Button("running.retryLocation") { controller.prepare() }
                         .accessibilityIdentifier("running.retryLocation").disabled(controller.isBusy)
