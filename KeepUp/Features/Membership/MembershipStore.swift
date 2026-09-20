@@ -71,6 +71,9 @@ final class MembershipStore {
     }
 
     func refreshEntitlements() async {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ui-testing") { return }
+        #endif
         var premium = false
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result,

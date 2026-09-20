@@ -1,3 +1,4 @@
+import CoreMotion
 import Foundation
 import Testing
 @testable import KeepUp
@@ -163,4 +164,98 @@ private func waitForSteps(_ condition: () -> Bool) async {
     #expect(controller.readings[day]?.day == day)
     #expect(!controller.needsDateRefresh(now: tomorrow, timeZone: zone))
     controller.stop()
+}
+
+@Test @MainActor func homeStepPermissionWaitsForSavedProfileAndVisibleHome() async {
+    let source = ControlledStepSource()
+    source.access = .needsPermission
+    var created = 0
+    let permission = HomeStepPermission { created += 1; return source }
+    await permission.requestIfNeeded(profileComplete: false, homeVisible: false)
+    await permission.requestIfNeeded(profileComplete: false, homeVisible: true)
+    // Saving has completed, but the welcome membership still covers the home screen.
+    await permission.requestIfNeeded(profileComplete: true, homeVisible: false)
+    #expect(created == 0)
+    #expect(source.queryCount == 0)
+    await permission.requestIfNeeded(profileComplete: true, homeVisible: true)
+    #expect(source.queryCount == 1)
+    await permission.requestIfNeeded(profileComplete: true, homeVisible: false)
+    await permission.requestIfNeeded(profileComplete: true, homeVisible: true)
+    #expect(created == 1)
+    #expect(source.queryCount == 1)
+}
+
+@Test @MainActor func homeStepPermissionDoesNotQueryWhenAuthorizationIsResolved() async {
+    for access in [StepAccess.available, .denied, .unsupported] {
+        let source = ControlledStepSource()
+        source.access = access
+        let permission = HomeStepPermission { source }
+        await permission.requestIfNeeded(profileComplete: true, homeVisible: true)
+        #expect(source.queryCount == 0)
+    }
+}
+
+@Test @MainActor func startupAndStopDoNotConstructSystemPedometers() {
+    // Exercise the real adapters, not ControlledStepSource: eager CMPedometer
+    // construction was invisible to the previous permission-query tests.
+    var constructed = 0
+    let steps = CoreMotionStepSource(makePedometer: {
+        constructed += 1
+        return CMPedometer()
+    })
+    let motion = CoreRunningMotionSource(makePedometer: {
+        constructed += 1
+        return CMPedometer()
+    })
+    let monitor = StepsController(day: LocalDay(date: .now), source: steps)
+    monitor.stop()
+    monitor.stop()
+    let running = RunningController(motionSource: motion)
+    running.stopPreparing()
+    motion.stop()
+    #expect(constructed == 0)
+}
+
+// Core Motion's Objective-C handler is not annotated Sendable, but the framework
+// invokes it on its private queue. Model that contract instead of a main-actor fake.
+private struct BackgroundPedometerCallback: @unchecked Sendable {
+    let handler: CMPedometerHandler
+    func deliver() {
+        handler(nil, NSError(domain: "KeepUp.CallbackRegression", code: 1))
+    }
+}
+
+private final class BackgroundCallbackPedometer: CMPedometer {
+    override func queryPedometerData(from start: Date, to end: Date, withHandler handler: @escaping CMPedometerHandler) {
+        let callback = BackgroundPedometerCallback(handler: handler)
+        DispatchQueue.global().async { callback.deliver() }
+    }
+    override func startUpdates(from start: Date, withHandler handler: @escaping CMPedometerHandler) {
+        let callback = BackgroundPedometerCallback(handler: handler)
+        DispatchQueue.global().async { callback.deliver() }
+    }
+    override func stopUpdates() {}
+}
+
+@Test @MainActor func systemPedometerQueryCallbackCanArriveOffMainActor() async {
+    let source = CoreMotionStepSource(makePedometer: { BackgroundCallbackPedometer() })
+    do {
+        _ = try await source.query(day: LocalDay(date: .now), now: .now, timeZone: .current)
+        Issue.record("Expected the source error")
+    } catch {
+        #expect((error as NSError).domain == "KeepUp.CallbackRegression")
+    }
+}
+
+@Test @MainActor func systemPedometerUpdateCallbackCanArriveOffMainActor() async {
+    let source = CoreMotionStepSource(makePedometer: { BackgroundCallbackPedometer() })
+    do {
+        for try await _ in source.updates(day: LocalDay(date: .now), timeZone: .current) {
+            Issue.record("An error must not become a step reading")
+        }
+        Issue.record("Expected the stream to throw")
+    } catch {
+        #expect((error as NSError).domain == "KeepUp.CallbackRegression")
+    }
+    source.stop()
 }

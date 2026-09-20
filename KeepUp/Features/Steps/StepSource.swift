@@ -50,8 +50,14 @@ protocol StepSource: AnyObject {
 
 @MainActor
 final class CoreMotionStepSource: StepSource {
-    private let pedometer = CMPedometer()
-    private let queryPedometer = CMPedometer()
+    // Construction and stop() must not touch Core Motion during onboarding.
+    private var pedometer: CMPedometer?
+    private var queryPedometer: CMPedometer?
+    private let makePedometer: () -> CMPedometer
+
+    init(makePedometer: @escaping () -> CMPedometer = { CMPedometer() }) {
+        self.makePedometer = makePedometer
+    }
     private var continuation: AsyncThrowingStream<StepReading, Error>.Continuation?
 
     var access: StepAccess {
@@ -68,8 +74,11 @@ final class CoreMotionStepSource: StepSource {
         guard let interval = StepsDateRange.interval(for: day, now: now, timeZone: timeZone) else {
             throw StepSourceError.unavailable
         }
+        let queryPedometer = self.queryPedometer ?? makePedometer()
+        self.queryPedometer = queryPedometer
+        // Objective-C does not annotate this handler Sendable; prevent inherited MainActor isolation.
         return try await withCheckedThrowingContinuation { continuation in
-            queryPedometer.queryPedometerData(from: interval.start, to: interval.end) { data, error in
+            queryPedometer.queryPedometerData(from: interval.start, to: interval.end) { @Sendable data, error in
                 continuation.resume(with: Self.reading(data, error: error, day: day, timeZoneID: timeZone.identifier))
             }
         }
@@ -82,7 +91,9 @@ final class CoreMotionStepSource: StepSource {
         let start = calendar.startOfDay(for: day.date(in: timeZone))
         let (stream, continuation) = AsyncThrowingStream<StepReading, Error>.makeStream(bufferingPolicy: .bufferingNewest(1))
         self.continuation = continuation
-        pedometer.startUpdates(from: start) { data, error in
+        let pedometer = self.pedometer ?? makePedometer()
+        self.pedometer = pedometer
+        pedometer.startUpdates(from: start) { @Sendable data, error in
             switch Self.reading(data, error: error, day: day, timeZoneID: timeZone.identifier) {
             case .success(let reading): continuation.yield(reading)
             case .failure(let error): continuation.finish(throwing: error)
@@ -92,7 +103,7 @@ final class CoreMotionStepSource: StepSource {
     }
 
     func stop() {
-        pedometer.stopUpdates()
+        pedometer?.stopUpdates()
         continuation?.finish()
         continuation = nil
     }

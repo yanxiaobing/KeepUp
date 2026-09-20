@@ -57,8 +57,14 @@ enum RunningMotionEvent: Sendable {
 #endif
 
 @MainActor final class CoreRunningMotionSource: RunningMotionSource {
-    private let pedometer = CMPedometer()
-    private let permissionPedometer = CMPedometer()
+    // Construction and stop() must not touch Core Motion during onboarding.
+    private var pedometer: CMPedometer?
+    private var permissionPedometer: CMPedometer?
+    private let makePedometer: () -> CMPedometer
+
+    init(makePedometer: @escaping () -> CMPedometer = { CMPedometer() }) {
+        self.makePedometer = makePedometer
+    }
     private var generation = 0
     private var permissionGeneration = 0
     var onEvent: (@MainActor (RunningMotionEvent) -> Void)?
@@ -79,7 +85,9 @@ enum RunningMotionEvent: Sendable {
         permissionGeneration += 1
         let token = permissionGeneration
         let date = Date.now
-        permissionPedometer.queryPedometerData(from: date.addingTimeInterval(-1), to: date) { [weak self] _, error in
+        let permissionPedometer = self.permissionPedometer ?? makePedometer()
+        self.permissionPedometer = permissionPedometer
+        permissionPedometer.queryPedometerData(from: date.addingTimeInterval(-1), to: date) { @Sendable [weak self] _, error in
             let failed = error != nil
             Task { @MainActor [weak self] in
                 guard let self, self.permissionGeneration == token else { return }
@@ -93,7 +101,9 @@ enum RunningMotionEvent: Sendable {
         stop()
         guard authorization == .authorized else { onEvent?(.authorization(authorization)); return }
         let token = generation
-        pedometer.startUpdates(from: date) { [weak self] data, error in
+        let pedometer = self.pedometer ?? makePedometer()
+        self.pedometer = pedometer
+        pedometer.startUpdates(from: date) { @Sendable [weak self] data, error in
             let reading: RunningMotionReading?
             if error == nil, let data, let distance = data.distance?.doubleValue {
                 reading = RunningMotionReading(startedAt: date, measuredAt: data.endDate,
@@ -112,6 +122,6 @@ enum RunningMotionEvent: Sendable {
     func stop() {
         generation += 1
         permissionGeneration += 1
-        pedometer.stopUpdates()
+        pedometer?.stopUpdates()
     }
 }

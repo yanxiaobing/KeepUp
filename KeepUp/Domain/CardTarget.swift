@@ -1,6 +1,12 @@
 import Foundation
 
 struct CardTarget: Identifiable, Codable, Equatable, Sendable {
+    static let registrationDefaults = [
+        CardTarget(cardID: "punchcard.2", isPinned: true, showsProgress: true),
+        CardTarget(cardID: "punchcard.50", isPinned: true, showsProgress: true),
+        CardTarget(cardID: "punchcard.63", isPinned: true, showsProgress: true, hour: 8)
+    ]
+
     var cardID: String
     var isPinned = false
     var showsProgress = false

@@ -61,7 +61,7 @@ struct KeepUpApp: App {
                         await ReminderScheduler.shared.synchronize(model.snapshot, locale: (AppLanguage(rawValue: language) ?? .system).locale)
                     }
                 }
-                .task(id: "\(model.isReady)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
+                .task(id: "\(model.isReady)-\(model.snapshot.profile != nil)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
                     refreshStepMonitoring()
                 }
                 .onChange(of: scenePhase) { _, _ in
@@ -85,12 +85,12 @@ struct KeepUpApp: App {
     }
 
     private func refreshStepMonitoring() {
-        guard scenePhase == .active, model.isReady,
+        guard scenePhase == .active, model.isReady, model.snapshot.profile != nil,
               StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges) != nil else {
             stepMonitor.stop()
             return
         }
-        // A configured goal enables foreground monitoring; permission is requested only from StepsView.
+        // Monitoring never requests permission; RootView waits for the home screen, or StepsView requests it explicitly.
         stepMonitor.refresh { await model.saveSteps($0) }
     }
 

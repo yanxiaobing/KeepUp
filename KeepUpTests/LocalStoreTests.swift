@@ -244,12 +244,12 @@ func invalidNumericAmountsAreRejected(value: Double) async throws {
         #expect(state.cards.filter(\.isCustom).count == 2)
         #expect(state.cards.first(where: { $0.id == id })?.symbol == custom.artwork)
         #expect(state.entries.first?.quantity == 12)
-        #expect(state.targets == [target])
+        #expect(state.targets.filter { $0.cardID == id } == [target])
         var invalid = target; invalid.reminderEnabled = true; invalid.weekdays = []
         await #expect(throws: StoreError.invalidTarget) { try await store.saveTarget(invalid) }
-        #expect(try await store.snapshot().targets == [target])
+        #expect(try await store.snapshot().targets.filter { $0.cardID == id } == [target])
         try await store.saveTarget(CardTarget(cardID: id))
-        #expect(try await store.snapshot().targets.isEmpty)
+        #expect(try await store.snapshot().targets.allSatisfy { $0.cardID != id })
         #expect(try await store.snapshot().entries.count == 1)
     }
 }
@@ -285,7 +285,7 @@ func invalidNumericAmountsAreRejected(value: Double) async throws {
         #expect(removed.archivedCardIDs == [id])
         #expect(removed.entries.count == 1)
         #expect(removed.cards.contains { $0.id == id })
-        #expect(removed.targets.isEmpty)
+        #expect(removed.targets.allSatisfy { $0.cardID != id })
         await #expect(throws: StoreError.invalidCard) { try await store.add(draft(quantity: 5, cardID: id), now: fixtureNow) }
         await #expect(throws: StoreError.invalidCard) { try await store.saveTarget(target) }
         let restoredID = try await store.createCustomCard(.init(name: custom.name, artwork: custom.artwork, unit: custom.unit))
@@ -494,5 +494,49 @@ func invalidNumericAmountsAreRejected(value: Double) async throws {
         #expect(snapshot.entries.first?.cardID == "preset.fruit")
         #expect(snapshot.weightTarget == nil)
         #expect(snapshot.weights.isEmpty)
+    }
+}
+
+@Test func newInstallSeedsResidentCardsOnceWithoutCreatingCheckInsOrReminders() async throws {
+    try await withStore { store, _ in
+        #expect(try await store.snapshot().targets.isEmpty)
+        var invalid = UserProfile(); invalid.height = .nan
+        await #expect(throws: StoreError.invalidProfile) { try await store.saveProfile(invalid) }
+        #expect(try await store.snapshot().profile == nil)
+        #expect(try await store.snapshot().targets.isEmpty)
+        try await store.saveProfile(UserProfile())
+        let initial = try await store.snapshot()
+        #expect(Set(initial.targets.map(\.cardID)) == ["punchcard.2", "punchcard.50", "punchcard.63"])
+        #expect(initial.entries.isEmpty)
+        for target in initial.targets {
+            #expect(initial.cards.contains { $0.id == target.cardID })
+            #expect(target.isPinned && target.showsProgress && !target.reminderEnabled)
+            #expect(target.weekdays == [1, 2, 3, 4, 5])
+            #expect(target.hour == (target.cardID == "punchcard.63" ? 8 : 21))
+            #expect(target.minute == 0)
+        }
+        await store.close()
+        try await store.open()
+        #expect(try await store.snapshot().targets == initial.targets)
+        for target in initial.targets { try await store.saveTarget(CardTarget(cardID: target.cardID)) }
+        await store.close()
+        try await store.open()
+        #expect(try await store.snapshot().targets.isEmpty)
+        try await store.saveProfile(UserProfile())
+        #expect(try await store.snapshot().targets.isEmpty)
+    }
+}
+
+@Test func existingInstallWithoutResidentCardsIsNotReseeded() async throws {
+    try await withStore { store, url in
+        for target in try await store.snapshot().targets {
+            try await store.saveTarget(CardTarget(cardID: target.cardID))
+        }
+        await store.close()
+        let database = Database(at: url.path)
+        try database.exec(StatementPragma().pragma(.userVersion).to(10))
+        database.close()
+        try await store.open()
+        #expect(try await store.snapshot().targets.isEmpty)
     }
 }

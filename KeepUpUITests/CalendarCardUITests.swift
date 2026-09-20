@@ -30,6 +30,21 @@ final class CalendarCardUITests: XCTestCase {
         XCTAssertTrue(app.buttons["calendar.menu.delete"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["entry.close"].exists, "Long press must not also open the detail screen")
     }
+    func testFreshInstallShowsDefaultResidentCards() {
+        let app = launch()
+        for id in ["punchcard.2", "punchcard.50", "punchcard.63"] {
+            XCTAssertTrue(app.buttons["target.pending.\(id)"].waitForExistence(timeout: 5))
+        }
+        XCTAssertEqual(records(app).count, 0)
+        capture("KeepUp-Fresh-Install-Resident-Cards")
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
+        app.launch()
+        for id in ["punchcard.2", "punchcard.50", "punchcard.63"] {
+            XCTAssertTrue(app.buttons["target.pending.\(id)"].waitForExistence(timeout: 10))
+        }
+    }
+
     func testRecordRibbonsAndRadialMenuAllColumns() {
         let app = launch()
         for value in 1...3 { addExercise(app, digit: value) }

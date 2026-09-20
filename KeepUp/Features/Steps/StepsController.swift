@@ -93,3 +93,25 @@ final class StepsController {
         if !saved { storageFailed = true }
     }
 }
+
+/// One authorization query after onboarding has dismissed and the calendar is visible.
+/// No step records or goals are created by this permission request.
+@MainActor
+final class HomeStepPermission {
+    private let makeSource: @MainActor () -> any StepSource
+    private var attempted = false
+
+    init(makeSource: @escaping @MainActor () -> any StepSource = { StepSources.make() }) {
+        self.makeSource = makeSource
+    }
+
+    func requestIfNeeded(profileComplete: Bool, homeVisible: Bool) async {
+        guard profileComplete, homeVisible, !attempted, !Task.isCancelled else { return }
+        attempted = true
+        let source = makeSource()
+        guard source.access == .needsPermission else { return }
+        let now = Date.now
+        // Core Motion requests authorization on the first data query.
+        _ = try? await source.query(day: LocalDay(date: now), now: now, timeZone: .current)
+    }
+}

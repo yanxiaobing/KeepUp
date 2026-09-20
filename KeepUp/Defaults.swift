@@ -2,6 +2,7 @@ import Foundation
 @_exported import Defaults
 
 extension Defaults.Keys {
+    static let privacyAccepted = Key<Bool>("privacyAccepted", default: false, suite: AppPreferences.store)
     static let appLanguage = Key<String>("appLanguage", default: "system", suite: AppPreferences.store)
     static let monthMode = Key<Bool>("monthMode", default: false, suite: AppPreferences.store)
     static let themeID = Key<Int>("themeID", default: 0, suite: AppPreferences.store)
@@ -34,6 +35,6 @@ enum AppPreferences {
     }
 
     static func reset() {
-        Defaults.reset(.appLanguage, .monthMode, .themeID, .stepGoalChanges, .runningSettings)
+        Defaults.reset(.privacyAccepted, .appLanguage, .monthMode, .themeID, .stepGoalChanges, .runningSettings)
     }
 }

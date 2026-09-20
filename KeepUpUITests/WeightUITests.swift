@@ -13,6 +13,8 @@ final class WeightUITests: XCTestCase {
         if !profile { app.launchArguments.append("-ui-testing-skip-onboarding") }
         app.launch()
         if profile {
+            XCTAssertTrue(app.buttons["startup.agree"].waitForExistence(timeout: 20))
+            app.buttons["startup.agree"].tap()
             XCTAssertTrue(app.textFields["info.nickname"].waitForExistence(timeout: 20)); app.textFields["info.nickname"].tap(); app.textFields["info.nickname"].typeText("KeepUp\n")
             app.buttons["info.next"].tap()
             for key in ["year", "height", "weight"] {

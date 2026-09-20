@@ -10,8 +10,75 @@ final class ProfileMembershipUITests: XCTestCase {
     private func launch(_ language: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-reset-test-data", "-AppleLanguages", "(\(language))", "-AppleLocale", language == "en" ? "en_US" : "zh_CN"]
-        app.launch(); return app
+        app.launch()
+        XCTAssertTrue(app.buttons["startup.agree"].waitForExistence(timeout: 20))
+        app.buttons["startup.agree"].tap()
+        return app
     }
+    func testPrivacyConsentPersistsBeforeProfileCompletion() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-reset-test-data", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launch()
+        XCTAssertTrue(app.buttons["startup.agree"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.buttons["info.next"].exists)
+        XCTAssertFalse(app.buttons["tab.calendar"].exists)
+        screenshot("KeepUp-Startup-Privacy-Chinese")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        XCTAssertTrue(app.buttons["startup.agree"].exists)
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
+        app.launch()
+        XCTAssertTrue(app.buttons["startup.agree"].waitForExistence(timeout: 15))
+        app.buttons["startup.agree"].tap()
+        XCTAssertTrue(app.buttons["info.next"].waitForExistence(timeout: 5))
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.buttons["info.next"].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.buttons["startup.agree"].exists)
+        XCTAssertFalse(app.buttons["tab.calendar"].exists)
+    }
+
+    func testEnglishPrivacyPage() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-reset-test-data", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        XCTAssertTrue(app.buttons["startup.agree"].waitForExistence(timeout: 20))
+        XCTAssertEqual(app.buttons["startup.agree"].label, "Agree and Continue")
+        screenshot("KeepUp-Startup-Privacy-English")
+        app.buttons["startup.agree"].tap()
+        XCTAssertTrue(app.buttons["info.next"].waitForExistence(timeout: 5))
+    }
+
+    func testOnboardingReachesHomeAfterMembershipDismisses() {
+        let app = launch("zh-Hans")
+        XCTAssertTrue(app.buttons["info.next"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.buttons["tab.calendar"].exists)
+        app.buttons["info.next"].tap()
+        for key in ["year", "height", "weight"] {
+            let button = app.buttons["info.\(key)"]
+            if !button.isHittable { app.swipeUp() }
+            button.tap()
+            XCTAssertTrue(app.buttons["info.ruler.confirm"].waitForExistence(timeout: 5))
+            app.buttons["info.ruler.confirm"].tap()
+        }
+        app.buttons["info.next"].tap()
+        XCTAssertTrue(app.buttons["info.confirm"].waitForExistence(timeout: 5))
+        app.buttons["info.confirm"].tap()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForExistence(timeout: 10))
+        app.buttons["membership.skip"].tap()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 5))
+        for id in ["punchcard.2", "punchcard.50", "punchcard.63"] {
+            XCTAssertTrue(app.buttons["target.pending.\(id)"].waitForExistence(timeout: 5))
+        }
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 15))
+        XCTAssertFalse(app.buttons["info.next"].exists)
+        XCTAssertFalse(app.buttons["membership.skip"].exists)
+    }
+
     func testChineseProfileAndMembership() throws {
         let app = launch("zh-Hans")
         XCTAssertTrue(app.textFields["info.nickname"].waitForExistence(timeout: 20))

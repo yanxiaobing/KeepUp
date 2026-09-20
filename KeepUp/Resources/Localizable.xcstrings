@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ / %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / %@"
+          }
+        }
+      }
+    },
+    "%@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@"
+          }
+        }
+      }
+    },
     "BMI=%@, %@": {
       "extractionState": "manual",
       "localizations": {
@@ -277,6 +309,7 @@
       }
     },
     "calendar.cardActions": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -327,6 +360,7 @@
       }
     },
     "calendar.deleteCancel": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -343,6 +377,7 @@
       }
     },
     "calendar.deleteCardConfirmation": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -427,6 +462,7 @@
       }
     },
     "calendar.removePinnedConfirmation": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3001,7 +3037,6 @@
       }
     },
     "entry.shareError": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3204,6 +3239,7 @@
       }
     },
     "history.collapse": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3220,6 +3256,7 @@
       }
     },
     "history.collapsed": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3270,6 +3307,7 @@
       }
     },
     "history.expand": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3286,6 +3324,7 @@
       }
     },
     "history.expanded": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5315,6 +5354,7 @@
       }
     },
     "profile.nickname": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5601,6 +5641,7 @@
       }
     },
     "profile.welcome": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7761,16 +7802,16 @@
     "runningShare.energy": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "消耗热量（千卡）"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Energy (kcal)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消耗热量（千卡）"
           }
         }
       }
@@ -7778,16 +7819,16 @@
     "runningShare.footer": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "记录每一次坚持"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Every effort counts"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录每一次坚持"
           }
         }
       }
@@ -7795,16 +7836,16 @@
     "runningShare.mapUnavailable": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "地图暂时无法加载，已保留轨迹示意，可以直接保存或分享。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The map is unavailable. Your route sketch is ready to save or share."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "地图暂时无法加载，已保留轨迹示意，可以直接保存或分享。"
           }
         }
       }
@@ -7812,16 +7853,16 @@
     "runningShare.multiplePages": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "这次运动已分成多张图片，保存和分享都会包含全部页面。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "This workout spans several images. Saving and sharing include every page."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这次运动已分成多张图片，保存和分享都会包含全部页面。"
           }
         }
       }
@@ -7829,16 +7870,16 @@
     "runningShare.preparing": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在生成分享图片…"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Preparing your images…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在生成分享图片…"
           }
         }
       }
@@ -7846,16 +7887,16 @@
     "runningShare.preview": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "运动分享图片"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Workout share image"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运动分享图片"
           }
         }
       }
@@ -7863,16 +7904,16 @@
     "runningShare.retry": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重新生成"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Try again"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新生成"
           }
         }
       }
@@ -7880,16 +7921,16 @@
     "runningShare.retryMap": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重新加载地图"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Retry map"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新加载地图"
           }
         }
       }
@@ -7897,21 +7938,22 @@
     "runningShare.schematic": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "轨迹示意 · 底图暂不可用"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Route sketch · basemap unavailable"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轨迹示意 · 底图暂不可用"
+          }
         }
       }
     },
     "runningStats.allModes": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7928,6 +7970,7 @@
       }
     },
     "runningStats.allTime": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7944,6 +7987,7 @@
       }
     },
     "runningStats.count": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7960,6 +8004,7 @@
       }
     },
     "runningStats.days": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7976,6 +8021,7 @@
       }
     },
     "runningStats.distance": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8008,6 +8054,7 @@
       }
     },
     "runningStats.empty": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8024,6 +8071,7 @@
       }
     },
     "runningStats.emptyHint": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8040,6 +8088,7 @@
       }
     },
     "runningStats.energy": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8072,6 +8121,7 @@
       }
     },
     "runningStats.filteredEmpty": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8088,6 +8138,7 @@
       }
     },
     "runningStats.filteredEmptyHint": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8104,6 +8155,7 @@
       }
     },
     "runningStats.kcal": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8120,6 +8172,7 @@
       }
     },
     "runningStats.longest": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8168,6 +8221,7 @@
       }
     },
     "runningStats.title": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8186,16 +8240,16 @@
     "runningVoice.autoPaused": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已自动暂停运动。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Workout automatically paused."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已自动暂停运动。"
           }
         }
       }
@@ -8203,16 +8257,16 @@
     "runningVoice.cyclingReached": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你已骑行"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You have cycled"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已骑行"
           }
         }
       }
@@ -8220,16 +8274,16 @@
     "runningVoice.cyclingStarted": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始骑行。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Ride started."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始骑行。"
           }
         }
       }
@@ -8237,16 +8291,16 @@
     "runningVoice.finished": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "运动已完成，记录已保存。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Workout finished. Your record is saved."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运动已完成，记录已保存。"
           }
         }
       }
@@ -8254,16 +8308,16 @@
     "runningVoice.hours %lld": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld小时"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld hours"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld小时"
           }
         }
       }
@@ -8271,16 +8325,16 @@
     "runningVoice.minutes %lld": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld分钟"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld minutes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld分钟"
           }
         }
       }
@@ -8288,16 +8342,16 @@
     "runningVoice.pace %@": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平均配速每公里%@。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Average pace: %@ per kilometer."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均配速每公里%@。"
           }
         }
       }
@@ -8305,16 +8359,16 @@
     "runningVoice.paused": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "运动已暂停。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Workout paused."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "运动已暂停。"
           }
         }
       }
@@ -8322,16 +8376,16 @@
     "runningVoice.preview": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始跑步。一起动起来！"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Run started. Let’s get moving!"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始跑步。一起动起来！"
           }
         }
       }
@@ -8339,16 +8393,16 @@
     "runningVoice.report %@ %@ %@": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你已完成%@公里，用时%@。%@"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "You have completed %@ kilometers in %@. %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已完成%@公里，用时%@。%@"
           }
         }
       }
@@ -8356,16 +8410,16 @@
     "runningVoice.resumed": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "继续运动。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Workout resumed."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续运动。"
           }
         }
       }
@@ -8373,16 +8427,16 @@
     "runningVoice.seconds %lld": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld秒"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld seconds"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld秒"
           }
         }
       }
@@ -8390,16 +8444,16 @@
     "runningVoice.speed %@": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平均速度每小时%@公里。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Average speed: %@ kilometers per hour."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平均速度每小时%@公里。"
           }
         }
       }
@@ -8407,16 +8461,16 @@
     "runningVoice.started": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始跑步。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Run started."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始跑步。"
           }
         }
       }
@@ -8620,6 +8674,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "偏好设置"
+          }
+        }
+      }
+    },
+    "startup.agree": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agree and Continue"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同意并继续"
+          }
+        }
+      }
+    },
+    "startup.agreementNotice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By tapping “Agree and Continue”, you agree to the Privacy Policy and User Agreement."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击“同意并继续”，即表示您同意隐私政策和用户协议"
+          }
+        }
+      }
+    },
+    "startup.slogan": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— Keep moving —"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "— 不 • 运 • 动 • 会 • 死 —"
           }
         }
       }
@@ -9066,6 +9171,7 @@
       }
     },
     "steps.view": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9082,6 +9188,7 @@
       }
     },
     "steps.viewCard": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9098,6 +9205,7 @@
       }
     },
     "steps.viewDetails": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9776,7 +9884,6 @@
       }
     },
     "unit.kilometers": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9861,7 +9968,6 @@
       }
     },
     "unit.steps": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9928,6 +10034,7 @@
       }
     },
     "wake.earlyBadge": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {

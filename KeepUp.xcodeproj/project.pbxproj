@@ -77,6 +77,7 @@
 		6B9EF53CECFE7230700DAC74 /* audio2.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 78F8EFF5A8E4D310F1B9D015 /* audio2.bundle */; };
 		728F353E26BD36472A8D571E /* CustomCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E3FCDB503FB5D0A4135AED /* CustomCardView.swift */; };
 		780049955B3F79F5B35B00EC /* RunningMapSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A336147247C72D2E838E3A1E /* RunningMapSnapshot.swift */; };
+		7833A068C0177478A9D310CF /* StartupPrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19858F9643FEB6AFEF44A46F /* StartupPrivacyView.swift */; };
 		790236B6D1542055408A7903 /* LocalStore+Steps.swift in Sources */ = {isa = PBXBuildFile; fileRef = C654BCF65B35A04A28A50EE3 /* LocalStore+Steps.swift */; };
 		798B5E12E18E7A11981764B5 /* EntryEncouragementUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88DC2C847C54DD81350CB7EB /* EntryEncouragementUITests.swift */; };
 		7B11672BBA4ED45E79129828 /* RunningScreenAwake.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C9613C1BB4143F951F05E1D /* RunningScreenAwake.swift */; };
@@ -181,6 +182,7 @@
 		12E0F9530861C713608BB60C /* StepSource.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StepSource.swift; sourceTree = "<group>"; };
 		17204415E2F1E9B946F58E68 /* en */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1950E8C70B9E60DEF1EC2AB0 /* AppPreferencesTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppPreferencesTests.swift; sourceTree = "<group>"; };
+		19858F9643FEB6AFEF44A46F /* StartupPrivacyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StartupPrivacyView.swift; sourceTree = "<group>"; };
 		1AD838484C63B1F1B4D16B65 /* CalendarTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CalendarTheme.swift; sourceTree = "<group>"; };
 		1C04780C3335DA7FD6E44170 /* LocalStore+Running.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LocalStore+Running.swift"; sourceTree = "<group>"; };
 		1D63668E16BBF12466A97A10 /* RunningView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RunningView.swift; sourceTree = "<group>"; };
@@ -629,6 +631,7 @@
 				44FDB3FF841C06902173FCC0 /* AppModel.swift */,
 				B54EFD024C268395085551B0 /* KeepUpApp.swift */,
 				BDFA1B377AB499D071E5FE30 /* RootView.swift */,
+				19858F9643FEB6AFEF44A46F /* StartupPrivacyView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -968,6 +971,7 @@
 				2ABAECAA1516BAD6E8ECF326 /* EntryEncouragement.swift in Sources */,
 				A8DAC3D3D0873ED6D75B2C51 /* ProfileDuration.swift in Sources */,
 				39BF5A0C550F55BCF5B73ABA /* EntryPosterFixtures.swift in Sources */,
+				7833A068C0177478A9D310CF /* StartupPrivacyView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

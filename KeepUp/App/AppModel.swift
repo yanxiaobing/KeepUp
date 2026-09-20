@@ -68,6 +68,9 @@ final class AppModel {
                 if !preparedUIFixtures {
                     preparedUIFixtures = true
                     let args = ProcessInfo.processInfo.arguments
+                    if args.contains("-ui-testing"), args.contains("-reset-test-data"), args.contains("-ui-testing-skip-onboarding") {
+                        for target in CardTarget.registrationDefaults { try await repository.saveTarget(target) }
+                    }
                     if args.contains("-ui-testing"), args.contains("-reset-test-data"),
                        let index = args.firstIndex(of: "-ui-testing-running-details"), args.indices.contains(index + 1),
                        let kind = RunningKind(rawValue: args[index + 1]) {

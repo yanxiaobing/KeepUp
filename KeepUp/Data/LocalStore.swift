@@ -135,7 +135,15 @@ actor LocalStore: CheckInRepository {
     func saveProfile(_ profile: UserProfile) throws {
         guard let database else { throw StoreError.notOpen }
         let valid = try profile.validated()
-        try database.insertOrReplace(ProfileRow(payload: StoredJSON.encode(valid)), intoTable: StoreTables.profile.name)
+        try database.run(transaction: { handle in
+            let existing: [ProfileRow] = try handle.getObjects(fromTable: StoreTables.profile.name, limit: 1)
+            try handle.insertOrReplace(ProfileRow(payload: StoredJSON.encode(valid)), intoTable: StoreTables.profile.name)
+            if existing.isEmpty {
+                try handle.insertOrIgnore(CardTarget.registrationDefaults.map {
+                    TargetRow(id: $0.cardID, payload: try StoredJSON.encode($0))
+                }, intoTable: StoreTables.targets.name)
+            }
+        })
     }
 
     func close() { database?.close(); database = nil }
