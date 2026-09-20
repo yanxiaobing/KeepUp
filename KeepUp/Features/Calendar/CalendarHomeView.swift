@@ -85,7 +85,7 @@ struct CalendarHomeView: View {
                 if let card = model.snapshot.cards.first(where: { $0.id == schedule.cardID }) { ScheduledCardView(card: card, day: schedule.day, existing: schedule) }
             }
             .fullScreenCover(item: $detail) { entry in
-                if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
+                if entry.cardID == "punchcard.1" { StepsView(day: entry.day, followsToday: false) }
                 else if let card = model.card(for: entry) {
                     if ["punchcard.2", "punchcard.96"].contains(entry.cardID) { RunningRecordView(entry: entry, card: card) }
                     else { EntryDetailView(entry: entry, card: card) }

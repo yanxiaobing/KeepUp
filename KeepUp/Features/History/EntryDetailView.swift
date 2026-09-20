@@ -13,12 +13,13 @@ struct EntryDetailView: View {
     @State private var showingReminder = false
     @State private var shareImage: ShareImage?
     @State private var message: String?
+    @State private var encouragementDay = LocalDay(date: .now)
     private var current: CheckInEntry { model.snapshot.entries.first { $0.id == entry.id } ?? entry }
 
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
-                EntryPoster(entry: current, card: card, entries: model.snapshot.entries, locale: locale, wakes: model.snapshot.wakeUps, weights: model.snapshot.weights, profileHeight: model.snapshot.profile?.height)
+                EntryPoster(entry: current, card: card, entries: model.snapshot.entries, locale: locale, wakes: model.snapshot.wakeUps, weights: model.snapshot.weights, profileHeight: model.snapshot.profile?.height, referenceDay: encouragementDay)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .accessibilityIdentifier("entry.poster")
             }.ignoresSafeArea(edges: .bottom)
@@ -60,7 +61,7 @@ struct EntryDetailView: View {
     }
     @MainActor private func renderShare() {
         let poster = VStack(spacing: 0) {
-            EntryPoster(entry: current, card: card, entries: model.snapshot.entries, locale: locale, wakes: model.snapshot.wakeUps, weights: model.snapshot.weights, profileHeight: model.snapshot.profile?.height).frame(width: 375, height: 700)
+            EntryPoster(entry: current, card: card, entries: model.snapshot.entries, locale: locale, wakes: model.snapshot.wakeUps, weights: model.snapshot.weights, profileHeight: model.snapshot.profile?.height, referenceDay: encouragementDay).frame(width: 375, height: 700)
             HStack { Text("KeepUp").font(.system(size: 24, weight: .bold)); Spacer(); Text(current.day.date(), format: .dateTime.year().month().day()).font(.system(size: 13)) }
                 .padding(24).frame(width: 375, height: 80).background(.white)
         }.environment(\.locale, locale).environment(\.colorScheme, .light)
@@ -79,6 +80,7 @@ struct EntryPoster: View {
     var wakes: [String: WakeUpRecord] = [:]
     var weights: [String: WeightRecord] = [:]
     var profileHeight: Double? = nil
+    var referenceDay = LocalDay(date: .now)
     private var name: String { localized(card.titleKey, locale) }
     private var title: String {
         guard let quantity = entry.quantity else { return name }
@@ -87,11 +89,8 @@ struct EntryPoster: View {
         return locale.identifier.hasPrefix("zh") ? "\(name)\(value)\(unit)" : "\(name) \(value) \(unit)"
     }
     private var encouragement: String {
-        let count = entries.filter { $0.cardID == card.id }.count
-        if locale.identifier.hasPrefix("zh") {
-            return count > 1 ? "嘿，你真棒！已经打\(name)卡\(count)次，努力会让你遇见更好的自己。" : "输了什么也不要输心情~"
-        }
-        return count > 1 ? "\(count) \(name.lowercased()) check-ins. Keep going—you’re building a better you." : "Whatever happens, keep your spirits up!"
+        EntryEncouragement.selected(entry: entry, card: card, entries: entries, weight: weights[entry.id], today: referenceDay)
+            .text(card: card, locale: locale)
     }
     var body: some View {
         if let wake = wakes[entry.id] { WakeUpPoster(entry: entry, record: wake, entries: entries, wakes: wakes, locale: locale) } else {
@@ -118,8 +117,10 @@ struct EntryPoster: View {
                 }
                 Image(card.cardImage).resizable().frame(width: 330*artworkScale, height: 390*artworkScale)
                     .position(x: geometry.size.width/2, y: (geometry.size.height-46)/2-10).accessibilityHidden(true)
+            }.overlay(alignment: .bottom) {
                 Text(encouragement).font(.system(size: 17*s, weight: .bold)).foregroundStyle(.white).multilineTextAlignment(.center).lineSpacing(5)
-                    .frame(width: max(0, geometry.size.width-60*s), height: 50*s).position(x: geometry.size.width/2, y: geometry.size.height-60*s)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: max(0, geometry.size.width-60*s)).padding(.bottom, 30*s)
             }.clipped()
         }
         }

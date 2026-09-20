@@ -53,4 +53,4 @@ python3 Scripts/validate_configuration.py
 
 [PersistenceSpike](Prototypes/PersistenceSpike/README.md) 验证 WCDB、Swift 6 隔离和 CloudKit 本地记录映射；不连接线上业务，不代表云同步已经完成。
 
-最新进展：[计步分享与时间线长文](docs/steps-sharing-history.md)。此前已完成[运动统计汇总](docs/running-statistics.md)、[运动详情与分享](docs/running-details-sharing.md)、[运动设置与语音](docs/running-settings.md)。后续按[功能对齐清单](docs/feature-alignment-plan.md)推进。
+最新进展：[普通海报与个人页](docs/ordinary-posters-profile.md)，附[普通记录与步行入口核查](docs/ordinary-statistics-entry-audit.md)。此前已完成[计步分享与时间线长文](docs/steps-sharing-history.md)、[运动统计汇总](docs/running-statistics.md)、[运动详情与分享](docs/running-details-sharing.md)。后续按[功能对齐清单](docs/feature-alignment-plan.md)推进。

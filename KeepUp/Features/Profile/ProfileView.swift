@@ -82,8 +82,15 @@ struct ProfileView: View {
                     .font(.system(size: 13 * scale, weight: .bold)).foregroundStyle(.white).padding(.horizontal, 3 * scale)
                     .frame(height: 18 * scale).background(KeepUpStyle.accent, in: RoundedRectangle(cornerRadius: 2 * scale))
                     .offset(x: 100 * scale, y: 17 * scale)
-                HStack(spacing: 4) { if let name = model.snapshot.profile?.nickname, !name.isEmpty { Text(name) } else { Text("profile.nickname") }; Text(verbatim: "-"); Text("profile.welcome") }
-                    .font(.system(size: 16 * scale)).offset(x: 20 * scale, y: 50 * scale)
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    let profile = model.snapshot.profile
+                    let nickname = profile?.nickname ?? ""
+                    let name = nickname.isEmpty ? localized("profile.nickname", locale) : nickname
+                    let days = ProfileDuration.dayCount(since: profile?.createdAt ?? context.date, now: context.date)
+                    Text(String(format: localized("profile.journey %@ %lld", locale), name, Int64(days)))
+                        .font(.system(size: 16 * scale)).lineLimit(1).minimumScaleFactor(0.7)
+                        .accessibilityIdentifier("profile.journey")
+                }.padding(.horizontal, 20 * scale).frame(maxWidth: .infinity, alignment: .leading).offset(y: 50 * scale)
             }.frame(height: 90 * scale)
         }.frame(height: 190 * scale)
             .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3) }

@@ -81,6 +81,9 @@ final class AppModel {
                             try await repository.saveContent(entryID: id, content: EntryContent(text: text), asDraft: false)
                         }
                     }
+                    if args.contains("-ui-testing"), args.contains("-reset-test-data"), args.contains("-ui-testing-entry-posters") {
+                        try await EntryPosterFixtures.prepare(repository: repository)
+                    }
                 }
                 #endif
                 snapshot = try await repository.snapshot()

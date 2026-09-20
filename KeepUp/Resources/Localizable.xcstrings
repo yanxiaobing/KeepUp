@@ -2679,6 +2679,142 @@
         }
       }
     },
+    "entry.encouragement.count": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ check-ins: %@. Keep going—you’re building a better you."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "嘿，你真棒！已经打%@卡%@次，努力会让你遇见更好的自己。"
+          }
+        }
+      }
+    },
+    "entry.encouragement.general": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whatever happens, keep your spirits up!"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输了什么也不要输心情~"
+          }
+        }
+      }
+    },
+    "entry.encouragement.streak": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You’ve checked in for %@ days in a row. Keep it going!"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已经连续打卡%@天，继续保持！"
+          }
+        }
+      }
+    },
+    "entry.encouragement.total": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ total: %@ %@. Every effort counts!"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "累计%@%@%@，每一次坚持都有收获！"
+          }
+        }
+      }
+    },
+    "entry.encouragement.weightGain": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight-gain goal reached! %@ days, %@ kg gained."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "达成增重目标！用%@天增重%@公斤。"
+          }
+        }
+      }
+    },
+    "entry.encouragement.weightGainOne": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight-gain goal reached! %@ day, %@ kg gained."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "达成增重目标！用%@天增重%@公斤。"
+          }
+        }
+      }
+    },
+    "entry.encouragement.weightLoss": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight-loss goal reached! %@ days, %@ kg lost."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "达成减重目标！用%@天减重%@公斤。"
+          }
+        }
+      }
+    },
+    "entry.encouragement.weightLossOne": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight-loss goal reached! %@ day, %@ kg lost."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "达成减重目标！用%@天减重%@公斤。"
+          }
+        }
+      }
+    },
     "entry.enterValue": {
       "localizations": {
         "en": {
@@ -5157,6 +5293,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "加入大家庭"
+          }
+        }
+      }
+    },
+    "profile.journey %@ %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · Day %2$lld together"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ - 与你相遇的第%2$lld天"
           }
         }
       }

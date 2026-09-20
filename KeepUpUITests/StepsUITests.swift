@@ -35,6 +35,12 @@ import XCTest
         let records = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "entry.steps."))
         XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(records.count, 1)
+        app.buttons["tab.calendar"].tap()
+        XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
+        records.firstMatch.tap()
+        XCTAssertTrue(app.buttons["steps.close"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["steps.count"].label, "6,500")
+        app.buttons["steps.close"].tap()
 
         app.terminate()
         app.launchArguments.removeAll { $0 == "-reset-test-data" }
