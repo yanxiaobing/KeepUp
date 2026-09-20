@@ -39,6 +39,7 @@ struct EntryRow: TableCodable {
     var note: String
     var runningKind: String?
     var runningKilocalories: Double?
+    var runningElapsedSeconds: Double?
 
     init(_ entry: CheckInEntry) {
         id = entry.id; cardID = entry.cardID; day = entry.day.rawValue
@@ -46,21 +47,24 @@ struct EntryRow: TableCodable {
         quantity = entry.quantity; unit = entry.unit.rawValue; note = entry.note
         runningKind = entry.runningKind?.rawValue
         runningKilocalories = entry.runningKilocalories
+        runningElapsedSeconds = entry.runningElapsedSeconds
     }
 
     func model() throws -> CheckInEntry {
         guard let day = LocalDay(rawValue: day), let unit = CardUnit(rawValue: unit),
               TimeZone(identifier: timeZoneID) != nil,
               runningKind.map({ RunningKind(rawValue: $0) != nil }) ?? true,
+              runningElapsedSeconds.map({ $0.isFinite && (0...604_800).contains($0) }) ?? true,
               runningKilocalories.map({ $0.isFinite && $0 >= 0 && $0 < Double(Int.max) }) ?? true else { throw StoreError.corruptRecord }
         return CheckInEntry(id: id, cardID: cardID, day: day, timeZoneID: timeZoneID,
                             createdAt: Date(timeIntervalSince1970: createdAt), quantity: quantity, unit: unit, note: note,
-                            runningKind: runningKind.flatMap(RunningKind.init(rawValue:)), runningKilocalories: runningKilocalories)
+                            runningKind: runningKind.flatMap(RunningKind.init(rawValue:)), runningKilocalories: runningKilocalories,
+                            runningElapsedSeconds: runningElapsedSeconds)
     }
 
     enum CodingKeys: String, CodingTableKey {
         typealias Root = EntryRow
-        case id, cardID, day, timeZoneID, createdAt, quantity, unit, note, runningKind, runningKilocalories
+        case id, cardID, day, timeZoneID, createdAt, quantity, unit, note, runningKind, runningKilocalories, runningElapsedSeconds
         nonisolated(unsafe) static let objectRelationalMapping = TableBinding(CodingKeys.self) {
             BindColumnConstraint(id, isPrimary: true)
             BindIndex(day, createdAt, namedWith: "_day_created")
@@ -70,7 +74,7 @@ struct EntryRow: TableCodable {
 }
 
 enum DatabaseSchema {
-    static let version = 10
+    static let version = 11
     private static let initializationLock = NSLock()
 
     static func prepare(_ database: Database) throws {
@@ -93,7 +97,7 @@ enum DatabaseSchema {
                 try handle.create(table: StoreTables.archivedCards.name, of: ArchivedCardRow.self)
                 try handle.insertOrIgnore(HabitCard.starters.map(CardRow.init), intoTable: StoreTables.cards.name)
                 try handle.insertOrIgnore(OriginalCatalog.items.map { CardRow($0.card) }, intoTable: StoreTables.cards.name)
-                if existingVersion < 10 {
+                if existingVersion < 11 {
                     // Copy only small summary fields. Normal snapshots still avoid loading historical tracks.
                     var previousID = ""
                     while true {
@@ -103,12 +107,20 @@ enum DatabaseSchema {
                         guard let row = rows.first else { break }
                         previousID = row.id
                         let session = try StoredJSON.decode(RunningSession.self, from: row.payload)
-                        try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningKind,
-                                          with: session.kind.rawValue, where: EntryRow.Properties.id == row.id)
-                        if let energy = RunningMetrics(session: session).estimatedEnergyKilocalories {
-                            try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningKilocalories,
-                                              with: energy, where: EntryRow.Properties.id == row.id)
+                        // v10 already froze energy; adding duration must not recalculate that value.
+                        if existingVersion < 10 {
+                            try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningKind,
+                                              with: session.kind.rawValue, where: EntryRow.Properties.id == row.id)
+                            if let energy = RunningMetrics(session: session).estimatedEnergyKilocalories {
+                                try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningKilocalories,
+                                                  with: energy, where: EntryRow.Properties.id == row.id)
+                            }
                         }
+                        guard session.elapsedSeconds.isFinite, (0...604_800).contains(session.elapsedSeconds) else {
+                            throw StoreError.corruptRecord
+                        }
+                        try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningElapsedSeconds,
+                                          with: session.elapsedSeconds, where: EntryRow.Properties.id == row.id)
                     }
                 }
                 if existingVersion < version {

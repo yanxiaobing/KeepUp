@@ -45,7 +45,8 @@ extension LocalStore {
         let entry = CheckInEntry(id: session.id, cardID: session.kind.cardID, day: session.day,
                                  timeZoneID: session.timeZoneID, createdAt: session.startedAt,
                                  quantity: session.distanceMeters / 1_000, unit: .kilometers, note: plan?.note ?? "",
-                                 runningKind: session.kind, runningKilocalories: RunningMetrics(session: session).estimatedEnergyKilocalories)
+                                 runningKind: session.kind, runningKilocalories: RunningMetrics(session: session).estimatedEnergyKilocalories,
+                                 runningElapsedSeconds: session.elapsedSeconds)
         try database.run(transaction: { handle in
             try handle.insertOrReplace(RunningRow(session), intoTable: StoreTables.running.name)
             try handle.insert(EntryRow(entry), intoTable: StoreTables.entries.name)

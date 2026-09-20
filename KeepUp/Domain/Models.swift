@@ -28,6 +28,7 @@ struct CheckInEntry: Identifiable, Equatable, Sendable {
     let note: String
     var runningKind: RunningKind? = nil
     var runningKilocalories: Double? = nil
+    var runningElapsedSeconds: Double? = nil
 }
 
 struct CheckInDraft: Sendable {

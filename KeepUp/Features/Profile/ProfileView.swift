@@ -9,6 +9,7 @@ struct ProfileView: View {
     @State private var showStepsTarget = false
     @State private var showWeightTarget = false
     @State private var showReminders = false
+    @State private var showRunningStatistics = false
     @State private var pendingFeature: String?
     private var entries: [CheckInEntry] { model.snapshot.entries }
 
@@ -27,6 +28,7 @@ struct ProfileView: View {
                             row("profile.weightTarget", subtitle: model.snapshot.weightTarget.map { String(format: "%.1fkg", $0.target) } ?? "profile.noTarget", image: "setting_ic_weight_target", scale: scale)
                             row("profile.stepTarget", subtitle: StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges).map { String(format: localized("steps.goal %lld", locale), Int64($0)) } ?? "profile.noSteps", image: "setting_ic_walk_target", scale: scale)
                             row("profile.alarms", subtitle: nil, image: "setting_ic_manageclock", scale: scale)
+                            row("runningStats.title", subtitle: nil, image: "figure.run", scale: scale, systemImage: true)
                         }
                         VStack(spacing: 0) {
                             row("profile.review", subtitle: "profile.reviewSubtitle", image: "setting_ic_review", scale: scale)
@@ -52,6 +54,7 @@ struct ProfileView: View {
                 .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
                 .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
                 .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
+                .fullScreenCover(isPresented: $showRunningStatistics) { RunningStatisticsView() }
                 .fullScreenCover(isPresented: $showPersonalInfo) { ProfileInfoView() }
                 .fullScreenCover(isPresented: $showMembership) { MembershipView(onClose: { showMembership = false }) }
                 .alert(Text(LocalizedStringKey(pendingFeature ?? "error.title")), isPresented: Binding(get: { pendingFeature != nil }, set: { if !$0 { pendingFeature = nil } })) {
@@ -85,10 +88,13 @@ struct ProfileView: View {
         }.frame(height: 190 * scale)
             .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3) }
     }
-    private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat) -> some View {
-        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { showStepsTarget = true } else if title == "profile.weightTarget" { showWeightTarget = true } else if title == "profile.alarms" { showReminders = true } else { pendingFeature = title } } label: {
+    private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat, systemImage: Bool = false) -> some View {
+        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { showStepsTarget = true } else if title == "profile.weightTarget" { showWeightTarget = true } else if title == "profile.alarms" { showReminders = true } else if title == "runningStats.title" { showRunningStatistics = true } else { pendingFeature = title } } label: {
             HStack(spacing: 15 * scale) {
-                Image(image).resizable().frame(width: 18 * scale, height: 18 * scale)
+                Group {
+                    if systemImage { Image(systemName: image).resizable().scaledToFit().foregroundStyle(KeepUpStyle.accent) }
+                    else { Image(image).resizable() }
+                }.frame(width: 18 * scale, height: 18 * scale)
                 Text(LocalizedStringKey(title)).font(.system(size: 14 * scale))
                 Spacer(minLength: 0)
                 HStack(spacing: 6 * scale) {
