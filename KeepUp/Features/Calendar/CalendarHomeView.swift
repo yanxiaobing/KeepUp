@@ -9,6 +9,7 @@ struct CalendarHomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Default(.monthMode) private var isMonthMode
     @State private var showingTheme = false
+    @State private var showingRunning = false
     @State private var scheduleDetail: ScheduledCard?
     @State private var detail: CheckInEntry?
     @State private var pendingDay = LocalDay(date: .now)
@@ -58,6 +59,14 @@ struct CalendarHomeView: View {
                     VStack(spacing: 0) {
                         calendarHeader
                         calendarBody
+                        if model.running.session != nil {
+                            Button { showingRunning = true } label: {
+                                Label("running.resumeActivity", systemImage: "figure.run")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            }.buttonStyle(.plain).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
+                                .padding(.top, 10).accessibilityIdentifier("running.resumeActivity")
+                        }
                         recordGrid(width: geometry.size.width)
                     }.padding(.horizontal, 15)
                 }
@@ -65,8 +74,10 @@ struct CalendarHomeView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(isPresented: $showingTheme) { ThemeListView() }
+            .fullScreenCover(isPresented: $showingRunning) { RunningView() }
             .fullScreenCover(item: $pendingCard) { card in
                 if card.id == "punchcard.1" { StepsView(day: pendingDay) }
+                else if card.id == "punchcard.2" { RunningView() }
                 else { ComposeEntryView(card: card, day: pendingDay, onSaved: { pendingCard = nil }, onCancel: { pendingCard = nil }) }
             }
             .fullScreenCover(item: $reminderCard) { card in ReminderSettingsView(card: card, target: model.snapshot.targets.first { $0.cardID == card.id }) }
@@ -75,7 +86,10 @@ struct CalendarHomeView: View {
             }
             .fullScreenCover(item: $detail) { entry in
                 if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
-                else if let card = model.card(for: entry) { EntryDetailView(entry: entry, card: card) }
+                else if let card = model.card(for: entry) {
+                    if entry.cardID == "punchcard.2" { RunningRecordView(entry: entry, card: card) }
+                    else { EntryDetailView(entry: entry, card: card) }
+                }
             }
 
         }
@@ -250,7 +264,7 @@ struct CalendarHomeView: View {
 
     private func canCheckIn(_ card: HabitCard) -> Bool {
         guard !model.snapshot.archivedCardIDs.contains(card.id),
-              ![1, 2, 96].contains(OriginalCatalog.item(card)?.number ?? 0) else { return false }
+              ![1, 96].contains(OriginalCatalog.item(card)?.number ?? 0) else { return false }
         return card.id != "punchcard.63" || !model.entries(on: LocalDay(date: .now)).contains { $0.cardID == card.id }
     }
 

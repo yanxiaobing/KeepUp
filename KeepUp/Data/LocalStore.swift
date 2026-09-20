@@ -15,6 +15,10 @@ protocol CheckInRepository: Sendable {
     func saveWeightTarget(_ target: WeightTarget, now: Date) async throws
     func saveSchedule(_ value: ScheduledCard, now: Date) async throws
     func deleteSchedule(id: String) async throws
+    func runningSession(id: String) async throws -> RunningSession?
+    func saveRunningSession(_ session: RunningSession) async throws
+    func finishRunning(_ session: RunningSession) async throws
+    func discardRunning(id: String) async throws
     func saveSteps(_ reading: StepReading, goal: Int?, now: Date) async throws
     func saveTarget(_ target: CardTarget) async throws
 }
@@ -57,8 +61,10 @@ actor LocalStore: CheckInRepository {
         let weightTargets: [WeightRow] = try database.table(StoreTables.weightTarget).getObjects(limit: 1)
         let weights: [WeightRow] = try database.table(StoreTables.weightRecords).getObjects()
         let steps = try database.table(StoreTables.stepRecords).getObjects()
+        let active = try database.table(StoreTables.running).getObjects(where: RunningRow.Properties.phase == RunningPhase.running.rawValue || RunningRow.Properties.phase == RunningPhase.paused.rawValue, limit: 1)
+        let activeRun = try active.first.map { try StoredJSON.decode(RunningSession.self, from: $0.payload) }
         return try LocalSnapshot(cards: cards.map { try $0.model() }, entries: entries.map { try $0.model() }, profile: profile, content: content,
-                                 targets: targets.map { try StoredJSON.decode(CardTarget.self, from: $0.payload) }, schedules: schedules.map { try $0.model() }, weightTarget: weightTargets.first.map { try StoredJSON.decode(WeightTarget.self, from: $0.payload) }, weights: Dictionary(uniqueKeysWithValues: weights.map { ($0.id, try StoredJSON.decode(WeightRecord.self, from: $0.payload)) }), wakeUps: Dictionary(uniqueKeysWithValues: wakes.map { ($0.id, try StoredJSON.decode(WakeUpRecord.self, from: $0.payload)) }), steps: Dictionary(uniqueKeysWithValues: steps.map { ($0.id, try StoredJSON.decode(StepRecord.self, from: $0.payload)) }), archivedCardIDs: Set(archived.map(\.id)))
+                                 targets: targets.map { try StoredJSON.decode(CardTarget.self, from: $0.payload) }, schedules: schedules.map { try $0.model() }, weightTarget: weightTargets.first.map { try StoredJSON.decode(WeightTarget.self, from: $0.payload) }, weights: Dictionary(uniqueKeysWithValues: weights.map { ($0.id, try StoredJSON.decode(WeightRecord.self, from: $0.payload)) }), wakeUps: Dictionary(uniqueKeysWithValues: wakes.map { ($0.id, try StoredJSON.decode(WakeUpRecord.self, from: $0.payload)) }), steps: Dictionary(uniqueKeysWithValues: steps.map { ($0.id, try StoredJSON.decode(StepRecord.self, from: $0.payload)) }), activeRun: activeRun, archivedCardIDs: Set(archived.map(\.id)))
     }
 
     func add(_ draft: CheckInDraft, now: Date = .now) throws {
@@ -105,6 +111,9 @@ actor LocalStore: CheckInRepository {
     func delete(id: String) throws {
         guard let database else { throw StoreError.notOpen }
         let entry = try database.table(StoreTables.entries).getObjects(where: EntryRow.Properties.id == id, limit: 1).first
+        var runningDeletion = try database.table(StoreTables.running).getObjects(where: RunningRow.Properties.id == id, limit: 1).first
+        runningDeletion?.phase = "deleted"
+        runningDeletion?.payload = Data()
         var stepDeletion: StepRow?
         if let entry, entry.cardID == "punchcard.1",
            let row = try database.table(StoreTables.stepRecords).getObjects(where: StepRow.Properties.id == entry.day, limit: 1).first {
@@ -113,6 +122,7 @@ actor LocalStore: CheckInRepository {
             stepDeletion = StepRow(id: row.id, payload: try StoredJSON.encode(record))
         }
         try database.run(transaction: { handle in
+            if let runningDeletion { try handle.insertOrReplace(runningDeletion, intoTable: StoreTables.running.name) }
             if let stepDeletion { try handle.insertOrReplace(stepDeletion, intoTable: StoreTables.stepRecords.name) }
             try handle.delete(fromTable: StoreTables.weightOperations.name, where: WeightOperationRow.Properties.entryID == id)
             try handle.delete(fromTable: StoreTables.weightRecords.name, where: WeightRow.Properties.id == id)

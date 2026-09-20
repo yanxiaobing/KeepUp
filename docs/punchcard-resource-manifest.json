@@ -3783,5 +3783,70 @@
     "source": "Assets.xcassets/CardDetails/card_details_walk_female.imageset/card_details_walk_female@2x.png",
     "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_details_walk_female.imageset/card_details_walk_female@2x.png",
     "sha256": "8f22bc7978cbb3cbe19e34344c084375dbdb5c51ce275f734138f02ea048e9e4"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_puase.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_puase.imageset/Contents.json",
+    "sha256": "d9af7d5b0a2b8afb58f8f6b296cd023f99df3b3f942ca01e3dd4626a80f4dcfb"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_puase.imageset/running_puase@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_puase.imageset/running_puase@2x.png",
+    "sha256": "fd2df216fb3284d4efe1759a78373f49726626edc743fd46bdfd336436c43197"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_start.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_start.imageset/Contents.json",
+    "sha256": "1f5964fb024f2c8537b58716de9d85ea66675b29a487b01dc08e60e6ec0d41ba"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_start.imageset/running_start@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_start.imageset/running_start@2x.png",
+    "sha256": "3e0986b4a8b7f85540a56a4a685edb9c394b34e12cd249a1398d399c99316781"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_stop.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_stop.imageset/Contents.json",
+    "sha256": "e1da25da8895b025f5d56ca8629d65b2233146952855dcc109c442d6351bafa2"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_stop.imageset/running_stop@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_stop.imageset/running_stop@2x.png",
+    "sha256": "bf0664bd6872d951abaebcedd125ad20855a05abb8009d5534dab417d4d18e27"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/run_prepare_oval_shadow.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_prepare_oval_shadow.imageset/Contents.json",
+    "sha256": "4ae1b06bcd0df7b5059cd571037fac84dd6d2ce634eee4b4764c740667c7ea4c"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/run_prepare_oval_shadow.imageset/run_prepare_oval_shadow@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_prepare_oval_shadow.imageset/run_prepare_oval_shadow@2x.png",
+    "sha256": "3a3d1087812f2ee8c089d97fefc1667ec978ed109080d7fe6aad8e3f2e71a1e5"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/run_prepare_oval_shadow.imageset/run_prepare_oval_shadow@3x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_prepare_oval_shadow.imageset/run_prepare_oval_shadow@3x.png",
+    "sha256": "9a1b1886640795fc04709bbaa6cfcc6e0ff56d66c70617fe94985d87946fb377"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/gps_1.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_1.imageset/Contents.json",
+    "sha256": "28ab808d55dc7ce1c4e1d5125deebc07a24ade76af23f1dd38257e8f22d40020"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/gps_1.imageset/gps_1.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_1.imageset/gps_1.png",
+    "sha256": "d3308699d5c9f20151f5949502f805863b5bf35336d1dde654f08a4d0d87bd59"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/gps_3.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_3.imageset/Contents.json",
+    "sha256": "b6ecdf627ba11e6944d23d3b996ff19a0d1c366bca93cc43cfd15eaefd604a96"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/gps_3.imageset/gps_3.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_3.imageset/gps_3.png",
+    "sha256": "3a4e018a013ee501618fbe67e707a8cd018e0600d25c758c461b05b651ee9721"
   }
 ]

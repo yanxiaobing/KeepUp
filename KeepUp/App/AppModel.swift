@@ -11,8 +11,29 @@ final class AppModel {
     var actionError: String?
     private let repository: any CheckInRepository
     private var reloadRequested = false
+    private var hasRestoredRunning = false
+    let running = RunningController()
 
-    init(repository: any CheckInRepository) { self.repository = repository }
+    init(repository: any CheckInRepository) {
+        self.repository = repository
+        running.configure(checkpoint: { [weak self] session in
+            guard let self else { return false }
+            do { try await self.repository.saveRunningSession(session); return true }
+            catch { return false }
+        }, finish: { [weak self] session in
+            guard let self else { return false }
+            do { try await self.repository.finishRunning(session); await self.load(); return true }
+            catch { return false }
+        }, discard: { [weak self] id in
+            guard let self else { return false }
+            do { try await self.repository.discardRunning(id: id); await self.load(); return true }
+            catch { return false }
+        })
+    }
+
+    func runningSession(id: String) async throws -> RunningSession? {
+        try await repository.runningSession(id: id)
+    }
 
     func load() async {
         guard !isLoading else {
@@ -29,6 +50,10 @@ final class AppModel {
                 revision += 1
                 isReady = true
                 loadError = nil
+                if !hasRestoredRunning {
+                    hasRestoredRunning = true
+                    if let active = snapshot.activeRun { running.restore(active) }
+                }
             } catch { loadError = (error as? StoreError)?.messageKey ?? "error.storage" }
         } while reloadRequested
     }

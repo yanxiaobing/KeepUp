@@ -4,3 +4,5 @@
 "NSPhotoLibraryAddUsageDescription" = "Save your KeepUp record cards to Photos.";
 
 "NSMotionUsageDescription" = "Read your steps and walking distance to track your daily goal.";
+
+"NSLocationWhenInUseUsageDescription" = "Record your running route, distance and pace while a workout is active.";

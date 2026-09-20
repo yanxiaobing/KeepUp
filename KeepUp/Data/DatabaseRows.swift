@@ -63,7 +63,7 @@ struct EntryRow: TableCodable {
 }
 
 enum DatabaseSchema {
-    static let version = 7
+    static let version = 8
     private static let initializationLock = NSLock()
 
     static func prepare(_ database: Database) throws {
@@ -71,6 +71,7 @@ enum DatabaseSchema {
             let existingVersion = try database.getValue(from: StatementPragma().pragma(.userVersion))?.intValue ?? 0
             guard existingVersion <= version else { throw StoreError.newerSchema }
             try database.run(transaction: { handle in
+                try handle.create(table: StoreTables.running.name, of: RunningRow.self)
                 try handle.create(table: StoreTables.stepRecords.name, of: StepRow.self)
                 try handle.create(table: StoreTables.weightOperations.name, of: WeightOperationRow.self)
                 try handle.create(table: StoreTables.weightTarget.name, of: WeightRow.self)
@@ -192,6 +193,36 @@ struct StepRow: TableCodable {
         case id, payload
         nonisolated(unsafe) static let objectRelationalMapping = TableBinding(CodingKeys.self) {
             BindColumnConstraint(id, isPrimary: true)
+        }
+    }
+}
+
+struct RunningRow: TableCodable {
+    var id: String
+    var phase: String
+    var revision: Int
+    var payload: Data
+
+    init(discardedID: String) {
+        id = discardedID
+        phase = "deleted"
+        revision = 0
+        payload = Data()
+    }
+
+    init(_ session: RunningSession) throws {
+        id = session.id
+        phase = session.phase.rawValue
+        revision = session.revision
+        payload = try StoredJSON.encode(session)
+    }
+
+    enum CodingKeys: String, CodingTableKey {
+        typealias Root = RunningRow
+        case id, phase, revision, payload
+        nonisolated(unsafe) static let objectRelationalMapping = TableBinding(CodingKeys.self) {
+            BindColumnConstraint(id, isPrimary: true)
+            BindIndex(phase, namedWith: "_phase")
         }
     }
 }

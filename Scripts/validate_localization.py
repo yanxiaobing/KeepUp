@@ -48,6 +48,10 @@ for path in (root / "KeepUp").rglob("*.swift"):
     for key in re.findall(r'\blocalized\("([^"\\]+)"\s*,', source):
         if key not in catalog:
             errors.append(f"{path.relative_to(root)}: missing key {key}")
+    # Error keys travel through the controller before becoming localized Text.
+    for key in re.findall(r'\berrorKey\s*=\s*"([^"\\]+)"', source):
+        if key not in catalog:
+            errors.append(f"{path.relative_to(root)}: missing error key {key}")
     for key in re.findall(r'\b(?:Text|Button|Label|Toggle|Picker|LocalizedStringKey)\("([^"\\]+)"', source):
         if re.fullmatch(r"[a-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*)+(?: .*)?", key) and key not in catalog:
             errors.append(f"{path.relative_to(root)}: missing key {key}")

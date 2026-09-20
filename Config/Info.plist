@@ -23,6 +23,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Record your running route, distance and pace while a workout is active.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSMotionUsageDescription</key>
 	<string>Read your steps and walking distance to track your daily goal.</string>
 	<key>NSCameraUsageDescription</key>

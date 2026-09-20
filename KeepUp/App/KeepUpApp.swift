@@ -63,6 +63,9 @@ struct KeepUpApp: App {
                 .task(id: "\(model.isReady)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
                     refreshStepMonitoring()
                 }
+                .onChange(of: scenePhase) { _, _ in
+                    if model.running.session != nil { Task { await model.running.tick() } }
+                }
                 .onReceive(stepClock) { _ in
                     guard scenePhase == .active, model.isReady else { return }
                     if stepMonitor.needsDateRefresh() || stepMonitor.state == .permission || stepMonitor.state == .failed {
