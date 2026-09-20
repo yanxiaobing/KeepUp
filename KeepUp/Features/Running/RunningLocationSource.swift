@@ -94,7 +94,9 @@ enum RunningLocationEvent: Sendable { case authorization(RunningAuthorization), 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         // Never transfer CLLocation or CLLocationManager across the actor boundary.
         let points = locations.map { RunningPoint(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude,
-                                                  horizontalAccuracy: $0.horizontalAccuracy, timestamp: $0.timestamp, speed: $0.speed) }
+                                                  horizontalAccuracy: $0.horizontalAccuracy, timestamp: $0.timestamp, speed: $0.speed,
+                                                  altitude: $0.altitude.isFinite && $0.verticalAccuracy >= 0 ? $0.altitude : nil,
+                                                  verticalAccuracy: $0.verticalAccuracy.isFinite && $0.verticalAccuracy >= 0 ? $0.verticalAccuracy : nil) }
         Task { @MainActor [weak self] in self?.onEvent?(.points(points)) }
     }
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {

@@ -3,32 +3,85 @@ import MapKit
 
 struct RunningDetailView: View {
     let session: RunningSession
+    var entry: CheckInEntry? = nil
+    var card: HabitCard? = nil
+    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @State private var editing = false
+    @State private var sharing = false
+    @State private var confirmingDelete = false
+    @State private var deleting = false
+    @State private var deleteFailed = false
+    private var currentEntry: CheckInEntry? {
+        guard let entry else { return nil }
+        return model.snapshot.entries.first { $0.id == entry.id } ?? entry
+    }
 
     var body: some View {
         NavigationStack {
-            RunningSessionSummary(session: session)
+            RunningSessionSummary(session: session, content: currentEntry.map { model.snapshot.publishedContent(for: $0) })
                 .navigationTitle("running.result")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("action.close") { dismiss() }.accessibilityIdentifier("running.result.close")
                     }
+                    if currentEntry != nil, card != nil {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Menu {
+                                Button("content.edit", systemImage: "square.and.pencil") { editing = true }
+                                    .accessibilityIdentifier("running.detail.edit")
+                                Button("action.delete", systemImage: "trash", role: .destructive) { confirmingDelete = true }
+                                    .accessibilityIdentifier("running.detail.delete")
+                            } label: { Image(systemName: "ellipsis") }
+                                .accessibilityLabel(Text("entry.actions")).accessibilityIdentifier("running.detail.actions")
+                                .disabled(deleting)
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { sharing = true } label: {
+                            Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24)
+                        }.accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.detail.share")
+                    }
                 }
+                .fullScreenCover(isPresented: $editing) {
+                    if let currentEntry, let card { EntryContentEditor(entry: currentEntry, card: card) }
+                }
+                .sheet(isPresented: $sharing) { RunningShareView(session: session) }
+                .confirmationDialog("entry.deleteConfirmation", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                    Button("action.delete", role: .destructive) { Task { await deleteRecord() } }
+                        .accessibilityIdentifier("running.detail.confirmDelete")
+                    Button("action.cancel", role: .cancel) {}
+                }
+                .alert("error.title", isPresented: $deleteFailed) {
+                    Button("action.ok", role: .cancel) {}
+                } message: { Text("error.storage") }
         }
+    }
+
+    private func deleteRecord() async {
+        guard let currentEntry, !deleting else { return }
+        deleting = true
+        model.actionError = nil
+        await model.delete(currentEntry)
+        deleting = false
+        if model.actionError == nil { dismiss() }
+        else { model.actionError = nil; deleteFailed = true }
     }
 }
 
 struct RunningSessionSummary: View {
     let session: RunningSession
+    var content: EntryContent? = nil
     @Environment(\.locale) private var locale
 
     var body: some View {
+        let metrics = RunningMetrics(session: session)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .center) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(RunningDisplay.distance(session.distanceMeters, locale: locale))
+                        Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale))
                             .font(.system(size: 50, weight: .light)).minimumScaleFactor(0.6)
                             .accessibilityIdentifier("running.result.distance")
                         Text("running.kilometers").font(.system(size: 14)).foregroundStyle(.secondary)
@@ -36,19 +89,23 @@ struct RunningSessionSummary: View {
                     Spacer(minLength: 8)
                     Text(LocalizedStringKey(session.kind.titleKey)).font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 14).padding(.vertical, 10)
-                        .foregroundStyle(.white).background(Color(hex: session.kind == .cycling ? 0x5866E3 : session.kind == .indoor ? 0x6889FF : 0xFF6440), in: Capsule())
+                        .foregroundStyle(.white).background(RunningDetailStyle.color(session.kind), in: Capsule())
                         .accessibilityIdentifier("running.result.kind")
                 }
                 Text(session.startedAt, format: .dateTime.year().month().day().hour().minute())
                     .font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 4)
                 HStack(spacing: 12) {
-                    resultMetric(RunningDisplay.duration(session.elapsed(at: .now)), label: "running.duration")
+                    resultMetric(RunningDisplay.duration(metrics.elapsedSeconds), label: "running.duration")
                     if session.kind == .cycling {
-                        resultMetric(RunningDisplay.speed(distance: session.distanceMeters, seconds: session.elapsed(at: .now), locale: locale), label: "running.averageSpeed")
+                        resultMetric(RunningDetailStyle.number(metrics.averageSpeedKilometersPerHour, locale: locale, digits: 1), label: "running.averageSpeed")
                     } else {
-                        resultMetric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: .now)), label: "running.averagePace")
+                        resultMetric(metrics.averagePaceSecondsPerKilometer.map(RunningDisplay.paceSeconds) ?? "—", label: "running.averagePace")
                     }
                 }.padding(.vertical, 22)
+                HStack(spacing: 12) {
+                    resultMetric(metrics.roundedEnergyKilocalories.map { $0.formatted(.number.locale(locale)) } ?? "—", label: "runningDetail.energy", identifier: "running.result.energy")
+                    resultMetric(RunningDetailStyle.number(metrics.maximumSpeedKilometersPerHour, locale: locale, digits: 1), label: "runningDetail.maximumSpeedUnit", identifier: "running.result.maximumSpeed")
+                }.padding(.bottom, 22)
                 if session.kind.usesGPS {
                     RunningRouteMap(segments: session.segments, showsUser: false)
                         .frame(height: 270).clipShape(RoundedRectangle(cornerRadius: 8))
@@ -65,40 +122,36 @@ struct RunningSessionSummary: View {
                     HStack {
                         Text("running.averageCadence")
                         Spacer()
-                        Text(RunningDisplay.cadence(steps: session.steps, seconds: session.elapsed(at: .now), locale: locale))
+                        Text(RunningDisplay.cadence(steps: session.steps, seconds: metrics.elapsedSeconds, locale: locale))
                             .monospacedDigit().accessibilityIdentifier("running.result.cadence")
                     }.padding(.bottom, 18)
                     Text("running.indoorDistanceHint").font(.system(size: 13)).foregroundStyle(.secondary)
                 }
-                Text("running.splits").font(.system(size: 22, weight: .medium)).padding(.top, 28).padding(.bottom, 18)
-                HStack {
-                    Text("running.kilometers")
-                    Spacer()
-                    Text(LocalizedStringKey(session.kind == .cycling ? "running.speedUnit" : "running.paceUnit"))
-                }.font(.system(size: 12)).foregroundStyle(.secondary).padding(.bottom, 12)
-                if session.splits.isEmpty {
-                    Text("running.noSplits").font(.system(size: 14)).foregroundStyle(.secondary).padding(.vertical, 18)
-                } else {
-                    ForEach(Array(session.splits.enumerated()), id: \.offset) { _, split in
-                        HStack {
-                            Text(split.kilometer.formatted(.number.locale(locale)))
-                            Spacer()
-                            Text(session.kind == .cycling
-                                 ? RunningDisplay.speed(distance: 1_000, seconds: split.elapsedSeconds, locale: locale)
-                                 : RunningDisplay.paceSeconds(split.elapsedSeconds)).monospacedDigit()
-                        }.font(.system(size: 16)).padding(14)
-                            .background(Color(hex: 0xFFD838).opacity(0.25))
-                            .padding(.bottom, 6)
+                RunningSplitsSection(session: session, metrics: metrics)
+                Divider()
+                RunningChartsSection(session: session, metrics: metrics)
+                if let content, !content.isEmpty {
+                    Divider().padding(.vertical, 16)
+                    Text("runningDetail.memory").font(.system(size: 22, weight: .medium)).padding(.bottom, 14)
+                    if !content.text.isEmpty {
+                        Text(verbatim: content.text).font(.system(size: 16)).textSelection(.enabled)
+                            .accessibilityIdentifier("running.detail.text").padding(.bottom, 16)
+                    }
+                    if let data = content.photo, let image = UIImage(data: data) {
+                        Image(uiImage: image).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 8))
+                            .accessibilityLabel(Text("content.photo")).accessibilityIdentifier("running.detail.photo")
                     }
                 }
             }.padding(22)
         }.background(.white).foregroundStyle(Color(hex: 0x222222))
+            .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
             .accessibilityIdentifier("running.result")
     }
 
-    private func resultMetric(_ value: String, label: LocalizedStringKey) -> some View {
+    private func resultMetric(_ value: String, label: LocalizedStringKey, identifier: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(verbatim: value).font(.system(size: 24, weight: .light)).monospacedDigit()
+                .accessibilityIdentifier(identifier ?? "")
             Text(label).font(.system(size: 12)).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity, alignment: .leading)
     }

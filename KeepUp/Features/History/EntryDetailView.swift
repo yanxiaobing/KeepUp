@@ -172,8 +172,11 @@ private struct EntrySharePreview: View {
         }
     }
 }
-private struct SystemImageShare: UIViewControllerRepresentable {
-    let image: UIImage
-    func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: [image], applicationActivities: nil) }
+struct SystemImageShare: UIViewControllerRepresentable {
+    let items: [Any]
+    init(image: UIImage) { items = [image] }
+    init(images: [UIImage]) { items = images }
+    init(files: [URL]) { items = files }
+    func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }

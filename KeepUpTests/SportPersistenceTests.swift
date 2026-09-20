@@ -110,6 +110,6 @@ func sportModePersistsAndConsumesOnlyItsOwnCardPlan(kind: RunningKind) async thr
         await store.close()
     } catch { await store.close(); throw error }
     let migrated = Database(at: url.path)
-    #expect(try migrated.getValue(from: StatementPragma().pragma(.userVersion))?.intValue == 9)
+    #expect(try migrated.getValue(from: StatementPragma().pragma(.userVersion))?.intValue == DatabaseSchema.version)
     migrated.close()
 }

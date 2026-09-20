@@ -10,6 +10,7 @@ struct RunningView: View {
     @State private var confirmingDiscard = false
     @State private var result: RunningSession?
     @State private var showingSettings = false
+    @State private var showingShare = false
     @State private var settingsKindAtOpen: RunningKind?
     @State private var visible = false
     @State private var automaticStartAttempted = false
@@ -48,6 +49,15 @@ struct RunningView: View {
                             .accessibilityLabel(Text("runningSettings.title")).accessibilityIdentifier("running.openSettings")
                     }
                 }
+                if result != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { showingShare = true } label: { Image(systemName: "square.and.arrow.up") }
+                            .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.result.share")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingShare) {
+                if let result { RunningShareView(session: result) }
             }
             .sheet(isPresented: $showingSettings, onDismiss: {
                 model.refreshRunningSettings()

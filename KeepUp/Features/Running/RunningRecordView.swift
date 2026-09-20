@@ -14,7 +14,7 @@ struct RunningRecordView: View {
     var body: some View {
         Group {
             if let session {
-                RunningDetailView(session: session)
+                RunningDetailView(session: session, entry: entry, card: card)
             } else if loaded {
                 EntryDetailView(entry: entry, card: card)
             } else {

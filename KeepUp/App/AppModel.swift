@@ -12,6 +12,9 @@ final class AppModel {
     private let repository: any CheckInRepository
     private var reloadRequested = false
     private var hasRestoredRunning = false
+    #if DEBUG
+    private var preparedRunningDetailsFixture = false
+    #endif
     let running = RunningController()
     let runningVoice = RunningVoiceCoach()
 
@@ -29,6 +32,9 @@ final class AppModel {
             guard let self else { return false }
             do { try await self.repository.discardRunning(id: id); await self.load(); return true }
             catch { return false }
+        }, weight: { [weak self] in
+            guard let self else { return nil }
+            return self.snapshot.entries.first { $0.cardID == "punchcard.50" }?.quantity ?? self.snapshot.profile?.weight
         })
         running.onEvent = { [weak self] event in
             guard let self else { return }
@@ -58,6 +64,17 @@ final class AppModel {
             reloadRequested = false
             do {
                 try await repository.open()
+                #if DEBUG
+                if !preparedRunningDetailsFixture {
+                    preparedRunningDetailsFixture = true
+                    let args = ProcessInfo.processInfo.arguments
+                    if args.contains("-ui-testing"), args.contains("-reset-test-data"),
+                       let index = args.firstIndex(of: "-ui-testing-running-details"), args.indices.contains(index + 1),
+                       let kind = RunningKind(rawValue: args[index + 1]) {
+                        try await repository.finishRunning(RunningDetailFixtures.make(kind: kind))
+                    }
+                }
+                #endif
                 snapshot = try await repository.snapshot()
                 revision += 1
                 isReady = true

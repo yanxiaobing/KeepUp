@@ -1,7 +1,7 @@
 import Foundation
 
-/// Fixed activity estimates from Resources/activity-energy.json; not personalized measurements.
-/// Keep version-one coefficients stable because historical entries derive energy from quantity.
+/// Manual cards use fixed estimates from activity-energy.json; recorded workouts use their saved energy summary.
+/// Keep version-one coefficients stable because historical manual entries derive energy from quantity.
 enum ActivityEnergy {
     struct Coefficient: Decodable {
         let cardNumber: Int
@@ -54,6 +54,9 @@ enum ActivityEnergy {
 
     static func calories(entry: CheckInEntry, card: HabitCard) -> Int? {
         guard entry.cardID == card.id, entry.unit == card.unit else { return nil }
+        if entry.runningKind != nil {
+            return RunningMetrics.roundedEnergy(entry.runningKilocalories)
+        }
         return calories(card: card, quantity: entry.quantity)
     }
 

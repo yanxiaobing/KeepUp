@@ -26,6 +26,8 @@ struct CheckInEntry: Identifiable, Equatable, Sendable {
     let quantity: Double?
     let unit: CardUnit
     let note: String
+    var runningKind: RunningKind? = nil
+    var runningKilocalories: Double? = nil
 }
 
 struct CheckInDraft: Sendable {

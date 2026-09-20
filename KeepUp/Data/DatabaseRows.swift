@@ -37,23 +37,30 @@ struct EntryRow: TableCodable {
     var quantity: Double?
     var unit: String
     var note: String
+    var runningKind: String?
+    var runningKilocalories: Double?
 
     init(_ entry: CheckInEntry) {
         id = entry.id; cardID = entry.cardID; day = entry.day.rawValue
         timeZoneID = entry.timeZoneID; createdAt = entry.createdAt.timeIntervalSince1970
         quantity = entry.quantity; unit = entry.unit.rawValue; note = entry.note
+        runningKind = entry.runningKind?.rawValue
+        runningKilocalories = entry.runningKilocalories
     }
 
     func model() throws -> CheckInEntry {
         guard let day = LocalDay(rawValue: day), let unit = CardUnit(rawValue: unit),
-              TimeZone(identifier: timeZoneID) != nil else { throw StoreError.corruptRecord }
+              TimeZone(identifier: timeZoneID) != nil,
+              runningKind.map({ RunningKind(rawValue: $0) != nil }) ?? true,
+              runningKilocalories.map({ $0.isFinite && $0 >= 0 && $0 < Double(Int.max) }) ?? true else { throw StoreError.corruptRecord }
         return CheckInEntry(id: id, cardID: cardID, day: day, timeZoneID: timeZoneID,
-                            createdAt: Date(timeIntervalSince1970: createdAt), quantity: quantity, unit: unit, note: note)
+                            createdAt: Date(timeIntervalSince1970: createdAt), quantity: quantity, unit: unit, note: note,
+                            runningKind: runningKind.flatMap(RunningKind.init(rawValue:)), runningKilocalories: runningKilocalories)
     }
 
     enum CodingKeys: String, CodingTableKey {
         typealias Root = EntryRow
-        case id, cardID, day, timeZoneID, createdAt, quantity, unit, note
+        case id, cardID, day, timeZoneID, createdAt, quantity, unit, note, runningKind, runningKilocalories
         nonisolated(unsafe) static let objectRelationalMapping = TableBinding(CodingKeys.self) {
             BindColumnConstraint(id, isPrimary: true)
             BindIndex(day, createdAt, namedWith: "_day_created")
@@ -63,7 +70,7 @@ struct EntryRow: TableCodable {
 }
 
 enum DatabaseSchema {
-    static let version = 9
+    static let version = 10
     private static let initializationLock = NSLock()
 
     static func prepare(_ database: Database) throws {
@@ -86,6 +93,24 @@ enum DatabaseSchema {
                 try handle.create(table: StoreTables.archivedCards.name, of: ArchivedCardRow.self)
                 try handle.insertOrIgnore(HabitCard.starters.map(CardRow.init), intoTable: StoreTables.cards.name)
                 try handle.insertOrIgnore(OriginalCatalog.items.map { CardRow($0.card) }, intoTable: StoreTables.cards.name)
+                if existingVersion < 10 {
+                    // Copy only small summary fields. Normal snapshots still avoid loading historical tracks.
+                    var previousID = ""
+                    while true {
+                        let rows: [RunningRow] = try handle.getObjects(fromTable: StoreTables.running.name,
+                            where: RunningRow.Properties.phase == RunningPhase.finished.rawValue && RunningRow.Properties.id > previousID,
+                            orderBy: [RunningRow.Properties.id.asOrder()], limit: 1)
+                        guard let row = rows.first else { break }
+                        previousID = row.id
+                        let session = try StoredJSON.decode(RunningSession.self, from: row.payload)
+                        try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningKind,
+                                          with: session.kind.rawValue, where: EntryRow.Properties.id == row.id)
+                        if let energy = RunningMetrics(session: session).estimatedEnergyKilocalories {
+                            try handle.update(table: StoreTables.entries.name, on: EntryRow.Properties.runningKilocalories,
+                                              with: energy, where: EntryRow.Properties.id == row.id)
+                        }
+                    }
+                }
                 if existingVersion < version {
                     try handle.exec(StatementPragma().pragma(.userVersion).to(version))
                 }

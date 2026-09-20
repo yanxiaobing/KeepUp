@@ -18,6 +18,14 @@ struct RunningPoint: Codable, Sendable, Equatable {
     var horizontalAccuracy: Double
     var timestamp: Date
     var speed: Double = -1
+    var altitude: Double? = nil
+    var verticalAccuracy: Double? = nil
+
+    var validAltitude: Double? {
+        guard let altitude, altitude.isFinite, let verticalAccuracy,
+              verticalAccuracy.isFinite, (0...20).contains(verticalAccuracy) else { return nil }
+        return altitude
+    }
 
     func isUsable(at now: Date) -> Bool {
         speed.isFinite && latitude.isFinite && longitude.isFinite && (-90...90).contains(latitude) && (-180...180).contains(longitude)
@@ -41,11 +49,22 @@ struct RunningSplit: Codable, Sendable, Equatable, Identifiable {
     var id: Int { kilometer }
 }
 
+/// Cumulative totals at a sensor boundary. Segment boundaries prevent pause time from becoming pace or cadence.
+struct RunningIndoorSample: Codable, Sendable, Equatable {
+    var timestamp: Date
+    var elapsedSeconds: Double
+    var distanceMeters: Double
+    var steps: Int
+}
+
 struct RunningSession: Codable, Sendable, Equatable, Identifiable {
     var id: String
     var revision: Int = 0
     var kind: RunningKind
     var steps: Int = 0
+    var indoorSegments: [[RunningIndoorSample]] = []
+    var weightKilograms: Double? = nil
+    var energyAlgorithmVersion: Int? = nil
     var day: LocalDay
     var timeZoneID: String
     var startedAt: Date
@@ -76,7 +95,7 @@ struct RunningSession: Codable, Sendable, Equatable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, revision, kind, steps, day, timeZoneID, startedAt, updatedAt, phase, elapsedSeconds
-        case activeSince, distanceMeters, segments, splits, finishedAt
+        case activeSince, distanceMeters, segments, splits, finishedAt, indoorSegments, weightKilograms, energyAlgorithmVersion
     }
 
     init(from decoder: any Decoder) throws {
@@ -85,6 +104,9 @@ struct RunningSession: Codable, Sendable, Equatable, Identifiable {
         revision = try values.decode(Int.self, forKey: .revision)
         kind = try values.decodeIfPresent(RunningKind.self, forKey: .kind) ?? .outdoor
         steps = try values.decodeIfPresent(Int.self, forKey: .steps) ?? 0
+        indoorSegments = try values.decodeIfPresent([[RunningIndoorSample]].self, forKey: .indoorSegments) ?? []
+        weightKilograms = try values.decodeIfPresent(Double.self, forKey: .weightKilograms)
+        energyAlgorithmVersion = try values.decodeIfPresent(Int.self, forKey: .energyAlgorithmVersion)
         day = try values.decode(LocalDay.self, forKey: .day)
         timeZoneID = try values.decode(String.self, forKey: .timeZoneID)
         startedAt = try values.decode(Date.self, forKey: .startedAt)
@@ -124,6 +146,7 @@ struct RunningSession: Codable, Sendable, Equatable, Identifiable {
         phase = .running
         // An empty segment explicitly breaks the line even when no samples arrived before pause.
         if kind.usesGPS, segments.last?.isEmpty != true { segments.append([]) }
+        if kind == .indoor, indoorSegments.last?.isEmpty != true { indoorSegments.append([]) }
     }
 
     mutating func finish(at date: Date) {
@@ -174,13 +197,21 @@ struct RunningSession: Codable, Sendable, Equatable, Identifiable {
     @discardableResult
     mutating func appendIndoor(distance: Double, steps addedSteps: Int, from start: Date, to end: Date, now: Date) -> Bool {
         guard kind == .indoor, phase == .running, let activeSince,
-              start >= activeSince, end > start, end <= now.addingTimeInterval(2),
+              start >= activeSince, end > start, end <= now,
               start.timeIntervalSince1970.isFinite, end.timeIntervalSince1970.isFinite,
               distance.isFinite, distance >= 0, addedSteps >= 0,
               distance <= 15 * end.timeIntervalSince(start) + 10,
               steps <= Int.max - addedSteps else { return false }
+        if let previous = indoorSegments.last?.last, start < previous.timestamp { return false }
+        if indoorSegments.isEmpty { indoorSegments.append([]) }
+        if indoorSegments.last?.isEmpty == true {
+            indoorSegments[indoorSegments.count - 1].append(RunningIndoorSample(timestamp: start, elapsedSeconds: elapsed(at: start),
+                                                                              distanceMeters: distanceMeters, steps: steps))
+        }
         addDistance(distance, fromElapsed: elapsed(at: start), toElapsed: elapsed(at: end))
         steps += addedSteps
+        indoorSegments[indoorSegments.count - 1].append(RunningIndoorSample(timestamp: end, elapsedSeconds: elapsed(at: end),
+                                                                          distanceMeters: distanceMeters, steps: steps))
         updatedAt = now
         revision += 1
         return true

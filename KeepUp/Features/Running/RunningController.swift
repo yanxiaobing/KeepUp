@@ -38,6 +38,7 @@ import Observation
     private var checkpointAction: (@MainActor (RunningSession) async -> Bool)?
     private var finishAction: (@MainActor (RunningSession) async -> Bool)?
     private var discardAction: (@MainActor (String) async -> Bool)?
+    private var weightProvider: @MainActor () -> Double? = { nil }
 
     init(source: any RunningLocationSource = RunningLocationSources.make(), motionSource: any RunningMotionSource = RunningMotionSources.make(), now: @escaping @MainActor () -> Date = { .now },
          settings: @escaping @MainActor () -> RunningSettings = { Defaults[.runningSettings] },
@@ -83,10 +84,12 @@ import Observation
 
     func configure(checkpoint: @escaping @MainActor (RunningSession) async -> Bool,
                    finish: @escaping @MainActor (RunningSession) async -> Bool,
-                   discard: @escaping @MainActor (String) async -> Bool) {
+                   discard: @escaping @MainActor (String) async -> Bool,
+                   weight: @escaping @MainActor () -> Double? = { nil }) {
         checkpointAction = checkpoint
         finishAction = finish
         discardAction = discard
+        weightProvider = weight
     }
 
     func restore(_ saved: RunningSession) {
@@ -188,6 +191,10 @@ import Observation
         }
         #endif
         session = RunningSession(startedAt: startedAt, kind: selectedKind)
+        if let weight = weightProvider(), weight.isFinite, (5...200).contains(weight) {
+            session?.weightKilograms = weight
+            session?.energyAlgorithmVersion = RunningMetrics.energyAlgorithmVersion
+        }
         isAutoPaused = false
         lastMovementAt = now()
         if let session { onEvent?(.started(session)) }
@@ -386,13 +393,13 @@ import Observation
             guard session?.phase == .running || isAutoPaused, authorization == .authorized,
                   let start = motionSubscriptionStart, reading.startedAt == start,
                   let previousTime = lastMotionAt, reading.measuredAt > previousTime,
+                  reading.measuredAt <= now(),
                   reading.distanceMeters.isFinite, reading.distanceMeters >= lastMotionDistance,
                   reading.steps >= lastMotionSteps else { return }
             let delta = reading.distanceMeters - lastMotionDistance
             let steps = reading.steps - lastMotionSteps
             if isAutoPaused {
-                guard reading.measuredAt <= now().addingTimeInterval(2),
-                      delta <= 15 * reading.measuredAt.timeIntervalSince(previousTime) + 10 else { return }
+                guard delta <= 15 * reading.measuredAt.timeIntervalSince(previousTime) + 10 else { return }
                 lastMotionAt = reading.measuredAt
                 lastMotionDistance = reading.distanceMeters
                 lastMotionSteps = reading.steps
