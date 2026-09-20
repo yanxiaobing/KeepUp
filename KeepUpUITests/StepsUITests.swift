@@ -3,10 +3,10 @@ import XCTest
 @MainActor final class StepsUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
-    private func launch(mode: String) -> XCUIApplication {
+    private func launch(mode: String, language: String = "en") -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding", "-reset-test-data", "-ui-testing-steps", mode,
-                               "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+                               "-AppleLanguages", "(\(language))", "-AppleLocale", language == "en" ? "en_US" : "zh_CN"]
         app.launch()
         XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
         return app
@@ -45,6 +45,10 @@ import XCTest
         XCTAssertTrue(app.staticTexts["steps.denied"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["steps.count"].label, "6,500")
         XCTAssertTrue(app.buttons["steps.settings"].exists)
+        XCTAssertTrue(app.buttons["steps.share"].isEnabled)
+        app.buttons["steps.share"].tap()
+        XCTAssertTrue(app.buttons["entry.saveImage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["entry.shareSystem"].exists)
     }
 
     func testUnsupportedDoesNotShowInventedZero() {
@@ -52,6 +56,7 @@ import XCTest
         openSteps(app)
         XCTAssertTrue(app.staticTexts["steps.unsupported"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["steps.count"].label, "—")
+        XCTAssertFalse(app.buttons["steps.share"].isEnabled)
     }
 
     func testPendingStepCardOpensMeasurementWithoutManualCheckIn() {
@@ -71,6 +76,37 @@ import XCTest
         XCTAssertFalse(app.staticTexts["steps.goalReached"].exists)
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "KeepUp-Steps-Pending-English"; shot.lifetime = .keepAlways; add(shot)
+    }
+
+    func testEnglishDetailsAndCardSharing() { verifySharing(language: "en") }
+    func testChineseDetailsAndCardSharing() { verifySharing(language: "zh-Hans") }
+
+    private func verifySharing(language: String) {
+        let app = launch(mode: "ready", language: language)
+        openSteps(app)
+        XCTAssertTrue(app.staticTexts["steps.count"].waitForExistence(timeout: 5))
+        let share = app.buttons["steps.share"]
+        XCTAssertTrue(share.waitForExistence(timeout: 5))
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: share)
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        share.tap()
+        XCTAssertTrue(app.buttons["entry.saveImage"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["entry.shareSystem"].exists)
+        app.buttons["entry.shareClose"].tap()
+        let picker = app.segmentedControls["steps.view"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        picker.buttons[language == "en" ? "Card" : "卡片"].tap()
+        XCTAssertTrue(app.staticTexts["steps.poster.count"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["steps.poster.count"].label, "6,500")
+        let cardShot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        cardShot.name = "Steps-Card-\(language)"; cardShot.lifetime = .keepAlways; add(cardShot)
+        share.tap()
+        XCTAssertTrue(app.buttons["entry.saveImage"].waitForExistence(timeout: 5))
+        let shareShot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shareShot.name = "Steps-Share-\(language)"; shareShot.lifetime = .keepAlways; add(shareShot)
+        app.buttons["entry.shareClose"].tap()
+        picker.buttons[language == "en" ? "Details" : "详情"].tap()
+        XCTAssertTrue(app.staticTexts["steps.count"].waitForExistence(timeout: 5))
     }
 
 }

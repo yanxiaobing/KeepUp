@@ -9,37 +9,51 @@ struct StepsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var controller: StepsController
     @State private var showingTarget = false
+    @State private var selectedStyle = StepsPosterStyle.details
+    @State private var shareImage: StepsShareImage?
+    @State private var shareFailed = false
     private let clock = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
-    init(day: LocalDay) {
+    init(day: LocalDay, followsToday: Bool? = nil) {
         self.day = day
-        _controller = State(initialValue: StepsController(day: day))
+        _controller = State(initialValue: StepsController(day: day, followsToday: followsToday))
     }
 
     private var selectedDay: LocalDay { controller.selectedDay }
-    private var count: Int? { controller.readings[selectedDay]?.steps ?? model.snapshot.steps[selectedDay.rawValue]?.steps }
-    private var distance: Double? {
-        if let reading = controller.readings[selectedDay] { return reading.distance }
-        return model.snapshot.steps[selectedDay.rawValue]?.distance
+    private var presentation: StepsPresentation {
+        StepsPresentation(day: selectedDay, reading: controller.readings[selectedDay],
+                          saved: model.snapshot.steps[selectedDay.rawValue], goal: StepsGoal.value(on: selectedDay))
     }
-    private var goal: Int? { model.snapshot.steps[selectedDay.rawValue]?.goal ?? StepsGoal.value(on: selectedDay) }
+    private var count: Int? { presentation.steps }
+    private var distance: Double? { presentation.distance }
+    private var goal: Int? { presentation.goal }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    summary
-                    status.padding(.horizontal, 24).padding(.vertical, 18)
-                    if let distance {
-                        VStack(spacing: 6) {
-                            Text((distance / 1_000).formatted(.number.precision(.fractionLength(2)).locale(locale)))
-                                .font(.system(size: 28, weight: .light))
-                            Text("unit.kilometers").font(.system(size: 12)).foregroundStyle(.secondary)
-                        }.frame(maxWidth: .infinity).padding(.bottom, 20).accessibilityLabel(Text("steps.distance"))
+                    Picker("steps.view", selection: $selectedStyle) {
+                        ForEach(StepsPosterStyle.allCases, id: \.self) { style in
+                            Text(LocalizedStringKey(style.titleKey)).tag(style)
+                        }
+                    }.pickerStyle(.segmented).padding(16).accessibilityIdentifier("steps.view")
+                    if selectedStyle == .details {
+                        summary
+                        status.padding(.horizontal, 24).padding(.vertical, 18)
+                        if let distance {
+                            VStack(spacing: 6) {
+                                Text((distance / 1_000).formatted(.number.precision(.fractionLength(2)).locale(locale)))
+                                    .font(.system(size: 28, weight: .light))
+                                Text("unit.kilometers").font(.system(size: 12)).foregroundStyle(.secondary)
+                            }.frame(maxWidth: .infinity).padding(.bottom, 20).accessibilityLabel(Text("steps.distance"))
+                        }
+                        history
+                        Image(model.snapshot.profile?.isMale == true ? "card_details_walk_male" : "card_details_walk_female")
+                            .resizable().scaledToFit().opacity(0.2).accessibilityHidden(true)
+                    } else {
+                        StepsPoster(data: presentation, style: .card, locale: locale, isMale: model.snapshot.profile?.isMale == true)
+                        status.padding(24)
                     }
-                    history
-                    Image(model.snapshot.profile?.isMale == true ? "card_details_walk_male" : "card_details_walk_female")
-                        .resizable().scaledToFit().opacity(0.2).accessibilityHidden(true)
                 }
             }.background(.white)
                 .navigationTitle("steps.title").navigationBarTitleDisplayMode(.inline)
@@ -51,7 +65,21 @@ struct StepsView: View {
                         Button { showingTarget = true } label: { Image("setting_ic_walk_target").resizable().frame(width: 22, height: 22) }
                             .accessibilityLabel(Text("steps.targetSettings")).accessibilityIdentifier("steps.target")
                     }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            guard let image = StepsPosterRenderer.render(data: presentation, style: selectedStyle, locale: locale,
+                                                                        isMale: model.snapshot.profile?.isMale == true) else {
+                                shareFailed = true; return
+                            }
+                            shareImage = StepsShareImage(image: image)
+                        } label: { Image(systemName: "square.and.arrow.up") }
+                            .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("steps.share").disabled(count == nil)
+                    }
                 }
+                .sheet(item: $shareImage) { EntrySharePreview(image: $0.image) }
+                .alert("error.title", isPresented: $shareFailed) {
+                    Button("action.ok", role: .cancel) {}
+                } message: { Text("entry.shareError") }
                 .sheet(isPresented: $showingTarget, onDismiss: { refresh() }) { StepTargetView() }
                 .task { refresh() }
                 .onDisappear { controller.stop() }
@@ -107,7 +135,7 @@ struct StepsView: View {
                 Button("steps.retry") { refresh() }.accessibilityIdentifier("steps.retry")
             case .ready: EmptyView()
             }
-            if model.snapshot.steps[selectedDay.rawValue] != nil && controller.state != .ready {
+            if presentation.isSaved && controller.state != .ready {
                 Text("steps.saved").font(.system(size: 12)).foregroundStyle(.secondary)
             }
             if controller.storageFailed {
@@ -138,3 +166,5 @@ struct StepsView: View {
         controller.refresh(requestPermission: requestPermission) { await model.saveSteps($0) }
     }
 }
+
+private struct StepsShareImage: Identifiable { let id = UUID(); let image: UIImage }

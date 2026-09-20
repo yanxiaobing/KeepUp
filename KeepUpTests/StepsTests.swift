@@ -142,3 +142,25 @@ private func waitForSteps(_ condition: () -> Bool) async {
     #expect(controller.needsDateRefresh(now: tomorrow, timeZone: otherZone))
     controller.stop()
 }
+
+@Test @MainActor func stepsHistoryOpenedTodayKeepsItsDateAcrossMidnight() async {
+    let zone = TimeZone.current
+    let day = stepsDay("2026-09-20")
+    let now = day.date(in: zone)
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = zone
+    let tomorrow = calendar.date(byAdding: .day, value: 1, to: now)!
+    let source = ControlledStepSource()
+    let controller = StepsController(day: day, source: source, now: now, followsToday: false)
+    var saves = 0
+    controller.refresh(now: now, timeZone: zone) { _ in saves += 1; return true }
+    await waitForSteps { saves == 7 }
+    #expect(controller.selectedDay == day)
+    #expect(controller.needsDateRefresh(now: tomorrow, timeZone: zone))
+    controller.refresh(now: tomorrow, timeZone: zone) { _ in saves += 1; return true }
+    await waitForSteps { saves == 14 }
+    #expect(controller.selectedDay == day)
+    #expect(controller.readings[day]?.day == day)
+    #expect(!controller.needsDateRefresh(now: tomorrow, timeZone: zone))
+    controller.stop()
+}

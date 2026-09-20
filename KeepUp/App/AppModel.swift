@@ -13,7 +13,7 @@ final class AppModel {
     private var reloadRequested = false
     private var hasRestoredRunning = false
     #if DEBUG
-    private var preparedRunningDetailsFixture = false
+    private var preparedUIFixtures = false
     #endif
     let running = RunningController()
     let runningVoice = RunningVoiceCoach()
@@ -65,13 +65,21 @@ final class AppModel {
             do {
                 try await repository.open()
                 #if DEBUG
-                if !preparedRunningDetailsFixture {
-                    preparedRunningDetailsFixture = true
+                if !preparedUIFixtures {
+                    preparedUIFixtures = true
                     let args = ProcessInfo.processInfo.arguments
                     if args.contains("-ui-testing"), args.contains("-reset-test-data"),
                        let index = args.firstIndex(of: "-ui-testing-running-details"), args.indices.contains(index + 1),
                        let kind = RunningKind(rawValue: args[index + 1]) {
                         try await repository.finishRunning(RunningDetailFixtures.make(kind: kind))
+                    }
+                    if args.contains("-ui-testing"), args.contains("-reset-test-data"), args.contains("-ui-testing-history-collapse") {
+                        for (id, text) in [("history.ui-long", (1...12).map { String(format: "Line %02d", $0) }.joined(separator: "\n")),
+                                           ("history.ui-short", "Short note")] {
+                            try await repository.add(CheckInDraft(id: id, cardID: "preset.exercise", day: LocalDay(date: .now),
+                                timeZoneID: TimeZone.current.identifier, quantity: 30, note: ""), now: .now)
+                            try await repository.saveContent(entryID: id, content: EntryContent(text: text), asDraft: false)
+                        }
                     }
                 }
                 #endif

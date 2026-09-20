@@ -25,13 +25,11 @@ struct HistoryView: View {
                                 Section {
                                     ForEach(model.entries(on: day)) { entry in
                                         if let card = model.card(for: entry) {
-                                            Button {
+                                            EntryRowView(entry: entry, card: card, content: model.snapshot.publishedContent(for: entry), hasDraft: model.snapshot.content[entry.id]?.draft != nil) {
                                                 if ["punchcard.1", "punchcard.2", "punchcard.96"].contains(entry.cardID) { detail = entry }
                                                 else if model.snapshot.publishedContent(for: entry).isEmpty || model.snapshot.content[entry.id]?.draft != nil { editing = entry }
                                                 else { detail = entry }
-                                            } label: {
-                                                EntryRowView(entry: entry, card: card, content: model.snapshot.publishedContent(for: entry), hasDraft: model.snapshot.content[entry.id]?.draft != nil)
-                                            }.buttonStyle(.plain).accessibilityIdentifier("entry.\(entry.id)")
+                                            }
                                                 .contextMenu {
                                                     Button("entry.viewCard") { detail = entry }.accessibilityIdentifier("entry.viewCard")
                                                     Button("content.edit") { editing = entry }.accessibilityIdentifier("entry.editContent")
@@ -65,7 +63,7 @@ struct HistoryView: View {
             }
             .background(Color(white: 246/255))
             .fullScreenCover(item: $detail) { entry in
-                if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
+                if entry.cardID == "punchcard.1" { StepsView(day: entry.day, followsToday: false) }
                 else if let card = model.card(for: entry) {
                     if ["punchcard.2", "punchcard.96"].contains(entry.cardID) { RunningRecordView(entry: entry, card: card) }
                     else { EntryDetailView(entry: entry, card: card) }

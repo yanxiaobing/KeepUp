@@ -173,6 +173,31 @@ final class EntryContentUITests: XCTestCase {
         shot("KeepUp-Theme-Preview-English")
     }
 
+    func testDeniedPhotoAccessOffersSettingsWithoutLosingPreview() throws {
+        let app = launch()
+        app.resetAuthorizationStatus(for: .photos)
+        // Reset may terminate the app; relaunch before opening the card.
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
+        addRecord(app); record(app).tap()
+        app.buttons["entry.share"].tap()
+        XCTAssertTrue(app.buttons["entry.saveImage"].waitForExistence(timeout: 5))
+        app.buttons["entry.saveImage"].tap()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deny = springboard.buttons.matching(NSPredicate(format: "label IN %@", ["Don’t Allow", "Don't Allow", "不允许"])).firstMatch
+        XCTAssertTrue(deny.waitForExistence(timeout: 10))
+        deny.tap()
+        XCTAssertTrue(app.alerts.buttons["entry.photoSettings"].waitForExistence(timeout: 10))
+        shot("KeepUp-Share-Photo-Denied-Settings")
+        app.alerts.buttons["OK"].tap()
+        XCTAssertTrue(app.buttons["entry.shareSystem"].isEnabled)
+        app.buttons["entry.saveImage"].tap()
+        XCTAssertTrue(app.alerts.buttons["entry.photoSettings"].waitForExistence(timeout: 5))
+        app.alerts.buttons["OK"].tap()
+        app.buttons["entry.shareClose"].tap()
+        XCTAssertTrue(app.buttons["entry.close"].waitForExistence(timeout: 5))
+    }
+
     func testSavePosterToPhotoLibrary() throws {
         let app = launch()
         addRecord(app); record(app).tap()

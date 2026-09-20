@@ -126,7 +126,7 @@ struct EntryPoster: View {
     }
 }
 
-private struct EntrySharePreview: View {
+struct EntrySharePreview: View {
     let image: UIImage
     @Environment(\.dismiss) private var dismiss
     @State private var sharing = false
@@ -150,6 +150,11 @@ private struct EntrySharePreview: View {
                 }
                 .sheet(isPresented: $sharing) { SystemImageShare(image: image) }
                 .alert("entry.share", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
+                    if message == "entry.photoDenied" {
+                        Button("steps.settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                        }.accessibilityIdentifier("entry.photoSettings")
+                    }
                     Button("action.ok") { message = nil }
                 } message: { Text(LocalizedStringKey(message ?? "entry.shareError")) }
         }

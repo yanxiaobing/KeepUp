@@ -16,9 +16,9 @@ final class StepsController {
     private var refreshedDay: LocalDay?
     private var refreshedZone: String?
 
-    init(day: LocalDay, source: any StepSource = StepSources.make(), now: Date = .now) {
+    init(day: LocalDay, source: any StepSource = StepSources.make(), now: Date = .now, followsToday: Bool? = nil) {
         selectedDay = day
-        followsToday = day == LocalDay(date: now)
+        self.followsToday = followsToday ?? (day == LocalDay(date: now))
         self.source = source
     }
 

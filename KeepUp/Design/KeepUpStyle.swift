@@ -63,38 +63,79 @@ struct EntryRowView: View {
     var content = EntryContent()
     var hasDraft = false
     var scale: CGFloat = 1
+    let action: () -> Void
+    @State private var isExpanded = false
+    @State private var textHeight: CGFloat = 0
+
+    // Match PunchCard's 108-point timeline preview using the rendered text height,
+    // so explicit newlines and different scripts fold at the same visual boundary.
+    private var foldedHeight: CGFloat { 108 * scale }
+    private var canExpand: Bool { !content.text.isEmpty && textHeight > foldedHeight + 0.5 }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 10 * scale) {
-            Image(card.whiteImage).resizable().frame(width: 40 * scale, height: 40 * scale)
-                .background(KeepUpStyle.theme.opacity(0.7), in: RoundedRectangle(cornerRadius: 4 * scale))
-                .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 0) {
+            Button(action: action) {
+                HStack(alignment: .top, spacing: 10 * scale) {
+                    Image(card.whiteImage).resizable().frame(width: 40 * scale, height: 40 * scale)
+                        .background(KeepUpStyle.theme.opacity(0.7), in: RoundedRectangle(cornerRadius: 4 * scale))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(spacing: 3) {
+                            Text(LocalizedStringKey(card.titleKey))
+                            if let quantity = entry.quantity {
+                                Text(quantity, format: .number.precision(.fractionLength(0...2)))
+                                    .foregroundStyle(Color(red: 245/255, green: 127/255, blue: 23/255))
+                                Text(LocalizedStringKey(entry.unit.titleKey))
+                            }
+                        }.font(.system(size: 13 * scale, weight: .bold)).frame(height: 40 * scale, alignment: .top)
+                        if let calories = ActivityEnergy.calories(entry: entry, card: card) {
+                            Text(ActivityEnergy.description(calories: calories, locale: locale))
+                                .font(.system(size: 12*scale)).foregroundStyle(Color(white: 0.43))
+                                .accessibilityIdentifier("energy.row")
+                        }
+                        if hasDraft { Text("content.draft").font(.system(size: 12*scale)).foregroundStyle(KeepUpStyle.accent).padding(.top, 8*scale) }
+                        if !content.text.isEmpty {
+                            Text(content.text)
+                                .font(.system(size: 15 * scale))
+                                .foregroundStyle(Color(white: 34/255).opacity(0.8))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { textHeight = $0 }
+                                .frame(maxHeight: isExpanded ? nil : foldedHeight, alignment: .top)
+                                .clipped()
+                                .padding(.top, 15 * scale)
+                        }
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                }.contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityIdentifier("entry.\(entry.id)")
+
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 3) {
-                    Text(LocalizedStringKey(card.titleKey))
-                    if let quantity = entry.quantity {
-                        Text(quantity, format: .number.precision(.fractionLength(0...2)))
-                            .foregroundStyle(Color(red: 245/255, green: 127/255, blue: 23/255))
-                        Text(LocalizedStringKey(entry.unit.titleKey))
-                    }
-                }.font(.system(size: 13 * scale, weight: .bold)).frame(height: 40 * scale, alignment: .top)
-                if let calories = ActivityEnergy.calories(entry: entry, card: card) {
-                    Text(ActivityEnergy.description(calories: calories, locale: locale))
-                        .font(.system(size: 12*scale)).foregroundStyle(Color(white: 0.43))
-                        .accessibilityIdentifier("energy.row")
+                if canExpand {
+                    Button {
+                        isExpanded.toggle()
+                    } label: {
+                        Text(isExpanded ? "history.collapse" : "history.expand")
+                            .font(.system(size: 14 * scale))
+                            .foregroundStyle(KeepUpStyle.theme)
+                            .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }.buttonStyle(.plain)
+                        .accessibilityIdentifier("history.toggle.\(entry.id)")
+                        .accessibilityValue(Text(isExpanded ? "history.expanded" : "history.collapsed"))
                 }
-                if hasDraft { Text("content.draft").font(.system(size: 12*scale)).foregroundStyle(KeepUpStyle.accent).padding(.top, 8*scale) }
-                if !content.text.isEmpty {
-                    Text(content.text).font(.system(size: 15 * scale)).foregroundStyle(Color(white: 34/255).opacity(0.8)).padding(.top, 15 * scale)
-                }
-                if let data = content.photo, let image = UIImage(data: data) {
-                    Image(uiImage: image).resizable().scaledToFill().frame(width: 100*scale, height: 100*scale).clipped().padding(.top, 15*scale)
-                        .accessibilityLabel(Text("content.photo")).accessibilityIdentifier("content.savedPhoto")
-                }
-                Text(entry.createdAt, format: .dateTime.hour().minute()).font(.system(size: 10 * scale))
-                    .foregroundStyle(Color(white: 34/255).opacity(0.3)).padding(.top, 20 * scale)
-            }
-            Spacer(minLength: 0)
+                Button(action: action) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if let data = content.photo, let image = UIImage(data: data) {
+                            Image(uiImage: image).resizable().scaledToFill().frame(width: 100*scale, height: 100*scale).clipped().padding(.top, 15*scale)
+                                .accessibilityLabel(Text("content.photo")).accessibilityIdentifier("content.savedPhoto")
+                        }
+                        Text(entry.createdAt, format: .dateTime.hour().minute()).font(.system(size: 10 * scale))
+                            .foregroundStyle(Color(white: 34/255).opacity(0.3)).padding(.top, 20 * scale)
+                    }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier("history.footer.\(entry.id)")
+            }.padding(.leading, 50 * scale)
         }.padding(15 * scale).frame(maxWidth: .infinity, alignment: .leading).background(.white)
-            .accessibilityElement(children: .combine)
+            .onChange(of: content) { isExpanded = false }
+            .onChange(of: entry.id) { isExpanded = false }
     }
 }
