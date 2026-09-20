@@ -63,7 +63,7 @@ struct EntryRow: TableCodable {
 }
 
 enum DatabaseSchema {
-    static let version = 6
+    static let version = 7
     private static let initializationLock = NSLock()
 
     static func prepare(_ database: Database) throws {
@@ -71,6 +71,7 @@ enum DatabaseSchema {
             let existingVersion = try database.getValue(from: StatementPragma().pragma(.userVersion))?.intValue ?? 0
             guard existingVersion <= version else { throw StoreError.newerSchema }
             try database.run(transaction: { handle in
+                try handle.create(table: StoreTables.stepRecords.name, of: StepRow.self)
                 try handle.create(table: StoreTables.weightOperations.name, of: WeightOperationRow.self)
                 try handle.create(table: StoreTables.weightTarget.name, of: WeightRow.self)
                 try handle.create(table: StoreTables.weightRecords.name, of: WeightRow.self)
@@ -180,5 +181,17 @@ struct WeightOperationRow: TableCodable {
         typealias Root = WeightOperationRow
         case id, entryID
         nonisolated(unsafe) static let objectRelationalMapping = TableBinding(CodingKeys.self) { BindColumnConstraint(id, isPrimary: true) }
+    }
+}
+
+struct StepRow: TableCodable {
+    var id: String
+    var payload: Data
+    enum CodingKeys: String, CodingTableKey {
+        typealias Root = StepRow
+        case id, payload
+        nonisolated(unsafe) static let objectRelationalMapping = TableBinding(CodingKeys.self) {
+            BindColumnConstraint(id, isPrimary: true)
+        }
     }
 }

@@ -54,7 +54,7 @@ struct ComposeEntryView: View {
                                     } else { Text("entry.enterValue") }
                                 }.font(.system(size: 12 * scale)).foregroundStyle(Color(white: 0.43)).fixedSize(horizontal: false, vertical: true)
                             } else {
-                                Text("entry.occurrence \(occurrence)").font(.system(size: 18 * scale, weight: .bold)).foregroundStyle(KeepUpStyle.accent)
+                                Text(verbatim: String(format: localized("entry.occurrence %lld", locale), Int64(occurrence))).font(.system(size: 18 * scale, weight: .bold)).foregroundStyle(KeepUpStyle.accent)
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }.padding(.horizontal, (isWake ? 25 : 15) * scale).frame(height: (isWake ? 69 : 94) * scale)

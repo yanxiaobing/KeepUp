@@ -89,7 +89,7 @@ struct CalendarTicketCard: View {
                                 .frame(width: (88*scale-8)/7, height: 2)
                         }
                     }.frame(maxWidth: .infinity).padding(.bottom, 19)
-                        .accessibilityLabel(Text("reminder.progressCount \(progress)"))
+                        .accessibilityLabel(Text(verbatim: String(format: localized("reminder.progressCount %lld", locale), Int64(progress))))
                         .accessibilityIdentifier("target.progress.\(card.id)")
                 }
             }

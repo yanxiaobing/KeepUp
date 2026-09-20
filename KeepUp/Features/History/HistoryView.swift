@@ -26,7 +26,8 @@ struct HistoryView: View {
                                     ForEach(model.entries(on: day)) { entry in
                                         if let card = model.card(for: entry) {
                                             Button {
-                                                if model.snapshot.publishedContent(for: entry).isEmpty || model.snapshot.content[entry.id]?.draft != nil { editing = entry }
+                                                if entry.cardID == "punchcard.1" { detail = entry }
+                                                else if model.snapshot.publishedContent(for: entry).isEmpty || model.snapshot.content[entry.id]?.draft != nil { editing = entry }
                                                 else { detail = entry }
                                             } label: {
                                                 EntryRowView(entry: entry, card: card, content: model.snapshot.publishedContent(for: entry), hasDraft: model.snapshot.content[entry.id]?.draft != nil)
@@ -64,7 +65,8 @@ struct HistoryView: View {
             }
             .background(Color(white: 246/255))
             .fullScreenCover(item: $detail) { entry in
-                if let card = model.card(for: entry) { EntryDetailView(entry: entry, card: card) }
+                if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
+                else if let card = model.card(for: entry) { EntryDetailView(entry: entry, card: card) }
             }
             .fullScreenCover(item: $editing) { entry in
                 if let card = model.card(for: entry) { EntryContentEditor(entry: entry, card: card) }

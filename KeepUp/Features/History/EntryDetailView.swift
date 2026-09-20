@@ -22,7 +22,7 @@ struct EntryDetailView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .accessibilityIdentifier("entry.poster")
             }.ignoresSafeArea(edges: .bottom)
-                .navigationTitle(Text("\(localized(card.titleKey, locale))\(locale.identifier.hasPrefix("zh") ? "详情" : " details")"))
+                .navigationTitle(Text(verbatim: String(format: localized("entry.detailTitle %@", locale), localized(card.titleKey, locale))))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
                 .toolbar {

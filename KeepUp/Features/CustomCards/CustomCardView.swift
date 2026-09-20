@@ -83,7 +83,7 @@ struct CustomCardView: View {
                 Image(CustomCardDraft.artworks[index]).resizable().frame(width: 165*s, height: 195*s)
                     .scaleEffect(scale).offset(x: radius*sin(offset/7 * .pi/2)*1.18*scale)
                     .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { imageIndex = index } }
-                    .accessibilityLabel(Text("custom.artwork \(index+1)")).accessibilityIdentifier("custom.artwork.\(index)")
+                    .accessibilityLabel(Text(verbatim: String(format: localized("custom.artwork %lld", locale), Int64(index + 1)))).accessibilityIdentifier("custom.artwork.\(index)")
             }
         }.frame(width: width, height: 195*s).clipped().contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 15).onEnded { value in

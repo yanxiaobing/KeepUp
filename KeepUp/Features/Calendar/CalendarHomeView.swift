@@ -66,14 +66,16 @@ struct CalendarHomeView: View {
             .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(isPresented: $showingTheme) { ThemeListView() }
             .fullScreenCover(item: $pendingCard) { card in
-                ComposeEntryView(card: card, day: pendingDay, onSaved: { pendingCard = nil }, onCancel: { pendingCard = nil })
+                if card.id == "punchcard.1" { StepsView(day: pendingDay) }
+                else { ComposeEntryView(card: card, day: pendingDay, onSaved: { pendingCard = nil }, onCancel: { pendingCard = nil }) }
             }
             .fullScreenCover(item: $reminderCard) { card in ReminderSettingsView(card: card, target: model.snapshot.targets.first { $0.cardID == card.id }) }
             .fullScreenCover(item: $scheduleDetail) { schedule in
                 if let card = model.snapshot.cards.first(where: { $0.id == schedule.cardID }) { ScheduledCardView(card: card, day: schedule.day, existing: schedule) }
             }
             .fullScreenCover(item: $detail) { entry in
-                if let card = model.card(for: entry) { EntryDetailView(entry: entry, card: card) }
+                if entry.cardID == "punchcard.1" { StepsView(day: entry.day) }
+                else if let card = model.card(for: entry) { EntryDetailView(entry: entry, card: card) }
             }
 
         }
@@ -200,7 +202,10 @@ struct CalendarHomeView: View {
                     }
                     ForEach(pendingCards.sorted { $0.id == "punchcard.63" && $1.id != "punchcard.63" }) { card in
                         CalendarInteractiveCard(identifier: "target.pending.\(card.id)", label: localized(card.titleKey, locale) + ", " + localized("reminder.todo", locale),
-                            actions: menuActions(card: card), tap: { checkInToday(card) }) {
+                            actions: menuActions(card: card), tap: {
+                                if card.id == "punchcard.1" { pendingDay = selectedDay; pendingCard = card }
+                                else { checkInToday(card) }
+                            }) {
                             CalendarTicketCard(card: card, scale: scale,
                                 badge: card.id == "punchcard.63" ? nil : localized("reminder.todo", locale),
                                 reminder: model.snapshot.targets.first { $0.cardID == card.id }?.reminderEnabled ?? false,

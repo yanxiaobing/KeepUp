@@ -15,6 +15,7 @@ protocol CheckInRepository: Sendable {
     func saveWeightTarget(_ target: WeightTarget, now: Date) async throws
     func saveSchedule(_ value: ScheduledCard, now: Date) async throws
     func deleteSchedule(id: String) async throws
+    func saveSteps(_ reading: StepReading, goal: Int?, now: Date) async throws
     func saveTarget(_ target: CardTarget) async throws
 }
 
@@ -55,8 +56,9 @@ actor LocalStore: CheckInRepository {
         let wakes: [WakeRow] = try database.table(StoreTables.wakeRecords).getObjects()
         let weightTargets: [WeightRow] = try database.table(StoreTables.weightTarget).getObjects(limit: 1)
         let weights: [WeightRow] = try database.table(StoreTables.weightRecords).getObjects()
+        let steps = try database.table(StoreTables.stepRecords).getObjects()
         return try LocalSnapshot(cards: cards.map { try $0.model() }, entries: entries.map { try $0.model() }, profile: profile, content: content,
-                                 targets: targets.map { try StoredJSON.decode(CardTarget.self, from: $0.payload) }, schedules: schedules.map { try $0.model() }, weightTarget: weightTargets.first.map { try StoredJSON.decode(WeightTarget.self, from: $0.payload) }, weights: Dictionary(uniqueKeysWithValues: weights.map { ($0.id, try StoredJSON.decode(WeightRecord.self, from: $0.payload)) }), wakeUps: Dictionary(uniqueKeysWithValues: wakes.map { ($0.id, try StoredJSON.decode(WakeUpRecord.self, from: $0.payload)) }), archivedCardIDs: Set(archived.map(\.id)))
+                                 targets: targets.map { try StoredJSON.decode(CardTarget.self, from: $0.payload) }, schedules: schedules.map { try $0.model() }, weightTarget: weightTargets.first.map { try StoredJSON.decode(WeightTarget.self, from: $0.payload) }, weights: Dictionary(uniqueKeysWithValues: weights.map { ($0.id, try StoredJSON.decode(WeightRecord.self, from: $0.payload)) }), wakeUps: Dictionary(uniqueKeysWithValues: wakes.map { ($0.id, try StoredJSON.decode(WakeUpRecord.self, from: $0.payload)) }), steps: Dictionary(uniqueKeysWithValues: steps.map { ($0.id, try StoredJSON.decode(StepRecord.self, from: $0.payload)) }), archivedCardIDs: Set(archived.map(\.id)))
     }
 
     func add(_ draft: CheckInDraft, now: Date = .now) throws {
@@ -64,6 +66,7 @@ actor LocalStore: CheckInRepository {
         guard let timeZone = TimeZone(identifier: draft.timeZoneID), draft.day <= LocalDay(date: now, timeZone: timeZone) else {
             throw StoreError.invalidDate
         }
+        guard draft.cardID != "punchcard.1" else { throw StoreError.invalidCard }
         guard draft.note.count <= 1000 else { throw StoreError.noteTooLong }
         if draft.cardID == "punchcard.50" { try saveWeight(draft, now: now); return }
         let rows: [CardRow] = try database.table(StoreTables.cards).getObjects(where: CardRow.Properties.id == draft.cardID, limit: 1)
@@ -101,7 +104,16 @@ actor LocalStore: CheckInRepository {
 
     func delete(id: String) throws {
         guard let database else { throw StoreError.notOpen }
+        let entry = try database.table(StoreTables.entries).getObjects(where: EntryRow.Properties.id == id, limit: 1).first
+        var stepDeletion: StepRow?
+        if let entry, entry.cardID == "punchcard.1",
+           let row = try database.table(StoreTables.stepRecords).getObjects(where: StepRow.Properties.id == entry.day, limit: 1).first {
+            var record = try StoredJSON.decode(StepRecord.self, from: row.payload)
+            record.checkInDeleted = true
+            stepDeletion = StepRow(id: row.id, payload: try StoredJSON.encode(record))
+        }
         try database.run(transaction: { handle in
+            if let stepDeletion { try handle.insertOrReplace(stepDeletion, intoTable: StoreTables.stepRecords.name) }
             try handle.delete(fromTable: StoreTables.weightOperations.name, where: WeightOperationRow.Properties.entryID == id)
             try handle.delete(fromTable: StoreTables.weightRecords.name, where: WeightRow.Properties.id == id)
             try handle.delete(fromTable: StoreTables.wakeRecords.name, where: WakeRow.Properties.id == id)

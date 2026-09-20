@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import UserNotifications
 
 enum AppLanguage: String, CaseIterable {
@@ -22,6 +23,9 @@ enum AppLanguage: String, CaseIterable {
 struct KeepUpApp: App {
     @Default(.appLanguage) private var language
     @Default(.themeID) private var themeID
+    @Default(.stepGoalChanges) private var stepGoalChanges
+    @State private var stepMonitor = StepsController(day: LocalDay(date: .now))
+    private let stepClock = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
     @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab = AppTab.calendar
@@ -56,6 +60,15 @@ struct KeepUpApp: App {
                         await ReminderScheduler.shared.synchronize(model.snapshot, locale: (AppLanguage(rawValue: language) ?? .system).locale)
                     }
                 }
+                .task(id: "\(model.isReady)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
+                    refreshStepMonitoring()
+                }
+                .onReceive(stepClock) { _ in
+                    guard scenePhase == .active, model.isReady else { return }
+                    if stepMonitor.needsDateRefresh() || stepMonitor.state == .permission || stepMonitor.state == .failed {
+                        refreshStepMonitoring()
+                    }
+                }
                 #if DEBUG
                 .transformEnvironment(\.dynamicTypeSize) { size in
                     if ProcessInfo.processInfo.arguments.contains("-ui-testing-large-type") { size = .accessibility3 }
@@ -64,4 +77,15 @@ struct KeepUpApp: App {
                 #endif
         }
     }
+
+    private func refreshStepMonitoring() {
+        guard scenePhase == .active, model.isReady,
+              StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges) != nil else {
+            stepMonitor.stop()
+            return
+        }
+        // A configured goal enables foreground monitoring; permission is requested only from StepsView.
+        stepMonitor.refresh { await model.saveSteps($0) }
+    }
+
 }

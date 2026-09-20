@@ -23,6 +23,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMotionUsageDescription</key>
+	<string>Read your steps and walking distance to track your daily goal.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo for your profile or check-in record.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

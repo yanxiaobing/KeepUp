@@ -43,7 +43,7 @@
 - 自己的 Keychain 命名空间；不继承原项目共享 Keychain access group。
 - 自己的内购产品、广告 App ID / 广告位、统计项目与远程配置路径。
 - 不复制旧项目密钥、生产配置、收据验证秘密或用户数据。
-- 尚无共享扩展需求，不提前增加 App Group。
+- 已按用户要求配置 App Group `group.com.bestlife.keepup`；目前数据库与偏好仍保留原位置，待明确扩展共享数据后设计迁移。
 
 ## 尚待后续接入的信息
 

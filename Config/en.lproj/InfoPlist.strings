@@ -2,3 +2,5 @@
 "NSPhotoLibraryUsageDescription" = "Choose a photo for your profile or check-in record.";
 
 "NSPhotoLibraryAddUsageDescription" = "Save your KeepUp record cards to Photos.";
+
+"NSMotionUsageDescription" = "Read your steps and walking distance to track your daily goal.";

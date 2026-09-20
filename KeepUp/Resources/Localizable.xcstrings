@@ -1,25 +1,19 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "%@%@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@%2$@"
-          }
-        }
-      }
-    },
-    "-": {},
-    "6:32": {},
-    ":": {},
     "BMI=%@, %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
-            "state": "new",
+            "state": "translated",
             "value": "BMI=%1$@, %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BMI=%1$@，%2$@"
           }
         }
       }
@@ -28,9 +22,6 @@
       "extractionState": "manual",
       "shouldTranslate": false
     },
-    "Time for your check-in!": {},
-    "To do": {},
-    "Wednesday, September 13": {},
     "action.back": {
       "extractionState": "manual",
       "localizations": {
@@ -1023,7 +1014,6 @@
         }
       }
     },
-    "custom.artwork %@": {},
     "custom.artwork %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -2655,6 +2645,23 @@
         }
       }
     },
+    "entry.detailTitle %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ details"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@详情"
+          }
+        }
+      }
+    },
     "entry.details": {
       "extractionState": "manual",
       "localizations": {
@@ -2756,9 +2763,8 @@
         }
       }
     },
-    "entry.occurrence %@": {},
     "entry.occurrence %lld": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3095,7 +3101,6 @@
         }
       }
     },
-    "iCloud": {},
     "info.avatarHint": {
       "localizations": {
         "en": {
@@ -5294,9 +5299,8 @@
         }
       }
     },
-    "profile.streakFormat %@": {},
     "profile.streakFormat %lld": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5514,6 +5518,23 @@
         }
       }
     },
+    "reminder.openSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开系统设置"
+          }
+        }
+      }
+    },
     "reminder.permissionDenied": {
       "extractionState": "manual",
       "localizations": {
@@ -5527,6 +5548,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "请在系统设置中允许 KeepUp 发送通知后再启用提醒。本次修改尚未保存。"
+          }
+        }
+      }
+    },
+    "reminder.permissionDisabled": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications are off. Enable them in Settings to receive reminders."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通知权限已关闭，开启后才能收到提醒。"
           }
         }
       }
@@ -5582,7 +5620,6 @@
         }
       }
     },
-    "reminder.progressCount %@": {},
     "reminder.progressCount %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -5918,6 +5955,380 @@
           "stringUnit": {
             "state": "translated",
             "value": "连续天数"
+          }
+        }
+      }
+    },
+    "steps.authorize": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow step access"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许读取步数"
+          }
+        }
+      }
+    },
+    "steps.dailyGoal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily step goal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日走路目标"
+          }
+        }
+      }
+    },
+    "steps.denied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Motion & Fitness access in Settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请在系统设置中允许访问运动与健身。"
+          }
+        }
+      }
+    },
+    "steps.distance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Walking distance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "行走距离"
+          }
+        }
+      }
+    },
+    "steps.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t read steps. Please try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时无法读取步数，请重试。"
+          }
+        }
+      }
+    },
+    "steps.goal %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal: %lld steps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标 %lld 步"
+          }
+        }
+      }
+    },
+    "steps.goalFirst": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first goal takes effect immediately."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "首次设置的目标立即生效。"
+          }
+        }
+      }
+    },
+    "steps.goalReached": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Goal reached"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标已达成"
+          }
+        }
+      }
+    },
+    "steps.goalTomorrow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes take effect tomorrow."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修改的目标明天生效。"
+          }
+        }
+      }
+    },
+    "steps.loading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading steps…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在读取步数…"
+          }
+        }
+      }
+    },
+    "steps.noData": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No record yet"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂无记录"
+          }
+        }
+      }
+    },
+    "steps.permission": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Motion & Fitness access to show steps recorded by this iPhone."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授权运动与健身后，显示手机记录的步数。"
+          }
+        }
+      }
+    },
+    "steps.recent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 7 days"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近 7 天"
+          }
+        }
+      }
+    },
+    "steps.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重试"
+          }
+        }
+      }
+    },
+    "steps.saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved record"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已保存的记录"
+          }
+        }
+      }
+    },
+    "steps.settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置"
+          }
+        }
+      }
+    },
+    "steps.syncHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steps sync while the app is open, including available records from the last 7 days. Reaching your goal checks you in automatically."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开 App 时同步步数，并补齐最近 7 天内可读取的记录。达成目标后自动打卡。"
+          }
+        }
+      }
+    },
+    "steps.targetSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计步卡设置"
+          }
+        }
+      }
+    },
+    "steps.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计步"
+          }
+        }
+      }
+    },
+    "steps.today": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today’s steps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日步数"
+          }
+        }
+      }
+    },
+    "steps.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No step data is available for this date."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该日期暂无可读取的步数。"
+          }
+        }
+      }
+    },
+    "steps.unsupported": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step counting is unavailable on this device."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备不支持计步。"
           }
         }
       }
@@ -6833,9 +7244,8 @@
         }
       }
     },
-    "wake.streak %@": {},
     "wake.streak %lld": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {

@@ -32,6 +32,7 @@ private actor SuspendedRepository: CheckInRepository {
     func saveWeightTarget(_ target: WeightTarget, now: Date) async throws {}
     func saveSchedule(_ value: ScheduledCard, now: Date) async throws {}
     func deleteSchedule(id: String) async throws {}
+    func saveSteps(_ reading: StepReading, goal: Int?, now: Date) async throws {}
     func saveTarget(_ target: CardTarget) async throws {}
     func saveProfile(_ profile: UserProfile) async throws {}
     func updateProfile(_ change: ProfileChange, now: Date) async throws {}

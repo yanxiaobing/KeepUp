@@ -6,6 +6,7 @@ struct StoreTable<Row: TableCodable>: Sendable {
 }
 
 enum StoreTables {
+    static let stepRecords = StoreTable<StepRow>(name: "step_records")
     static let cards = StoreTable<CardRow>(name: "cards")
     static let entries = StoreTable<EntryRow>(name: "entries")
     static let profile = StoreTable<ProfileRow>(name: "profile")

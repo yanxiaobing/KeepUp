@@ -9,6 +9,7 @@ struct CardCatalogView: View {
     @State private var search = ""
     @State private var category = Category.recommended
     @State private var scheduledCard: HabitCard?
+    @State private var showingSteps = false
     @State private var wakeIntro = false
     @State private var wakeReminder = false
     @State private var selectedCard: HabitCard?
@@ -89,6 +90,7 @@ struct CardCatalogView: View {
                             .transition(.opacity).zIndex(1)
                     }
                 }
+                .fullScreenCover(isPresented: $showingSteps) { StepsView(day: day) }
                 .fullScreenCover(item: $scheduledCard) { card in
                     ScheduledCardView(card: card, day: day, existing: model.snapshot.schedules.first { $0.cardID == card.id && $0.day == day }, onSaved: { dismiss() })
                 }
@@ -204,8 +206,9 @@ struct CardCatalogView: View {
             if model.entries(on: day).contains(where: { $0.cardID == card.id }) { pendingFeature = "wake.duplicate"; return }
             if !model.snapshot.targets.contains(where: { $0.cardID == card.id && $0.isPinned }) { wakeIntro = true; return }
         }
-        // Sensor / GPS / weight use specialized flows in the source app.
-        guard ![1,2,96].contains(OriginalCatalog.item(card)?.number ?? 0) else {
+        if card.id == "punchcard.1" { showingSteps = true; return }
+        // GPS uses specialized flows in the source app.
+        guard ![2,96].contains(OriginalCatalog.item(card)?.number ?? 0) else {
             pendingFeature = card.titleKey; return
         }
         selectedCard = card

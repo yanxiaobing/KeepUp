@@ -3763,5 +3763,25 @@
     "source": "Assets.xcassets/XBCalendar/color/5fdcc9.imageset/Contents.json",
     "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/5fdcc9.imageset/Contents.json",
     "sha256": "be6fb7622dda13b1ee1eec1e6ede747436b251ddc8be0ebd7d022c52cc4bd12b"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_details_walk_male.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_details_walk_male.imageset/Contents.json",
+    "sha256": "a9bd1a375ea0197e86301680e0b17629ce8cb0eea49f77248843e85a110d69b1"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_details_walk_male.imageset/card_details_walk_male@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_details_walk_male.imageset/card_details_walk_male@2x.png",
+    "sha256": "9d1068c87203484113dbb8fc7f7da777d30c527cd8773a46ec1cc98543d23e03"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_details_walk_female.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_details_walk_female.imageset/Contents.json",
+    "sha256": "5ac567751fdf487f2f1d9fc7ebca3801c5153b31d3e2300ed31fd720e31e607a"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_details_walk_female.imageset/card_details_walk_female@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_details_walk_female.imageset/card_details_walk_female@2x.png",
+    "sha256": "8f22bc7978cbb3cbe19e34344c084375dbdb5c51ce275f734138f02ea048e9e4"
   }
 ]

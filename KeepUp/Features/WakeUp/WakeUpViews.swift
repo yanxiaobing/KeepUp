@@ -81,7 +81,7 @@ struct WakeUpPoster: View {
                 Text(timeText).font(.system(size: 15*s)).frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 15*s).padding(.top, 20*s)
                 WakeUpClock(time: record.time, timeZoneID: record.timeZoneID).frame(width: 200*s, height: 200*s).padding(.top, 54*s)
                 VStack(spacing: 12*s) {
-                    if record.isEarly { Text("wake.streak \(streak)").font(.system(size: 24*s)) }
+                    if record.isEarly { Text(verbatim: String(format: localized("wake.streak %lld", locale), Int64(streak))).font(.system(size: 24*s)) }
                     else { Text("wake.missed").font(.system(size: 24*s)) }
                     if record.isEarly { Text("wake.encouragement").font(.system(size: 14*s)) }
                     else { Text(String(format: localized("wake.actualTime %@", locale), actualTimeText)).font(.system(size: 14*s)) }

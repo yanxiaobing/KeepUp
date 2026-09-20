@@ -33,6 +33,17 @@ final class AppModel {
         } while reloadRequested
     }
 
+    func saveSteps(_ reading: StepReading) async -> Bool {
+        do {
+            try await repository.saveSteps(reading, goal: StepsGoal.value(on: reading.day), now: .now)
+            await load()
+            return true
+        } catch {
+            actionError = (error as? StoreError)?.messageKey ?? "error.storage"
+            return false
+        }
+    }
+
     func add(_ draft: CheckInDraft) async -> Bool {
         do { try await repository.add(draft, now: .now) }
         catch {

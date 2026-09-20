@@ -1,10 +1,14 @@
 import SwiftUI
+import UserNotifications
 
 struct ReminderSettingsView: View {
     let card: HabitCard
     @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
+    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @State private var value: CardTarget
     @State private var original: CardTarget
     @State private var saving = false
@@ -31,6 +35,9 @@ struct ReminderSettingsView: View {
                         separator
                         VStack(spacing: 0) {
                             Toggle("reminder.alarm", isOn: $value.reminderEnabled).frame(height: 18*s).accessibilityIdentifier("reminder.enabled")
+                            if value.reminderEnabled && authorizationStatus == .denied {
+                                ReminderPermissionNotice().padding(.top, 16*s)
+                            }
                             Button { timePicker = true } label: {
                                 HStack(spacing: 15) {
                                     Text(value.timeText).font(.system(size: 45*s))
@@ -62,6 +69,9 @@ struct ReminderSettingsView: View {
                     }.font(.system(size: 16*s)).foregroundStyle(ink).tint(Color(red: 251/255, green: 192/255, blue: 45/255)).background(.white)
                 }.background(Color(white: 246/255))
             }
+            .task(id: scenePhase) {
+                if scenePhase == .active { authorizationStatus = await ReminderScheduler.shared.authorizationStatus() }
+            }
             .navigationTitle("reminder.title").navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
@@ -88,7 +98,12 @@ struct ReminderSettingsView: View {
                 }.presentationDetents([.height(300)])
             }
             .alert("error.title", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
-                Button("action.ok") {}
+                if error == "reminder.permissionDenied", authorizationStatus == .denied {
+                    Button("reminder.openSettings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    }
+                }
+                Button("action.ok", role: .cancel) {}
             } message: { Text(LocalizedStringKey(error ?? "error.storage")) }
         }
     }
@@ -103,16 +118,16 @@ struct ReminderSettingsView: View {
             .overlay(alignment: .topLeading) {
                 if !locale.identifier.hasPrefix("zh") {
                     if asset == "alarm_clock_set_tips_a_ic" {
-                        Text("To do").font(.system(size: 14*s)).foregroundStyle(.white)
+                        Text(verbatim: "To do").font(.system(size: 14*s)).foregroundStyle(.white)
                             .frame(width: 46*s, height: 23*s).background(Color(white: 0.72), in: UnevenRoundedRectangle(topLeadingRadius: 6*s, bottomTrailingRadius: 9*s))
                             .offset(x: 31*s, y: 11*s)
                     } else if asset == "alarm_clock_set_tips_b_ic" {
                         VStack(spacing: 4*s) {
-                            Text("6:32").font(.system(size: 24*s, weight: .ultraLight)).padding(.top, 20*s)
-                            Text("Wednesday, September 13").font(.system(size: 6*s))
+                            Text(verbatim: "6:32").font(.system(size: 24*s, weight: .ultraLight)).padding(.top, 20*s)
+                            Text(verbatim: "Wednesday, September 13").font(.system(size: 6*s))
                             VStack(alignment: .leading, spacing: 3*s) {
                                 Text("KeepUp").font(.system(size: 6*s, weight: .bold))
-                                Text("Time for your check-in!").font(.system(size: 7*s))
+                                Text(verbatim: "Time for your check-in!").font(.system(size: 7*s))
                             }.foregroundStyle(Color(white: 0.25)).padding(5*s).frame(maxWidth: .infinity, alignment: .leading)
                                 .background(.white.opacity(0.75), in: RoundedRectangle(cornerRadius: 5*s)).padding(.horizontal, 3*s).padding(.top, 6*s)
                             Spacer(minLength: 0)
@@ -132,8 +147,13 @@ struct ReminderSettingsView: View {
         saving = true; defer { saving = false }
         if value.reminderEnabled {
             do {
-                guard try await ReminderScheduler.shared.requestPermission() else { error = "reminder.permissionDenied"; return }
-            } catch { self.error = "reminder.permissionDenied"; return }
+                let granted = try await ReminderScheduler.shared.requestPermission()
+                authorizationStatus = await ReminderScheduler.shared.authorizationStatus()
+                guard granted else { error = "reminder.permissionDenied"; return }
+            } catch {
+                authorizationStatus = await ReminderScheduler.shared.authorizationStatus()
+                self.error = "reminder.permissionDenied"; return
+            }
         }
         if await model.saveTarget(value) { dismiss() }
         else { error = model.actionError; model.actionError = nil }
@@ -144,11 +164,16 @@ struct ReminderListView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @State private var selected: HabitCard?
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 0) {
+                    if authorizationStatus == .denied && model.snapshot.targets.contains(where: \.reminderEnabled) {
+                        ReminderPermissionNotice().padding(15)
+                    }
                     ForEach(model.snapshot.targets) { target in
                         if let card = model.snapshot.cards.first(where: { $0.id == target.cardID }) {
                             Button { selected = card } label: {
@@ -167,6 +192,8 @@ struct ReminderListView: View {
                     }
                     if model.snapshot.targets.isEmpty { Text("reminder.empty").font(.system(size: 14)).foregroundStyle(.secondary).padding(40) }
                 }
+            }.task(id: scenePhase) {
+                if scenePhase == .active { authorizationStatus = await ReminderScheduler.shared.authorizationStatus() }
             }.background(Color(white: 246/255)).navigationTitle("profile.alarms").navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { dismiss() }.accessibilityIdentifier("reminder.listClose") } }
@@ -176,5 +203,21 @@ struct ReminderListView: View {
     private func days(_ target: CardTarget) -> String {
         var calendar = Calendar(identifier: .gregorian); calendar.locale = locale
         return target.weekdays.map { calendar.shortStandaloneWeekdaySymbols[$0 % 7] }.joined(separator: " · ")
+    }
+}
+
+private struct ReminderPermissionNotice: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("reminder.permissionDisabled", systemImage: "bell.slash")
+                .font(.footnote).foregroundStyle(.secondary)
+            Button("reminder.openSettings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            }.font(.footnote.weight(.semibold)).accessibilityIdentifier("reminder.openSettings")
+        }.frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12).background(Color.yellow.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+            .accessibilityIdentifier("reminder.permissionNotice")
     }
 }

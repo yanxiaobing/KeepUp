@@ -48,6 +48,7 @@ struct LocalSnapshot: Sendable {
     var weightTarget: WeightTarget? = nil
     var weights: [String: WeightRecord] = [:]
     var wakeUps: [String: WakeUpRecord] = [:]
+    var steps: [String: StepRecord] = [:]
     var archivedCardIDs: Set<String> = []
     static let empty = LocalSnapshot(cards: [], entries: [])
 }

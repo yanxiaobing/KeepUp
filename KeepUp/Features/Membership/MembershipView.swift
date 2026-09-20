@@ -110,7 +110,7 @@ struct MembershipView: View {
     private func cloud(_ s: CGFloat) -> some View {
         ZStack {
             Image(systemName: "icloud").font(.system(size: 110*s, weight: .thin)).imageScale(.small)
-            Text("iCloud").font(.system(size: 15*s, weight: .heavy, design: .monospaced)).offset(y: 15*s)
+            Text(verbatim: "iCloud").font(.system(size: 15*s, weight: .heavy, design: .monospaced)).offset(y: 15*s)
             Image(systemName: "arrow.up.arrow.down").font(.system(size: 20*s, weight: .bold)).imageScale(.small).offset(x: 15*s, y: -14*s)
             VStack(spacing: 8*s) {
                 HStack(spacing: 130*s) {
@@ -204,7 +204,7 @@ struct MembershipView: View {
         let values = [remaining/3600, remaining%3600/60, remaining%60]
         return HStack(spacing: 0) {
             ForEach(0..<3) { index in
-                if index > 0 { Text(":").frame(width: 11*s) }
+                if index > 0 { Text(verbatim: ":").frame(width: 11*s) }
                 Text(String(format: "%02d", values[index])).frame(width: 18*s, height: 20*s)
                     .background(LinearGradient(colors: [.white.opacity(0.1), .white.opacity(0.25)], startPoint: .top, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 3*s))
             }

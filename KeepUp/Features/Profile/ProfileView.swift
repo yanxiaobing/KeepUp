@@ -2,8 +2,11 @@ import SwiftUI
 
 struct ProfileView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.locale) private var locale
     @State private var showMembership = false
     @State private var showPersonalInfo = false
+    @Default(.stepGoalChanges) private var stepGoalChanges
+    @State private var showStepsTarget = false
     @State private var showWeightTarget = false
     @State private var showReminders = false
     @State private var pendingFeature: String?
@@ -22,7 +25,7 @@ struct ProfileView: View {
                         }
                         VStack(spacing: 0) {
                             row("profile.weightTarget", subtitle: model.snapshot.weightTarget.map { String(format: "%.1fkg", $0.target) } ?? "profile.noTarget", image: "setting_ic_weight_target", scale: scale)
-                            row("profile.stepTarget", subtitle: "profile.noSteps", image: "setting_ic_walk_target", scale: scale)
+                            row("profile.stepTarget", subtitle: StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges).map { String(format: localized("steps.goal %lld", locale), Int64($0)) } ?? "profile.noSteps", image: "setting_ic_walk_target", scale: scale)
                             row("profile.alarms", subtitle: nil, image: "setting_ic_manageclock", scale: scale)
                         }
                         VStack(spacing: 0) {
@@ -46,6 +49,7 @@ struct ProfileView: View {
                     }
             }.background(alignment: .top) { KeepUpStyle.theme.ignoresSafeArea(edges: .top) }
                 .toolbar(.hidden, for: .navigationBar)
+                .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
                 .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
                 .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
                 .fullScreenCover(isPresented: $showPersonalInfo) { ProfileInfoView() }
@@ -71,18 +75,18 @@ struct ProfileView: View {
                         .clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2.5 * scale))
                         .overlay(alignment: .bottomTrailing) { Image(model.snapshot.profile?.isMale == true ? "personal_ic_boy" : "personal_ic_girl").resizable().frame(width: 20 * scale, height: 20 * scale) }
                 }.offset(x: 20 * scale, y: -35 * scale)
-                Text("profile.streakFormat \(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))")
+                Text(verbatim: String(format: localized("profile.streakFormat %lld", locale), Int64(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))))
                     .font(.system(size: 13 * scale, weight: .bold)).foregroundStyle(.white).padding(.horizontal, 3 * scale)
                     .frame(height: 18 * scale).background(KeepUpStyle.accent, in: RoundedRectangle(cornerRadius: 2 * scale))
                     .offset(x: 100 * scale, y: 17 * scale)
-                HStack(spacing: 4) { if let name = model.snapshot.profile?.nickname, !name.isEmpty { Text(name) } else { Text("profile.nickname") }; Text("-"); Text("profile.welcome") }
+                HStack(spacing: 4) { if let name = model.snapshot.profile?.nickname, !name.isEmpty { Text(name) } else { Text("profile.nickname") }; Text(verbatim: "-"); Text("profile.welcome") }
                     .font(.system(size: 16 * scale)).offset(x: 20 * scale, y: 50 * scale)
             }.frame(height: 90 * scale)
         }.frame(height: 190 * scale)
             .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3) }
     }
     private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat) -> some View {
-        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.weightTarget" { showWeightTarget = true } else if title == "profile.alarms" { showReminders = true } else { pendingFeature = title } } label: {
+        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { showStepsTarget = true } else if title == "profile.weightTarget" { showWeightTarget = true } else if title == "profile.alarms" { showReminders = true } else { pendingFeature = title } } label: {
             HStack(spacing: 15 * scale) {
                 Image(image).resizable().frame(width: 18 * scale, height: 18 * scale)
                 Text(LocalizedStringKey(title)).font(.system(size: 14 * scale))
