@@ -24,6 +24,7 @@ struct KeepUpApp: App {
     @Default(.appLanguage) private var language
     @Default(.themeID) private var themeID
     @Default(.stepGoalChanges) private var stepGoalChanges
+    @Default(.runningSettings) private var runningSettings
     @State private var stepMonitor = StepsController(day: LocalDay(date: .now))
     private let stepClock = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
     @State private var model: AppModel
@@ -66,6 +67,8 @@ struct KeepUpApp: App {
                 .onChange(of: scenePhase) { _, _ in
                     if model.running.session != nil { Task { await model.running.tick() } }
                 }
+                .onChange(of: runningSettings) { _, _ in model.refreshRunningSettings() }
+                .onChange(of: language) { _, _ in model.refreshRunningSettings() }
                 .onReceive(stepClock) { _ in
                     guard scenePhase == .active, model.isReady else { return }
                     if stepMonitor.needsDateRefresh() || stepMonitor.state == .permission || stepMonitor.state == .failed {

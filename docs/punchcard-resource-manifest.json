@@ -3858,5 +3858,450 @@
     "source": "Assets.xcassets/RunIcon/running_pre_indoor_des.imageset/running_pre_indoor_des@2x.png",
     "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_pre_indoor_des.imageset/running_pre_indoor_des@2x.png",
     "sha256": "836974f8634429e74343c8dee3959692d8960c4d967a2efaf02483286bd61715"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_setting.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_setting.imageset/Contents.json",
+    "sha256": "d4f704d4ac0ec0440a482c36ffb6641b88ebf8fa509d7ef05b8a040de1c0a7cc"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_setting.imageset/running_setting.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_setting.imageset/running_setting.png",
+    "sha256": "a55c51d28c923925e7b0ccaa6773f8bc1dce99136316b57203775975bef2b431"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_lock.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_lock.imageset/Contents.json",
+    "sha256": "73879aee28f925b8762b26857a30d26497f70ba279ee54ae6d719aa928eaeb1c"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/running_lock.imageset/running_lock@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_lock.imageset/running_lock@2x.png",
+    "sha256": "423875b037fd578eab9125f81218ebd7b6eaa39bea5a1d015856987412a277b9"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/RunSet/setting_icon_voice.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/setting_icon_voice.imageset/Contents.json",
+    "sha256": "c03531a6e6ae0f520deb9dc1779c9cf3c898df7b1cd55f3b6cd23a4469d85194"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/RunSet/setting_icon_voice.imageset/setting_icon_voice.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/setting_icon_voice.imageset/setting_icon_voice.png",
+    "sha256": "ccdf964b73ef2c3a8f52328e928c128e017dd8f402f3aa660e47028fdf79c552"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/RunSet/setting_icon_sound.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/setting_icon_sound.imageset/Contents.json",
+    "sha256": "4f9d409d7ac7ef1587c7acbd07645856277ac277d8ff2a7a3db8937aad790829"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/RunSet/setting_icon_sound.imageset/setting_icon_sound.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/setting_icon_sound.imageset/setting_icon_sound.png",
+    "sha256": "a5acec6f6d8b618c481027329c656fdf85c5e912d6f2a38627e1a4d64f208fa9"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/RunSet/setting_icon_map.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/setting_icon_map.imageset/Contents.json",
+    "sha256": "9207bb7047e977d93c1a2648b3c1a6ceaaeaac02490f2107c502fd802feda8b9"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/RunSet/setting_icon_map.imageset/setting_icon_map.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/setting_icon_map.imageset/setting_icon_map.png",
+    "sha256": "70bf9aa5bdae521c4a43aa228673ccf9885eb4af8f924f667288ef7a680a20c1"
+  },
+  {
+    "source": "Resource/audio.bundle/alert.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/alert.mp3",
+    "sha256": "4080e9cf5e1eda3da3383c7eb683e18c2e699542d54995e03be6b3e73b1d29a9"
+  },
+  {
+    "source": "Resource/audio.bundle/complete.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/complete.mp3",
+    "sha256": "600e24bc70f76ae3d345af79ca37d904c7b813d6755ff4fd1284eb4d38ddf13b"
+  },
+  {
+    "source": "Resource/audio.bundle/continue.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/continue.mp3",
+    "sha256": "b3fc08890f9c1bf6befc51ec3534c69a2198d737a12466e585844833077653ff"
+  },
+  {
+    "source": "Resource/audio.bundle/countdownone.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/countdownone.mp3",
+    "sha256": "670d92660678736a65a6732a86990c17968010d6bc3b681a91231956abf6ca94"
+  },
+  {
+    "source": "Resource/audio.bundle/countdownthree.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/countdownthree.mp3",
+    "sha256": "07d6e7d8c750747b5276e69435e521a6368d26b11381c988a1272f23474b6c83"
+  },
+  {
+    "source": "Resource/audio.bundle/countdowntwo.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/countdowntwo.mp3",
+    "sha256": "dd8eef46a1ae8813edf88d88b332ad0bf0b657907b9df27f519adcae400b8b00"
+  },
+  {
+    "source": "Resource/audio.bundle/eight.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/eight.mp3",
+    "sha256": "eabaaa3106e621c6216e5b40d713ae97b6a7ccce5cb5e17f92dffc5665f2f207"
+  },
+  {
+    "source": "Resource/audio.bundle/five.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/five.mp3",
+    "sha256": "3194c4ff36bbd1aa744d28a46cfbc2af460c7e2623d23c6e012798c4a160e48e"
+  },
+  {
+    "source": "Resource/audio.bundle/four.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/four.mp3",
+    "sha256": "914573df76a64ce25a52fa3531f71eefe371f0207e5a1f5e18231c48f66e1f9b"
+  },
+  {
+    "source": "Resource/audio.bundle/hour.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/hour.mp3",
+    "sha256": "8c5068aebca65845cfafdb28b65881e7ecfdf34bf3f4eb547c7c5e4cf734eb56"
+  },
+  {
+    "source": "Resource/audio.bundle/hundred.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/hundred.mp3",
+    "sha256": "e6f67ea005d234d4e4215a32215fdd2067273d67d30eb58514c6ad3424d5d2cb"
+  },
+  {
+    "source": "Resource/audio.bundle/jiangjiang.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/jiangjiang.mp3",
+    "sha256": "ed80da5fc0b8562a55f1341d3cd877c09524f2a8c1da0dba19c7e22ab3ada269"
+  },
+  {
+    "source": "Resource/audio.bundle/kilometer.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/kilometer.mp3",
+    "sha256": "e1ca1166f6126f25e51a33311b4a5a7c07db512e7527c142d07033709ce1fc85"
+  },
+  {
+    "source": "Resource/audio.bundle/liang.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/liang.mp3",
+    "sha256": "1a867d23646b6be4070909e288b743701a7e1102e69618e23938ced89079fde0"
+  },
+  {
+    "source": "Resource/audio.bundle/meter.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/meter.mp3",
+    "sha256": "bbc1d6243b0b6de4bd1dc3ba09c4e8e134ed9d39c4ca38e7a26e31406eff815b"
+  },
+  {
+    "source": "Resource/audio.bundle/min.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/min.mp3",
+    "sha256": "86c0c20af847948e80bc4374d6661904c968a851d08ebf7177b8060e8a0d10c6"
+  },
+  {
+    "source": "Resource/audio.bundle/minute.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/minute.mp3",
+    "sha256": "e066f95b97e457910281f745bc0bc05de99fafb6abb79fa3577a22826d726548"
+  },
+  {
+    "source": "Resource/audio.bundle/nine.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/nine.mp3",
+    "sha256": "6897005ca2abccec330b827a789491564ef7cfb9693c69fe3fe65acf3674e9f1"
+  },
+  {
+    "source": "Resource/audio.bundle/one.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/one.mp3",
+    "sha256": "28d34dd4d46b11c0ad17922c07a807fa5701abe593f8f285f6d0db4364b338c3"
+  },
+  {
+    "source": "Resource/audio.bundle/ouch.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/ouch.mp3",
+    "sha256": "47fe6c9fe03da964affdde56be8fcc034cd6d4b77f7518e61896474082170c03"
+  },
+  {
+    "source": "Resource/audio.bundle/pity.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/pity.mp3",
+    "sha256": "78cb753402742ec21ffdda284b595ffa023963b85f1d8eaf78f1d72eda365de6"
+  },
+  {
+    "source": "Resource/audio.bundle/point.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/point.mp3",
+    "sha256": "0dec38cfac68f6cfcd5675e0809297fcae218fadd6ecfe28b1225b56deb81ee8"
+  },
+  {
+    "source": "Resource/audio.bundle/ride_stop.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/ride_stop.mp3",
+    "sha256": "760e07835b91dcd98d4428532a35e3c4ca7c79bc4282a3e0c33c1d64c7ec2120"
+  },
+  {
+    "source": "Resource/audio.bundle/ride_yeah.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/ride_yeah.mp3",
+    "sha256": "acf7bca16296a34318a1951ee402723a65a5b0a7b9e7fbd918dd165bcbf6a4a8"
+  },
+  {
+    "source": "Resource/audio.bundle/runkilometer.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/runkilometer.mp3",
+    "sha256": "083139e82088f4488a0ed2e1c1d00ac556111a7f691b6bf08bdce4eae0e8f617"
+  },
+  {
+    "source": "Resource/audio.bundle/runningstop.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/runningstop.mp3",
+    "sha256": "ea2b6c3426792e9eb89af593cef425f2ca1d5d68125500f7c2cd17e187f269de"
+  },
+  {
+    "source": "Resource/audio.bundle/second.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/second.mp3",
+    "sha256": "f7bc441ec4ae8443a649050d38e78961f273a3fdbb7c7a9096811bf2ead275c3"
+  },
+  {
+    "source": "Resource/audio.bundle/seven.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/seven.mp3",
+    "sha256": "7a0bcc3d925fb7011f13458ec2256f3ad66e74228a6bf20201fe92f72e825502"
+  },
+  {
+    "source": "Resource/audio.bundle/six.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/six.mp3",
+    "sha256": "0eba3114767d229d6e15531f8e70ec6298d6d7c9b1085cf7e4febdcca3dab8d1"
+  },
+  {
+    "source": "Resource/audio.bundle/smile.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/smile.mp3",
+    "sha256": "b2b252d1dcf131a0e8d1399e84c7a7befbecb5f6d4727e64f849812b49b25e54"
+  },
+  {
+    "source": "Resource/audio.bundle/startrun.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/startrun.mp3",
+    "sha256": "8150373a646024d57b8e6f022483f52188914de5b70c42b98061971fdccdb092"
+  },
+  {
+    "source": "Resource/audio.bundle/stop.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/stop.mp3",
+    "sha256": "760e07835b91dcd98d4428532a35e3c4ca7c79bc4282a3e0c33c1d64c7ec2120"
+  },
+  {
+    "source": "Resource/audio.bundle/ten.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/ten.mp3",
+    "sha256": "49ee733547680d4d56d8b8257775d3f0df3abe5e2fb8e81cfe5af6efe76871c8"
+  },
+  {
+    "source": "Resource/audio.bundle/thousand.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/thousand.mp3",
+    "sha256": "d61273879455a84b8a9db729cb1990aa2d7c73ed9b18e7c7815b1e151f1540a9"
+  },
+  {
+    "source": "Resource/audio.bundle/three.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/three.mp3",
+    "sha256": "44cb9afc2cf08665344abc3a0e48373db9e3aa200dfd06889710917d33113579"
+  },
+  {
+    "source": "Resource/audio.bundle/time.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/time.mp3",
+    "sha256": "5f7ff49a0594a678d81a53901c5bbc648bd57b556e9bfea3d5afe406352db4df"
+  },
+  {
+    "source": "Resource/audio.bundle/two.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/two.mp3",
+    "sha256": "6b71298e98c33e0c5e4da5f982c2d39ab4be145503fa34a95a5307b21fafcbf9"
+  },
+  {
+    "source": "Resource/audio.bundle/victorylaugh.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/victorylaugh.mp3",
+    "sha256": "5dae4aec84d039c6afd27b6317d949121c504d40379aa802cc2faf959cf28848"
+  },
+  {
+    "source": "Resource/audio.bundle/yeah.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/yeah.mp3",
+    "sha256": "acf7bca16296a34318a1951ee402723a65a5b0a7b9e7fbd918dd165bcbf6a4a8"
+  },
+  {
+    "source": "Resource/audio.bundle/zero.mp3",
+    "destination": "KeepUp/Resources/audio.bundle/zero.mp3",
+    "sha256": "1cd2670ee02c8a1acab526550cf8142dac1068341bad6f159250199029afe039"
+  },
+  {
+    "source": "Resource/audio2.bundle/alert.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/alert.mp3",
+    "sha256": "969a972afa66674afe1344468e914cd81cc752b06ef1316c0c2fd44b452e9071"
+  },
+  {
+    "source": "Resource/audio2.bundle/alert2.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/alert2.mp3",
+    "sha256": "a74412f05e627f8b2e762f6c54c0ad5e369e857a66feaf8877e8492c6bd9c4d5"
+  },
+  {
+    "source": "Resource/audio2.bundle/complete.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/complete.mp3",
+    "sha256": "4964f89fe5c44f2095c667db37c8eb9df98815fce323d24cd12e651ea495c721"
+  },
+  {
+    "source": "Resource/audio2.bundle/continue.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/continue.mp3",
+    "sha256": "0667159d5af0729f0aac592ff8196e06c1fae8475144ba9eb931989ad81acba1"
+  },
+  {
+    "source": "Resource/audio2.bundle/countdownone.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/countdownone.mp3",
+    "sha256": "beb532cbb30560e53663bce1d26dec7e2f5497f2c589744aaada1a765556d0f7"
+  },
+  {
+    "source": "Resource/audio2.bundle/countdownthree.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/countdownthree.mp3",
+    "sha256": "c5c2735c8ac5c7085dd8b27c0ed05ebda64a40b318e2fb03ba1edd3584abfb0d"
+  },
+  {
+    "source": "Resource/audio2.bundle/countdowntwo.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/countdowntwo.mp3",
+    "sha256": "21adc6e0474041184baf56779279fade23456b690deeb3b758349b056d47fa52"
+  },
+  {
+    "source": "Resource/audio2.bundle/eight.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/eight.mp3",
+    "sha256": "de18d9a3d972f0216a0222b4b365c91112af0196479d4ce81351eb39b34037ee"
+  },
+  {
+    "source": "Resource/audio2.bundle/five.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/five.mp3",
+    "sha256": "37a9b3fb30d2dfd9ee1d6e4298cb270bcddf18b31383a583b798b5c9f9fc97a5"
+  },
+  {
+    "source": "Resource/audio2.bundle/four.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/four.mp3",
+    "sha256": "5193cec6b7747bc06e63850955f33b59ceeaad3a19a0f4d7e62c60c6fdc76d71"
+  },
+  {
+    "source": "Resource/audio2.bundle/hour.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/hour.mp3",
+    "sha256": "5bcefed274011a7243ae53b8fa1dd780d55c01344da070293b3686d77331248d"
+  },
+  {
+    "source": "Resource/audio2.bundle/hundred.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/hundred.mp3",
+    "sha256": "7d94b98d424179707a18c21090217e9439429d1da41046f1b804235b8615af6c"
+  },
+  {
+    "source": "Resource/audio2.bundle/kilometer.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/kilometer.mp3",
+    "sha256": "2a052091eb8b462f22849212e830d40bf0c9a2893b3b8461621f784092493574"
+  },
+  {
+    "source": "Resource/audio2.bundle/liang.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/liang.mp3",
+    "sha256": "441dd648bad1fa752d4ff8cf4f89e61266e81c888770b3d873389f38c94d6a9e"
+  },
+  {
+    "source": "Resource/audio2.bundle/meter.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/meter.mp3",
+    "sha256": "e081681af974938fd5c4fa19d7d7e3f876e7d6508a6a881383e9bea0e668fcb6"
+  },
+  {
+    "source": "Resource/audio2.bundle/min.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/min.mp3",
+    "sha256": "36203c1b4a90e32ea14d3c930da43d933eb18d1ebe75e78e261915396bd3995b"
+  },
+  {
+    "source": "Resource/audio2.bundle/minute.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/minute.mp3",
+    "sha256": "4082f42189588da07b81f9709c6eeda4119ccebb350898f07c007e65449808b6"
+  },
+  {
+    "source": "Resource/audio2.bundle/nine.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/nine.mp3",
+    "sha256": "c385d40af36b71d105f0f957eaadad15332fba129ceede4399dc4ef0b7cf3874"
+  },
+  {
+    "source": "Resource/audio2.bundle/one.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/one.mp3",
+    "sha256": "8fc925c144bba4f41346d07cf49a5a4a85166bd046df5a37a634ce026c9d7f15"
+  },
+  {
+    "source": "Resource/audio2.bundle/ouch.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/ouch.mp3",
+    "sha256": "a9cd8ba8f6cd4c0cd0ff586da45f367d0faa7031a67cf7d11a4e4ae68cc21882"
+  },
+  {
+    "source": "Resource/audio2.bundle/point.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/point.mp3",
+    "sha256": "98e2997031542559d917564a303f696d9b016f56f8d58c7eed680495ad35db29"
+  },
+  {
+    "source": "Resource/audio2.bundle/ride_comeon.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/ride_comeon.mp3",
+    "sha256": "bbd917cbc52a84b803352b709f126ab52a0f695adf99082ab27a2e0e1cf76ebe"
+  },
+  {
+    "source": "Resource/audio2.bundle/ride_continue.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/ride_continue.mp3",
+    "sha256": "4b975af6ecd97c9c2bdbae4d6fe54fd497f5849e743e682cc4e058b6c287569d"
+  },
+  {
+    "source": "Resource/audio2.bundle/ride_reach.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/ride_reach.mp3",
+    "sha256": "6251cbba26b9b53920a06595fd6c78a15ed81b92e555355f7debb387e6a9b1d1"
+  },
+  {
+    "source": "Resource/audio2.bundle/ride_stop.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/ride_stop.mp3",
+    "sha256": "6946973642bf08b1cd93f88f879b517a25d85b751cf75696e6b3a4d407e73b45"
+  },
+  {
+    "source": "Resource/audio2.bundle/run.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/run.mp3",
+    "sha256": "b197133e3ca587174851242360944d8a2a57c259da8550b93ad72889404bacb4"
+  },
+  {
+    "source": "Resource/audio2.bundle/runkilometer.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/runkilometer.mp3",
+    "sha256": "308ccf39fc5d63136d85160047a8908d086f7eb396f30379f22cddfb5e6b42d2"
+  },
+  {
+    "source": "Resource/audio2.bundle/runningstop.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/runningstop.mp3",
+    "sha256": "906047e9d8cd6ac6560c644a22233f23153498750d94cab99064a7dcba24b947"
+  },
+  {
+    "source": "Resource/audio2.bundle/second.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/second.mp3",
+    "sha256": "8f6ccdc4f67854da12361a6f1738bab84041a57443c66808abd5ca650006570b"
+  },
+  {
+    "source": "Resource/audio2.bundle/seven.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/seven.mp3",
+    "sha256": "97047c99f481a20b8a8d61c76f0c7b1f230f740c89bceeeee91f7cb57657d516"
+  },
+  {
+    "source": "Resource/audio2.bundle/six.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/six.mp3",
+    "sha256": "6d3df5f19d0907e9823afcda30336332f1a457afb6b6a20742d9a1d22d4f86a6"
+  },
+  {
+    "source": "Resource/audio2.bundle/startrun.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/startrun.mp3",
+    "sha256": "5c500cbdd7d38a81811cc61b1e40487901b0a4e72b91dee2e8051067235ec1d2"
+  },
+  {
+    "source": "Resource/audio2.bundle/stop.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/stop.mp3",
+    "sha256": "6376fca7892ee620d4bc27b180897900d7132c341ce0de95f1ff28bfee466713"
+  },
+  {
+    "source": "Resource/audio2.bundle/ten.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/ten.mp3",
+    "sha256": "ff304f32ffb19089ad8ca7f6b99e41ebb1c83bdb80d4afcde3d08e851274ff31"
+  },
+  {
+    "source": "Resource/audio2.bundle/thousand.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/thousand.mp3",
+    "sha256": "81550a2ea4b072e1ddb78fb63f1b03557ebb587350156b5ec5495b5a487ca0b0"
+  },
+  {
+    "source": "Resource/audio2.bundle/three.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/three.mp3",
+    "sha256": "e3f3c9fe2ee7bf561e5005469bf83411f6da16a693afe4e24314dca7948192b1"
+  },
+  {
+    "source": "Resource/audio2.bundle/time.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/time.mp3",
+    "sha256": "616311d138619c917636852718bc58679443ac929d12aa2c8b6d68c6bcdf9008"
+  },
+  {
+    "source": "Resource/audio2.bundle/two.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/two.mp3",
+    "sha256": "b5a638635c52e024113842a501e65439c25f329d6a194c69effa049cdf95309f"
+  },
+  {
+    "source": "Resource/audio2.bundle/zero.mp3",
+    "destination": "KeepUp/Resources/audio2.bundle/zero.mp3",
+    "sha256": "3f4ef5576e8ad1ded583f8cdb3ef29f0d767d5ab3cfb8656d09544dc9e0a25e1"
   }
 ]

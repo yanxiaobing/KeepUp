@@ -28,6 +28,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>audio</string>
 	</array>
 	<key>NSMotionUsageDescription</key>
 	<string>Read your steps and distance for daily goals and indoor running.</string>

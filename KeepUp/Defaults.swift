@@ -34,6 +34,6 @@ enum AppPreferences {
     }
 
     static func reset() {
-        Defaults.reset(.appLanguage, .monthMode, .themeID, .stepGoalChanges)
+        Defaults.reset(.appLanguage, .monthMode, .themeID, .stepGoalChanges, .runningSettings)
     }
 }

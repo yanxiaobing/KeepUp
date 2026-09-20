@@ -105,6 +105,7 @@ struct RunningSessionSummary: View {
 }
 
 struct RunningRouteMap: View {
+    @Default(.runningSettings) private var settings
     let segments: [[RunningPoint]]
     var showsUser: Bool = false
 
@@ -127,7 +128,8 @@ struct RunningRouteMap: View {
                 }
             }
             if showsUser { UserAnnotation() }
-        }.mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+        }.mapStyle(settings.satelliteMap ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
+            .accessibilityValue(Text(LocalizedStringKey(settings.satelliteMap ? "runningSettings.satellite" : "runningSettings.standard")))
     }
 }
 

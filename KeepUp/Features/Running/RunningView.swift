@@ -9,6 +9,13 @@ struct RunningView: View {
     @State private var confirmingFinish = false
     @State private var confirmingDiscard = false
     @State private var result: RunningSession?
+    @State private var showingSettings = false
+    @State private var settingsKindAtOpen: RunningKind?
+    @State private var visible = false
+    @State private var automaticStartAttempted = false
+    @State private var controlsLocked = false
+    @State private var screenAwake = RunningScreenAwake()
+    @Default(.runningSettings) private var settings
     private var controller: RunningController { model.running }
     private var currentKind: RunningKind { controller.session?.kind ?? controller.selectedKind }
     private var readyToStart: Bool {
@@ -23,13 +30,34 @@ struct RunningView: View {
                 else { preparation }
             }
             .background(.white)
+            .accessibilityHidden(controller.countdownRemaining != nil)
             .navigationTitle(LocalizedStringKey(result == nil ? currentKind.titleKey : "running.result"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("action.close") { dismiss() }.accessibilityIdentifier("running.close")
+                    Button("action.close") { controller.cancelCountdown(); dismiss() }.accessibilityIdentifier("running.close")
+                }
+                if result == nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            automaticStartAttempted = true
+                            controller.cancelCountdown()
+                            settingsKindAtOpen = settings.defaultRunningKind
+                            showingSettings = true
+                        } label: { Image("running_setting").resizable().scaledToFit().frame(width: 22, height: 22) }
+                            .accessibilityLabel(Text("runningSettings.title")).accessibilityIdentifier("running.openSettings")
+                    }
                 }
             }
+            .sheet(isPresented: $showingSettings, onDismiss: {
+                model.refreshRunningSettings()
+                if controller.session == nil, settingsKindAtOpen != settings.defaultRunningKind {
+                    controller.selectKind(kind == .cycling ? .cycling : settings.defaultRunningKind)
+                }
+                if result == nil { controller.prepare() }
+                updateScreenAwake()
+            }) { RunningSettingsView() }
+            .overlay { countdownOverlay }
             .confirmationDialog("running.finishConfirmation", isPresented: $confirmingFinish, titleVisibility: .visible) {
                 Button("running.save") { Task { await finish() } }.accessibilityIdentifier("running.confirmFinish")
                 Button("action.cancel", role: .cancel) {}
@@ -44,11 +72,43 @@ struct RunningView: View {
                     .accessibilityIdentifier("running.confirmDiscard")
                 Button("action.cancel", role: .cancel) {}
             }
-            .task { controller.selectKind(kind); controller.prepare() }
-            .onDisappear { controller.stopPreparing() }
+            .onAppear {
+                visible = true
+                if controller.session?.phase == .running { controlsLocked = settings.autoLock }
+                updateScreenAwake()
+            }
+            .task {
+                controller.selectKind(kind == .cycling ? .cycling : settings.defaultRunningKind)
+                controller.prepare()
+                attemptAutomaticStart()
+            }
+            .onDisappear {
+                visible = false
+                controller.cancelCountdown()
+                controller.stopPreparing()
+                updateScreenAwake()
+            }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active, result == nil { controller.prepare() }
-                else { controller.stopPreparing() }
+                if phase == .active, result == nil {
+                    controller.prepare()
+                    attemptAutomaticStart()
+                } else {
+                    controller.cancelCountdown()
+                    controller.stopPreparing()
+                }
+                updateScreenAwake()
+            }
+            .onChange(of: readyToStart) { _, ready in if ready { attemptAutomaticStart() } }
+            .onChange(of: showingSettings) { _, _ in updateScreenAwake() }
+            .onChange(of: settings) { old, new in
+                model.refreshRunningSettings()
+                if new.autoLock != old.autoLock { controlsLocked = new.autoLock && controller.session?.phase == .running }
+                updateScreenAwake()
+            }
+            .onChange(of: controller.session?.phase) { _, phase in
+                if phase == .running { controlsLocked = settings.autoLock }
+                else if phase == nil || phase == .finished { controlsLocked = false }
+                updateScreenAwake()
             }
         }.tint(Color(hex: 0x222222))
     }
@@ -77,13 +137,13 @@ struct RunningView: View {
             }.frame(maxHeight: .infinity)
             VStack(spacing: 14) {
                 errorStatus
-                Button { Task { await controller.start() } } label: {
+                Button { automaticStartAttempted = true; Task { await controller.start() } } label: {
                     Text("running.start").font(.system(size: 18, weight: .bold))
                         .frame(width: 84, height: 84)
                         .background(Color(hex: 0xFFD838), in: Circle())
                         .background(Image("run_prepare_oval_shadow").resizable().frame(width: 100, height: 100))
                 }.buttonStyle(.plain).accessibilityIdentifier("running.start")
-                    .disabled(!readyToStart || controller.isBusy)
+                    .disabled(!readyToStart || controller.isBusy || controller.countdownRemaining != nil)
                     .opacity(readyToStart ? 1 : 0.45)
                 modeSelector
                 Text(LocalizedStringKey(currentKind.usesGPS ? "running.prepareHint" : "running.indoorDistanceHint")).font(.system(size: 12)).foregroundStyle(.secondary)
@@ -115,7 +175,7 @@ struct RunningView: View {
     private var modeSelector: some View {
         HStack(spacing: 0) {
             ForEach(RunningKind.allCases, id: \.self) { mode in
-                Button { controller.selectKind(mode); controller.prepare() } label: {
+                Button { automaticStartAttempted = true; controller.selectKind(mode); controller.prepare() } label: {
                     Text(LocalizedStringKey(mode.titleKey)).font(.system(size: 14, weight: currentKind == mode ? .semibold : .regular))
                         .lineLimit(1).minimumScaleFactor(0.75)
                         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -166,7 +226,7 @@ struct RunningView: View {
                         .accessibilityIdentifier("running.recovered")
                 }
                 if session.phase == .running || controller.authorization != .authorized { permissionStatus }
-                Text(LocalizedStringKey(session.phase == .running ? "running.inProgress" : session.phase == .paused ? "running.paused" : "running.pendingSave"))
+                Text(LocalizedStringKey(session.phase == .running ? "running.inProgress" : session.phase == .paused ? (controller.isAutoPaused ? "runningSettings.autoPaused" : "running.paused") : "running.pendingSave"))
                     .font(.system(size: 14)).foregroundStyle(.secondary)
                     .accessibilityIdentifier("running.state")
                 TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -204,6 +264,20 @@ struct RunningView: View {
     }
 
     @ViewBuilder private func controls(_ session: RunningSession) -> some View {
+        if controlsLocked {
+            VStack(spacing: 10) {
+                Image("running_lock").resizable().scaledToFit().frame(width: 26, height: 30)
+                Text("runningSettings.holdToUnlock").font(.system(size: 14, weight: .medium))
+            }.padding(22).frame(maxWidth: .infinity)
+                .background(Color(hex: 0xE6E6E6), in: Capsule())
+                .contentShape(Capsule())
+                .onLongPressGesture(minimumDuration: 1) { controlsLocked = false }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("runningSettings.holdToUnlock"))
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction(named: Text("runningSettings.unlock")) { controlsLocked = false }
+                .accessibilityIdentifier("running.unlock")
+        } else {
         VStack(spacing: 16) {
             HStack(spacing: 42) {
                 if session.phase == .running {
@@ -222,6 +296,7 @@ struct RunningView: View {
             }
             if controller.isBusy { ProgressView() }
         }.disabled(controller.isBusy)
+        }
     }
 
     private func imageButton(_ image: String, label: LocalizedStringKey, identifier: String, action: @escaping @MainActor () async -> Void) -> some View {
@@ -257,6 +332,36 @@ struct RunningView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder private var countdownOverlay: some View {
+        if let remaining = controller.countdownRemaining {
+            VStack(spacing: 28) {
+                Text(remaining.formatted(.number.locale(locale)))
+                    .font(.system(size: 110, weight: .light, design: .rounded)).monospacedDigit()
+                    .accessibilityIdentifier("running.countdown")
+                Text("runningSettings.ready").font(.system(size: 20, weight: .medium))
+                Button("action.cancel") {
+                    automaticStartAttempted = true
+                    controller.cancelCountdown()
+                }.font(.system(size: 17)).accessibilityIdentifier("running.cancelCountdown")
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(hex: 0xFFD838).opacity(0.98))
+                .accessibilityElement(children: .contain)
+        }
+    }
+
+    private func attemptAutomaticStart() {
+        guard visible, scenePhase == .active, !showingSettings, !settings.confirmBeforeStart,
+              !automaticStartAttempted, controller.session == nil, result == nil,
+              controller.countdownRemaining == nil, readyToStart else { return }
+        automaticStartAttempted = true
+        Task { await controller.start() }
+    }
+
+    private func updateScreenAwake() {
+        screenAwake.update(active: visible && !showingSettings && scenePhase == .active
+                           && controller.session?.phase == .running && settings.keepScreenOn)
     }
 
     private func finish() async {

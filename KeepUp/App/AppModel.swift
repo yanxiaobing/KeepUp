@@ -13,6 +13,7 @@ final class AppModel {
     private var reloadRequested = false
     private var hasRestoredRunning = false
     let running = RunningController()
+    let runningVoice = RunningVoiceCoach()
 
     init(repository: any CheckInRepository) {
         self.repository = repository
@@ -29,6 +30,17 @@ final class AppModel {
             do { try await self.repository.discardRunning(id: id); await self.load(); return true }
             catch { return false }
         })
+        running.onEvent = { [weak self] event in
+            guard let self else { return }
+            self.runningVoice.handle(event, settings: Defaults[.runningSettings], locale: self.runningLocale)
+        }
+    }
+
+    private var runningLocale: Locale { (AppLanguage(rawValue: Defaults[.appLanguage]) ?? .system).locale }
+
+    func refreshRunningSettings() {
+        running.settingsDidChange()
+        runningVoice.update(settings: Defaults[.runningSettings], locale: runningLocale)
     }
 
     func runningSession(id: String) async throws -> RunningSession? {
