@@ -100,3 +100,32 @@ private func withStepsStore(_ action: (LocalStore, URL) async throws -> Void) as
         #expect(try await store.snapshot().entries.count == 2)
     }
 }
+
+@Test func intradaySurvivesLiveTotalsReopenAndRejectsInvalidBins() async throws {
+    try await withStepsStore { store, url in
+        var reading = measuredSteps(6000)
+        let zone = TimeZone(identifier: stepZone)!
+        let ranges = StepIntraday.ranges(day: reading.day, through: reading.measuredAt, timeZone: zone)
+        reading.intraday = StepIntraday(intervals: ranges.map { StepInterval(start: $0.start, end: $0.end, steps: 10) }, measuredThrough: reading.measuredAt)
+        try await store.saveSteps(reading, goal: 5000, now: stepNow)
+        try await store.saveSteps(measuredSteps(6500, offset: 2), goal: 5000, now: stepNow.addingTimeInterval(3))
+        await store.close()
+        let reopened = LocalStore(fileURL: url)
+        try await reopened.open()
+        // A late detail query must enrich the latest total, never roll it back.
+        var lateDetail = reading
+        let nextThrough = reading.measuredAt.addingTimeInterval(1)
+        lateDetail.intraday = StepIntraday(intervals: StepIntraday.ranges(day: reading.day, through: nextThrough, timeZone: zone).map {
+            StepInterval(start: $0.start, end: $0.end, steps: 20)
+        }, measuredThrough: nextThrough)
+        lateDetail = StepReading(day: reading.day, timeZoneID: stepZone, steps: 6100, distance: nil, measuredAt: nextThrough, intraday: lateDetail.intraday)
+        try await reopened.saveSteps(lateDetail, goal: 5000, now: stepNow.addingTimeInterval(3))
+        let snapshot = try await reopened.snapshot()
+        #expect(snapshot.steps[reading.day.rawValue]?.intraday == lateDetail.intraday)
+        #expect(snapshot.steps[reading.day.rawValue]?.steps == 6500)
+        var invalid = measuredSteps(7000, offset: 3)
+        invalid.intraday = StepIntraday(intervals: [], measuredThrough: invalid.measuredAt)
+        await #expect(throws: StoreError.invalidQuantity) { try await reopened.saveSteps(invalid, goal: 5000, now: stepNow.addingTimeInterval(4)) }
+        await reopened.close()
+    }
+}

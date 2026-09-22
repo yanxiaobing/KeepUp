@@ -9,10 +9,12 @@ final class StepsController {
     private(set) var readings: [LocalDay: StepReading] = [:]
     private(set) var selectedDay: LocalDay
     private(set) var storageFailed = false
+    private(set) var loadingIntraday = false
     private let followsToday: Bool
     private let source: any StepSource
     private var generation = 0
     private var task: Task<Void, Never>?
+    private var detailTask: Task<Void, Never>?
     private var refreshedDay: LocalDay?
     private var refreshedZone: String?
 
@@ -25,6 +27,9 @@ final class StepsController {
     func stop() {
         generation += 1
         task?.cancel()
+        detailTask?.cancel()
+        detailTask = nil
+        loadingIntraday = false
         task = nil
         source.stop()
     }
@@ -33,7 +38,7 @@ final class StepsController {
         refreshedDay != LocalDay(date: now, timeZone: timeZone) || refreshedZone != timeZone.identifier
     }
 
-    func refresh(requestPermission: Bool = false, now: Date = .now, timeZone: TimeZone = .current,
+    func refresh(requestPermission: Bool = false, includeIntraday: Bool = false, now: Date = .now, timeZone: TimeZone = .current,
                  save: @escaping @MainActor (StepReading) async -> Bool) {
         stop()
         let token = generation
@@ -59,6 +64,19 @@ final class StepsController {
                     let reading = try await source.query(day: day, now: now, timeZone: timeZone)
                     guard generation == token, !Task.isCancelled else { return }
                     await receive(reading, token: token, save: save)
+                    guard generation == token, !Task.isCancelled else { return }
+                    if includeIntraday && day == selectedDay {
+                        loadingIntraday = true
+                        detailTask = Task { [weak self] in
+                            guard let self, generation == token, !Task.isCancelled else { return }
+                            defer { if generation == token { loadingIntraday = false } }
+                            guard let detail = try? await source.queryIntraday(day: day, through: reading.measuredAt, timeZone: timeZone),
+                                  generation == token, !Task.isCancelled else { return }
+                            var enriched = readings[day] ?? reading
+                            enriched.intraday = detail
+                            await receive(enriched, token: token, save: save)
+                        }
+                    }
                 } catch {
                     guard generation == token, !Task.isCancelled else { return }
                     if source.access == .denied { state = .denied; return }
@@ -86,6 +104,10 @@ final class StepsController {
         guard reading.isValid, generation == token else { return }
         if let existing = readings[reading.day], existing.timeZoneID == reading.timeZoneID,
            existing.measuredAt > reading.measuredAt { return }
+        var reading = reading
+        if reading.intraday == nil, let existing = readings[reading.day], existing.timeZoneID == reading.timeZoneID {
+            reading.intraday = existing.intraday
+        }
         readings[reading.day] = reading
         if reading.day == selectedDay { state = .ready }
         let saved = await save(reading)

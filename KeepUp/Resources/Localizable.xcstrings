@@ -10600,6 +10600,120 @@
           }
         }
       }
+    },
+    "steps.activeEstimate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated active time"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算活跃时长"
+          }
+        }
+      }
+    },
+    "steps.activeExplanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated from five-minute intervals with more than five steps; not exact exercise duration."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "累计超过 5 步的五分钟区间时长，为估算值，并非精确运动时长。"
+          }
+        }
+      }
+    },
+    "steps.dataThrough": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interval data through"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分时数据截至"
+          }
+        }
+      }
+    },
+    "steps.hourly": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hourly steps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每小时步数"
+          }
+        }
+      }
+    },
+    "steps.intradayMissing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No interval data is available for this day."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当天暂无分时数据。"
+          }
+        }
+      }
+    },
+    "steps.intradayPartial": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some intervals are unavailable. Active time cannot be calculated."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "部分时段数据缺失，无法计算活跃时长。"
+          }
+        }
+      }
+    },
+    "steps.minutes %lld": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 分钟"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

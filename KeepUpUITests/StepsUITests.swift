@@ -21,6 +21,26 @@ import XCTest
         XCTAssertTrue(app.buttons["steps.close"].waitForExistence(timeout: 5))
     }
 
+    func testIntradayChartAndMissingIntervals() {
+        let app = launch(mode: "partial")
+        openSteps(app)
+        XCTAssertTrue(app.staticTexts["steps.intradayPartial"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["steps.activeMinutes"].label, "—")
+        XCTAssertTrue(app.buttons["steps.retryIntraday"].exists)
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "KeepUp-Steps-Intraday-Partial"; shot.lifetime = .keepAlways; add(shot)
+    }
+
+    func testZeroIntradayHasKnownZeroActiveTime() {
+        let app = launch(mode: "zero", language: "zh-Hans")
+        openSteps(app)
+        XCTAssertTrue(app.staticTexts["steps.activeMinutes"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["steps.activeMinutes"].label, "0 分钟")
+        XCTAssertFalse(app.staticTexts["steps.intradayPartial"].exists)
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "KeepUp-Steps-Intraday-Zero-Chinese"; shot.lifetime = .keepAlways; add(shot)
+    }
+
     func testGoalCreatesOneDailyRecordAndSurvivesDeniedAccess() {
         let app = launch(mode: "ready")
         openSteps(app)
@@ -35,7 +55,7 @@ import XCTest
         let records = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "entry.steps."))
         XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(records.count, 1)
-        app.buttons["tab.calendar"].tap()
+        app.buttons["BackButton"].tap()
         XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
         records.firstMatch.tap()
         XCTAssertTrue(app.buttons["steps.close"].waitForExistence(timeout: 5))
@@ -72,8 +92,8 @@ import XCTest
         XCTAssertTrue(app.buttons["stepsTarget.save"].waitForExistence(timeout: 5))
         app.buttons["stepsTarget.save"].tap()
         XCTAssertTrue(app.buttons["stepsTarget.save"].waitForNonExistence(timeout: 5))
-        // From the profile tab, the middle button returns to the calendar.
-        app.buttons["tab.calendar"].tap()
+        // Profile is pushed from the calendar in the current navigation structure.
+        app.buttons["BackButton"].tap()
         let pending = app.buttons["target.pending.punchcard.1"]
         XCTAssertTrue(pending.waitForExistence(timeout: 5))
         pending.tap()

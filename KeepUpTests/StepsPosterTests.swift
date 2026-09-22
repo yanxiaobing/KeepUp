@@ -68,3 +68,25 @@ private func posterRecord(steps: Int = 6_500, distance: Double? = 4_225, goal: I
         }
     }
 }
+
+@Test @MainActor func stepPosterRendersSavedIntradayAfterSensorWindowExpires() throws {
+    var calendar = Calendar(identifier: .gregorian); calendar.timeZone = posterZone
+    let start = calendar.startOfDay(for: posterDay.date(in: posterZone))
+    let through = start.addingTimeInterval(14 * 3600 + 1200)
+    let ranges = StepIntraday.ranges(day: posterDay, through: through, timeZone: posterZone)
+    let detail = StepIntraday(intervals: ranges.enumerated().map { index, range in
+        StepInterval(start: range.start, end: range.end, steps: index % 12 < 4 ? 50 : 0)
+    }, measuredThrough: through)
+    var saved = StepRecord(day: posterDay, timeZoneID: posterZone.identifier,
+                           steps: detail.intervals.reduce(0) { $0 + ($1.steps ?? 0) }, distance: 4225,
+                           measuredAt: through, goal: 5000)
+    saved.intraday = detail
+    let data = StepsPresentation(day: posterDay, reading: nil, saved: saved, goal: nil)
+    #expect(data.intraday == detail)
+    #expect(data.timeZoneID == posterZone.identifier)
+    for language in ["en_US", "zh_Hans_CN"] {
+        let image = try #require(StepsPosterRenderer.render(data: data, style: .details, locale: Locale(identifier: language)))
+        #expect(image.size.height > 850 && image.size.height < 1400)
+        Attachment.record(Array(try #require(image.pngData())), named: "steps-intraday-\(language).png")
+    }
+}

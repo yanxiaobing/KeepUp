@@ -7,11 +7,13 @@ struct StepReading: Sendable, Equatable {
     let distance: Double?
     /// End of the measured interval, never callback arrival time.
     let measuredAt: Date
+    var intraday: StepIntraday? = nil
 
     var isValid: Bool {
         steps >= 0 && steps <= 1_000_000 && TimeZone(identifier: timeZoneID) != nil &&
         measuredAt.timeIntervalSince1970.isFinite &&
-        (distance.map { $0.isFinite && $0 >= 0 } ?? true)
+        (distance.map { $0.isFinite && $0 >= 0 } ?? true) &&
+        (intraday.map { $0.measuredThrough <= measuredAt && $0.isValid(day: day, timeZoneID: timeZoneID) } ?? true)
     }
 }
 

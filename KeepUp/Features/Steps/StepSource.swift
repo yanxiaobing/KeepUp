@@ -36,6 +36,13 @@ enum StepSourceError: Error { case unavailable, invalidReading }
         return StepReading(day: day, timeZoneID: timeZone.identifier, steps: count, distance: Double(count) * 0.65, measuredAt: interval.end)
     }
     func updates(day: LocalDay, timeZone: TimeZone) -> AsyncThrowingStream<StepReading, Error> { AsyncThrowingStream { $0.finish() } }
+    func queryIntraday(day: LocalDay, through: Date, timeZone: TimeZone) async throws -> StepIntraday? {
+        let ranges = StepIntraday.ranges(day: day, through: through, timeZone: timeZone)
+        return StepIntraday(intervals: ranges.enumerated().map { index, range in
+            StepInterval(start: range.start, end: range.end,
+                         steps: mode == "partial" && index == 0 ? nil : (mode == "zero" || day != LocalDay(date: through, timeZone: timeZone) ? 0 : (6500 / max(1, ranges.count) + (index < 6500 % max(1, ranges.count) ? 1 : 0))))
+        }, measuredThrough: through)
+    }
     func stop() {}
 }
 #endif
@@ -46,6 +53,11 @@ protocol StepSource: AnyObject {
     func query(day: LocalDay, now: Date, timeZone: TimeZone) async throws -> StepReading
     func updates(day: LocalDay, timeZone: TimeZone) -> AsyncThrowingStream<StepReading, Error>
     func stop()
+    func queryIntraday(day: LocalDay, through: Date, timeZone: TimeZone) async throws -> StepIntraday?
+}
+
+extension StepSource {
+    func queryIntraday(day: LocalDay, through: Date, timeZone: TimeZone) async throws -> StepIntraday? { nil }
 }
 
 @MainActor
@@ -53,6 +65,7 @@ final class CoreMotionStepSource: StepSource {
     // Construction and stop() must not touch Core Motion during onboarding.
     private var pedometer: CMPedometer?
     private var queryPedometer: CMPedometer?
+    private var intervalCache: [DateInterval: Int] = [:]
     private let makePedometer: () -> CMPedometer
 
     init(makePedometer: @escaping () -> CMPedometer = { CMPedometer() }) {
@@ -106,6 +119,30 @@ final class CoreMotionStepSource: StepSource {
         pedometer?.stopUpdates()
         continuation?.finish()
         continuation = nil
+    }
+
+    func queryIntraday(day: LocalDay, through: Date, timeZone: TimeZone) async throws -> StepIntraday? {
+        let device = makePedometer()
+        var samples: [StepInterval] = []
+        for range in StepIntraday.ranges(day: day, through: through, timeZone: timeZone) {
+            try Task.checkCancellation()
+            let count: Int?
+            if let cached = intervalCache[range] { count = cached }
+            else {
+                count = await withCheckedContinuation { continuation in
+                    device.queryPedometerData(from: range.start, to: range.end) { @Sendable data, error in
+                        let value = data?.numberOfSteps.intValue
+                        continuation.resume(returning: error == nil ? value.flatMap { (0...1_000_000).contains($0) ? $0 : nil } : nil)
+                    }
+                }
+                // Recent samples can still be revised by the sensor. Cache only settled bins.
+                if let count, range.end < through.addingTimeInterval(-3600) { intervalCache[range] = count }
+            }
+            samples.append(StepInterval(start: range.start, end: range.end, steps: count))
+        }
+        try Task.checkCancellation()
+        intervalCache = intervalCache.filter { $0.key.end > through.addingTimeInterval(-7 * 86400) }
+        return StepIntraday(intervals: samples, measuredThrough: through)
     }
 
     nonisolated private static func reading(_ data: CMPedometerData?, error: Error?, day: LocalDay, timeZoneID: String) -> Result<StepReading, Error> {

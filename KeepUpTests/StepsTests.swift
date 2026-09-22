@@ -47,6 +47,7 @@ private func stepsDay(_ value: String) -> LocalDay { LocalDay(rawValue: value)! 
 private final class ControlledStepSource: StepSource {
     var access: StepAccess = .available
     var queryCount = 0
+    var intradayQueryCount = 0
     var pending: [CheckedContinuation<StepReading, Error>] = []
     var suspendedQueries = 0
     func query(day: LocalDay, now: Date, timeZone: TimeZone) async throws -> StepReading {
@@ -59,6 +60,10 @@ private final class ControlledStepSource: StepSource {
     }
     func updates(day: LocalDay, timeZone: TimeZone) -> AsyncThrowingStream<StepReading, Error> {
         AsyncThrowingStream { $0.finish() }
+    }
+    func queryIntraday(day: LocalDay, through: Date, timeZone: TimeZone) async throws -> StepIntraday? {
+        intradayQueryCount += 1
+        return nil
     }
     func stop() {}
 }
@@ -258,4 +263,82 @@ private final class BackgroundCallbackPedometer: CMPedometer {
         #expect((error as NSError).domain == "KeepUp.CallbackRegression")
     }
     source.stop()
+}
+
+@Test func intradayUsesRealBinsAndDistinguishesMissingFromZero() throws {
+    let zone = TimeZone(identifier: "Asia/Shanghai")!
+    let day = LocalDay(date: Date(timeIntervalSince1970: 1_789_516_800), timeZone: zone)
+    var calendar = Calendar(identifier: .gregorian); calendar.timeZone = zone
+    let start = calendar.startOfDay(for: day.date(in: zone))
+    let through = start.addingTimeInterval(750)
+    let ranges = StepIntraday.ranges(day: day, through: through, timeZone: zone)
+    #expect(ranges.map(\.duration) == [300, 300, 150])
+    let detail = StepIntraday(intervals: zip(ranges, [0, 5, 6]).map {
+        StepInterval(start: $0.0.start, end: $0.0.end, steps: $0.1)
+    }, measuredThrough: through)
+    #expect(detail.isValid(day: day, timeZoneID: zone.identifier))
+    #expect(detail.estimatedActiveMinutes == 2)
+    #expect(detail.hours(timeZoneID: zone.identifier).first?.steps == 11)
+    let missing = StepIntraday(intervals: ranges.map { StepInterval(start: $0.start, end: $0.end, steps: nil) }, measuredThrough: through)
+    #expect(missing.estimatedActiveMinutes == nil)
+    #expect(missing.hours(timeZoneID: zone.identifier).first?.steps == nil)
+    let zero = StepIntraday(intervals: ranges.map { StepInterval(start: $0.start, end: $0.end, steps: 0) }, measuredThrough: through)
+    #expect(zero.estimatedActiveMinutes == 0)
+    #expect(zero.hours(timeZoneID: zone.identifier).first?.steps == 0)
+    #expect(!StepIntraday(intervals: Array(detail.intervals.reversed()), measuredThrough: through).isValid(day: day, timeZoneID: zone.identifier))
+}
+
+@Test func intradayRespectsDaylightSavingAndLegacyRecords() throws {
+    let zone = TimeZone(identifier: "America/New_York")!
+    let decoder = JSONDecoder()
+    let old = StepRecord(day: LocalDay(date: .now), timeZoneID: "Asia/Shanghai", steps: 42, distance: nil, measuredAt: .now, goal: nil)
+    #expect(try decoder.decode(StepRecord.self, from: JSONEncoder().encode(old)).intraday == nil)
+    var calendar = Calendar(identifier: .gregorian); calendar.timeZone = zone
+    for (month, date, hours) in [(3, 8, 23), (11, 1, 25)] {
+        let start = try #require(calendar.date(from: DateComponents(year: 2026, month: month, day: date)))
+        let end = try #require(calendar.date(byAdding: .day, value: 1, to: start))
+        let day = LocalDay(date: start, timeZone: zone)
+        let ranges = StepIntraday.ranges(day: day, through: end, timeZone: zone)
+        #expect(ranges.count == hours * 12)
+        let detail = StepIntraday(intervals: ranges.map { StepInterval(start: $0.start, end: $0.end, steps: 10) }, measuredThrough: end)
+        #expect(detail.isValid(day: day, timeZoneID: zone.identifier))
+        #expect(detail.hours(timeZoneID: zone.identifier).count == hours)
+    }
+}
+
+@Test @MainActor func intradaySystemCallbacksPreserveUnknownAndCancellation() async throws {
+    let source = CoreMotionStepSource(makePedometer: { BackgroundCallbackPedometer() })
+    let zone = TimeZone(identifier: "Asia/Shanghai")!
+    let day = stepsDay("2026-09-22")
+    var calendar = Calendar(identifier: .gregorian); calendar.timeZone = zone
+    let through = calendar.startOfDay(for: day.date(in: zone)).addingTimeInterval(600)
+    let detail = try #require(try await source.queryIntraday(day: day, through: through, timeZone: zone))
+    #expect(detail.intervals.count == 2)
+    #expect(detail.intervals.allSatisfy { $0.steps == nil })
+    #expect(detail.estimatedActiveMinutes == nil)
+    let task = Task { try await source.queryIntraday(day: day, through: through, timeZone: zone) }
+    task.cancel()
+    do { _ = try await task.value; Issue.record("Cancelled interval query should throw") }
+    catch { #expect(error is CancellationError) }
+}
+
+@Test @MainActor func intradayIsOptInAndDoesNotStartAfterPageClosesDuringSave() async {
+    let day = stepsDay("2026-09-22")
+    let now = day.date(in: stepsZone)
+    let source = ControlledStepSource()
+    let controller = StepsController(day: day, source: source, now: now)
+    controller.refresh(now: now, timeZone: stepsZone) { _ in true }
+    await waitForSteps { source.queryCount == 7 }
+    #expect(source.intradayQueryCount == 0)
+    controller.refresh(includeIntraday: true, now: now, timeZone: stepsZone) { _ in
+        controller.stop()
+        return true
+    }
+    await waitForSteps { source.queryCount == 8 }
+    await Task.yield()
+    #expect(source.intradayQueryCount == 0)
+    controller.refresh(includeIntraday: true, now: now, timeZone: stepsZone) { _ in true }
+    await waitForSteps { source.intradayQueryCount == 1 }
+    #expect(source.intradayQueryCount == 1)
+    controller.stop()
 }

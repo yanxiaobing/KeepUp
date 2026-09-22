@@ -13,17 +13,30 @@ extension LocalStore {
         let start = calendar.startOfDay(for: reading.day.date(in: zone))
         guard let end = calendar.date(byAdding: .day, value: 1, to: start),
               reading.measuredAt >= start, reading.measuredAt <= end else { throw StoreError.invalidDate }
-        guard (0...1_000_000).contains(reading.steps),
+        guard reading.isValid, (0...1_000_000).contains(reading.steps),
               reading.distance.map({ $0.isFinite && $0 >= 0 && $0 <= 1_000_000 }) ?? true,
               goal.map({ (5_000...30_000).contains($0) && $0 % 1_000 == 0 }) ?? true else { throw StoreError.invalidQuantity }
 
         let rows = try database.table(StoreTables.stepRecords).getObjects(where: StepRow.Properties.id == reading.day.rawValue, limit: 1)
         let previous = try rows.first.map { try StoredJSON.decode(StepRecord.self, from: $0.payload) }
         // Sensor timestamps, not callback arrival times, determine freshness.
-        if let previous, previous.measuredAt > reading.measuredAt { return }
+        var reading = reading
+        if let previous, previous.measuredAt > reading.measuredAt {
+            guard previous.timeZoneID == reading.timeZoneID, let detail = reading.intraday,
+                  detail.measuredThrough >= (previous.intraday?.measuredThrough ?? .distantPast) else { return }
+            reading = StepReading(day: previous.day, timeZoneID: previous.timeZoneID, steps: previous.steps,
+                                  distance: previous.distance, measuredAt: previous.measuredAt, intraday: detail)
+        }
         var record = StepRecord(day: reading.day, timeZoneID: zone.identifier, steps: reading.steps,
                                 distance: reading.distance, measuredAt: reading.measuredAt, goal: previous?.goal ?? goal)
         record.checkInDeleted = previous?.checkInDeleted
+        record.intraday = reading.intraday
+        if let previous, previous.timeZoneID == reading.timeZoneID,
+           let cached = previous.intraday,
+           cached.measuredThrough <= reading.measuredAt,
+           record.intraday == nil || cached.measuredThrough > record.intraday!.measuredThrough {
+            record.intraday = cached
+        }
         if previous == record { return }
         let entryID = "steps." + reading.day.rawValue
         let entries = try database.table(StoreTables.entries).getObjects(where: EntryRow.Properties.id == entryID, limit: 1)

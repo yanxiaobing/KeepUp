@@ -47,6 +47,11 @@ struct StepsView: View {
                                 Text("unit.kilometers").font(.system(size: 12)).foregroundStyle(.secondary)
                             }.frame(maxWidth: .infinity).padding(.bottom, 20).accessibilityLabel(Text("steps.distance"))
                         }
+                        StepsIntradayView(data: presentation).padding(24)
+                        if controller.loadingIntraday { ProgressView("steps.loading").padding(.bottom, 16) }
+                        if !controller.loadingIntraday && controller.state == .ready && presentation.intraday?.isComplete != true {
+                            Button("steps.retry") { refresh() }.padding(.bottom, 16).accessibilityIdentifier("steps.retryIntraday")
+                        }
                         history
                         Image(model.snapshot.profile?.isMale == true ? "card_details_walk_male" : "card_details_walk_female")
                             .resizable().scaledToFit().opacity(0.2).accessibilityHidden(true)
@@ -87,7 +92,8 @@ struct StepsView: View {
                     if phase == .active { refresh() } else { controller.stop() }
                 }
                 .onReceive(clock) { _ in
-                    if scenePhase == .active && controller.needsDateRefresh() { refresh() }
+                    if scenePhase == .active && (controller.needsDateRefresh() ||
+                        (!controller.loadingIntraday && selectedDay == LocalDay(date: .now) && Date.now.timeIntervalSince(controller.readings[selectedDay]?.intraday?.measuredThrough ?? .now) >= 300)) { refresh() }
                 }
         }
     }
@@ -163,7 +169,7 @@ struct StepsView: View {
     }
 
     private func refresh(requestPermission: Bool = false) {
-        controller.refresh(requestPermission: requestPermission) { await model.saveSteps($0) }
+        controller.refresh(requestPermission: requestPermission, includeIntraday: true) { await model.saveSteps($0) }
     }
 }
 
