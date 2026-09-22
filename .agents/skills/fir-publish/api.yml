@@ -1,0 +1,8 @@
+# fir-cli API_YML_PATH override: same official endpoints, using HTTPS.
+fir:
+  domain: 'https://www.betaqr.com.cn'
+  base_url: 'https://api.appmeta.cn'
+  user_url: 'https://api.appmeta.cn/user'
+  user_feishu_access_token: 'https://api.appmeta.cn/user/fetch_feishu_v3_token'
+  app_url: 'https://api.appmeta.cn/apps'
+  udids_url: 'https://api.appmeta.cn/devices/multi_udid'

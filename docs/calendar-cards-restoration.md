@@ -45,3 +45,22 @@
 - 全量 `validate_localization.py` 仍报告 14 个基线中已有的未翻译条目（与修改前 HEAD 对照一致），本轮新增 4 条文案均有中英文翻译，没有新增缺失项。校验器现同时识别 UIKit 的 accessibilityIdentifier 赋值，避免把自动化标识误认成文案。
 
 可审阅截图在 `.build/ui-review/`：`KeepUp-Cards-Three-Columns.png`、`KeepUp-Card-Menu-Column-0.png`、`KeepUp-Card-Menu-Column-2.png`、`KeepUp-Card-Delete-Confirmation.png`、`KeepUp-Weight-Calendar-zh-Hans.png`。
+
+## 卡片滚动与日历联动初版（2026-09-21，已由下方连续过渡替代）
+
+- 卡片区上滑超过 30 点收起为所选日期所在周；下拉超过 30 点且列表已到顶部时展开整月。长列表中途下拉保持周视图，少量卡片和空白区同样支持手势。
+- 每次拖动最多切换一次周／月视图，沿用原有动画及减弱动态效果设置；保留左右切日和日历自身的手势、切换按钮。辅助功能大字号下保留日期选择器。
+- `.build/CalendarScrollLinkFinal.xcresult`：新增 2 条 UI 测试通过，覆盖少量卡片、未来空白区、左右切日、45 条记录长列表中途下拉及到顶展开。
+- `.build/CalendarScrollLink.xcresult`：原有周／月按钮、月份翻页及补打回归通过；首轮新增测试因周／月布局的辅助功能元素类型变化而定位失败，调整测试查询后在上述最终结果包通过。
+- 截图导出至 `.build/ui-review/calendar-scroll/`；`git diff --check` 通过。
+
+
+## 连续拖动修正（2026-09-21）
+
+初版仅在超过阈值时切换周／月网格，最终状态测试不能证明拖动手感。现保留完整月网格，按拖动距离连续调整裁切高度与所选周的纵向位置，松手按预计落点吸附；短距离慢拖回到原状态。月视图下优先由日历消耗上滑，周视图下保持卡片原生滚动，到顶下拉再展开；抵消列表顶部回弹产生的额外卡片位移。
+
+- 移除可见的上下滑提示文字，保留箭头按钮和读屏标签。
+- 收起时隐藏不可见日期的辅助功能元素，并将点击范围限制在可见日历内，避免隐藏日期挡住“今天”按钮。
+- `.build/CalendarContinuousFinal.xcresult`：少量卡片／空白区、长列表到顶、原有日历翻页和补打这 3 条测试通过。慢拖测试的收放、短拖回弹、日期选中和可点击断言通过，末尾检查误用了普通记录关闭按钮标识，改为体重页标识后单独重跑。
+- 慢拖过程实截 `.build/ui-review/calendar-mid-drag.png` 确认存在周／月之间的连续中间布局，卡片紧跟日历下缘；未据此宣称真机帧率或手感已验收。
+- `.build/CalendarContinuousSlow.xcresult`：慢拖测试最终通过，包含短拖回弹、完整展开／收起、所选日期保持可点击及收起后打开体重卡；上述 4 条针对性 UI 检查均通过。`git diff --check` 通过。

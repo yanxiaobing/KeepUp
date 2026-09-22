@@ -15,6 +15,12 @@ struct CalendarHomeView: View {
     @State private var pendingDay = LocalDay(date: .now)
     @State private var pendingCard: HabitCard?
     @State private var reminderCard: HabitCard?
+    @State private var recordsAtTop = true
+    @State private var recordsOverscroll: CGFloat = 0
+    @State private var scopeProgress: CGFloat? = nil
+    @State private var scopeDragOrigin: CGFloat? = nil
+    @State private var scopeDragTranslation: CGFloat = 0
+    @GestureState private var draggingScope = false
 
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
@@ -23,6 +29,12 @@ struct CalendarHomeView: View {
         return calendar
     }
     private var selectedDay: LocalDay { LocalDay(date: selectedDate) }
+    private var monthStart: Date { calendar.dateInterval(of: .month, for: selectedDate)!.start }
+    private var monthOffset: Int { (calendar.component(.weekday, from: monthStart) - calendar.firstWeekday + 7) % 7 }
+    private var monthDayCount: Int { ((monthOffset + calendar.range(of: .day, in: .month, for: selectedDate)!.count + 6) / 7) * 7 }
+    private var selectedWeekRow: Int { (monthOffset + calendar.component(.day, from: selectedDate) - 1) / 7 }
+    private var scopeTravel: CGFloat { CGFloat(monthDayCount / 7 - 1) * 32 }
+    private var expansion: CGFloat { scopeProgress ?? (isMonthMode ? 1 : 0) }
     private var monthTitle: String {
         let year = calendar.component(.year, from: selectedDate)
         let month = selectedDate.formatted(.dateTime.month(.wide).locale(locale))
@@ -123,20 +135,19 @@ struct CalendarHomeView: View {
                 DatePicker("calendar.chooseDate", selection: $selectedDate, displayedComponents: .date)
                     .datePickerStyle(.compact).padding(14)
             } else {
-                let monthStart = calendar.dateInterval(of: .month, for: selectedDate)!.start
-                let offset = (calendar.component(.weekday, from: monthStart) - calendar.firstWeekday + 7) % 7
-                let start = isMonthMode
-                    ? calendar.date(byAdding: .day, value: -offset, to: monthStart)!
-                    : calendar.dateInterval(of: .weekOfYear, for: selectedDate)!.start
-                let count = isMonthMode ? ((offset + calendar.range(of: .day, in: .month, for: selectedDate)!.count + 6) / 7) * 7 : 7
+                let start = calendar.date(byAdding: .day, value: -monthOffset, to: monthStart)!
                 let daysWithRecords = Set(model.snapshot.entries.map(\.day))
                 let plannedDays = Set(model.snapshot.schedules.filter { $0.day >= LocalDay(date: .now) }.map(\.day))
                 let weekdays = calendar.veryShortStandaloneWeekdaySymbols
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
+                HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { index in
-                        Text(weekdays[(index + 1) % 7]).font(.system(size: 12)).foregroundStyle(.secondary).frame(height: 22)
+                        Text(weekdays[(index + 1) % 7]).font(.system(size: 12)).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity).frame(height: 22)
                     }
-                    ForEach((0..<count).map { calendar.date(byAdding: .day, value: $0, to: start)! }, id: \.self) { date in
+                }.padding(.horizontal, 8).padding(.top, 9)
+                // Keep all month rows alive: collapse by clipping and translating the selected week.
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
+                    ForEach((0..<monthDayCount).map { calendar.date(byAdding: .day, value: $0, to: start)! }, id: \.self) { date in
                         let day = LocalDay(date: date)
                         let selected = day == selectedDay
                         let today = calendar.isDateInToday(date)
@@ -159,24 +170,28 @@ struct CalendarHomeView: View {
                             .accessibilityLabel(Text(date, format: .dateTime.year().month().day()))
                             .accessibilityAddTraits(selected ? .isSelected : [])
                             .accessibilityIdentifier("day.\(day.rawValue)")
+                            .accessibilityHidden(expansion == 0 && !calendar.isDate(date, equalTo: selectedDate, toGranularity: .weekOfYear))
                     }
-                }.padding(.horizontal, 8).padding(.top, 9)
+                }.padding(.horizontal, 8)
+                    .offset(y: -CGFloat(selectedWeekRow) * 32 * (1 - expansion))
+                    .frame(height: 32 + scopeTravel * expansion, alignment: .top)
+                    .clipped()
+                    .contentShape(Rectangle())
                 Button { setMonthMode(!isMonthMode) } label: {
-                    HStack(spacing: 4) {
-                        Image(isMonthMode ? "homepage_tips_ic_up" : "homepage_tips_ic_down")
-                            .resizable().scaledToFit().frame(width: 10, height: 10)
-                        Text(isMonthMode ? "calendar.showWeek" : "calendar.showMonth").font(.system(size: 11))
-                    }.foregroundStyle(.secondary).offset(y: -5).frame(maxWidth: .infinity).frame(height: 19)
-                }.buttonStyle(.plain).accessibilityIdentifier("calendar.scope")
+                    Image(isMonthMode ? "homepage_tips_ic_up" : "homepage_tips_ic_down")
+                        .resizable().scaledToFit().frame(width: 10, height: 10)
+                        .offset(y: -5).frame(maxWidth: .infinity).frame(height: 19)
+                        .contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .accessibilityLabel(Text(isMonthMode ? "calendar.showWeek" : "calendar.showMonth"))
+                    .accessibilityIdentifier("calendar.scope")
             }
         }
         .background(KeepUpStyle.surface, in: UnevenRoundedRectangle(bottomLeadingRadius: 8, bottomTrailingRadius: 8))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("calendar.grid")
-        .gesture(DragGesture(minimumDistance: 30).onEnded { value in
-            if abs(value.translation.width) > abs(value.translation.height) { movePage(value.translation.width < 0 ? 1 : -1) }
-            else { setMonthMode(value.translation.height > 0) }
-        })
+        .gesture(scopeGesture(fromCards: false))
+
     }
 
     private func recordGrid(width: CGFloat) -> some View {
@@ -184,8 +199,9 @@ struct CalendarHomeView: View {
         let itemWidth = 88 * scale
         let spacing = (width - itemWidth * 3 - 34) / 4
         return ZStack(alignment: .bottom) {
-            if !isMonthMode && visibleCardCount <= 3 {
-                Image("pic_week_pass").resizable().scaledToFit().frame(height: 100).accessibilityHidden(true)
+            if visibleCardCount <= 3 {
+                Image("pic_week_pass").resizable().scaledToFit().frame(height: 100)
+                    .opacity(1 - expansion).accessibilityHidden(true)
             }
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(itemWidth), spacing: spacing), count: 3), spacing: 20) {
@@ -232,20 +248,71 @@ struct CalendarHomeView: View {
                         }.buttonStyle(.plain).accessibilityIdentifier("calendar.add")
                     }
                 }.padding(.horizontal, spacing).padding(.vertical, 15)
+                    // The calendar consumes downward overscroll; don't move the tickets twice.
+                    .offset(y: recordsOverscroll)
+            }
+            .scrollDisabled(isMonthMode)
+            .scrollBounceBehavior(.always, axes: .vertical)
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, offset in
+                recordsAtTop = offset <= 1
+                recordsOverscroll = min(0, offset)
             }
             .id(selectedDay)
         }.frame(maxWidth: .infinity, maxHeight: .infinity).background(KeepUpStyle.background)
             .contentShape(Rectangle())
-            .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
-                guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
-                selectedDate = calendar.date(byAdding: .day, value: value.translation.width < 0 ? 1 : -1, to: selectedDate)!
-            })
+            .simultaneousGesture(scopeGesture(fromCards: true))
+            .onChange(of: draggingScope) { _, dragging in
+                // A cancelled gesture must settle too, rather than leave a partial calendar.
+                if !dragging, scopeDragOrigin != nil {
+                    scopeDragOrigin = nil
+                    setMonthMode(expansion > 0.5)
+                }
+            }
+            .onChange(of: selectedDay) { _, _ in recordsAtTop = true }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("calendar.records")
     }
 
+    private func scopeGesture(fromCards: Bool) -> some Gesture {
+        DragGesture(minimumDistance: 8, coordinateSpace: .global)
+            .updating($draggingScope) { _, dragging, _ in dragging = true }
+            .onChanged { value in
+                guard !dynamicTypeSize.isAccessibilitySize,
+                      abs(value.translation.height) > abs(value.translation.width) * 1.5 else { return }
+                if scopeDragOrigin == nil {
+                    guard !fromCards || isMonthMode || (recordsAtTop && value.translation.height > 0) else { return }
+                    scopeDragOrigin = expansion
+                    // When a long list reaches the top, only consume the remaining drag.
+                    scopeDragTranslation = fromCards && !isMonthMode ? value.translation.height : 0
+                }
+                guard let origin = scopeDragOrigin else { return }
+                scopeProgress = min(1, max(0, origin + (value.translation.height - scopeDragTranslation) / scopeTravel))
+            }
+            .onEnded { value in
+                if scopeDragOrigin != nil {
+                    settleScope(projectedTranslation: value.predictedEndTranslation.height)
+                } else if abs(value.translation.width) > max(30, abs(value.translation.height) * 1.5) {
+                    if fromCards {
+                        selectedDate = calendar.date(byAdding: .day, value: value.translation.width < 0 ? 1 : -1, to: selectedDate)!
+                    } else { movePage(value.translation.width < 0 ? 1 : -1) }
+                }
+            }
+    }
+
+    private func settleScope(projectedTranslation: CGFloat) {
+        guard let origin = scopeDragOrigin else { return }
+        let projected = origin + (projectedTranslation - scopeDragTranslation) / scopeTravel
+        scopeDragOrigin = nil
+        setMonthMode(projected > 0.5)
+    }
+
     private func setMonthMode(_ expanded: Bool) {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) { isMonthMode = expanded }
+        withAnimation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.9)) {
+            isMonthMode = expanded
+            scopeProgress = nil
+        }
     }
 
     private func weeklyProgress(_ card: HabitCard) -> Int? {

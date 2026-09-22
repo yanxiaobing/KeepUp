@@ -87,6 +87,13 @@ final class AppModel {
                     if args.contains("-ui-testing"), args.contains("-reset-test-data"), args.contains("-ui-testing-entry-posters") {
                         try await EntryPosterFixtures.prepare(repository: repository)
                     }
+                    if args.contains("-ui-testing"), args.contains("-reset-test-data"), args.contains("-ui-testing-calendar-scroll") {
+                        for index in 0..<45 {
+                            try await repository.add(CheckInDraft(id: "calendar.scroll.\(index)", cardID: "preset.exercise",
+                                day: LocalDay(date: .now), timeZoneID: TimeZone.current.identifier,
+                                quantity: 30, note: ""), now: Date.now.addingTimeInterval(Double(index)))
+                        }
+                    }
                 }
                 #endif
                 snapshot = try await repository.snapshot()

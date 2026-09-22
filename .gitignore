@@ -5,3 +5,8 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 Prototypes/PersistenceSpike/*.log
+
+# Local packages and publishing credentials
+build/
+output/packages/
+.agents/skills/fir-publish/credentials.env

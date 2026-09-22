@@ -3,9 +3,10 @@ import XCTest
 @MainActor
 final class CalendarCardUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
-    private func launch(_ language: String = "zh-Hans") -> XCUIApplication {
+    private func launch(_ language: String = "zh-Hans", longList: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding", "-reset-test-data", "-AppleLanguages", "(\(language))", "-AppleLocale", language == "en" ? "en_US" : "zh_CN"]
+        if longList { app.launchArguments.append("-ui-testing-calendar-scroll") }
         app.launch()
         XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
         return app
@@ -29,6 +30,90 @@ final class CalendarCardUITests: XCTestCase {
         card.press(forDuration: 0.7)
         XCTAssertTrue(app.buttons["calendar.menu.delete"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["entry.close"].exists, "Long press must not also open the detail screen")
+    }
+    private func waitForScope(_ app: XCUIApplication, weekY: CGFloat, expanded: Bool) {
+        let layout = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            MainActor.assumeIsolated {
+                let y = app.buttons["calendar.scope"].frame.midY
+                return expanded ? y > weekY + 50 : abs(y - weekY) < 2
+            }
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [layout], timeout: 5), .completed)
+    }
+
+    func testCardSwipesLinkCalendarScopeWithShortAndEmptyLists() {
+        let app = launch()
+        let scope = app.buttons["calendar.scope"]
+        XCTAssertTrue(scope.waitForExistence(timeout: 5))
+        let weekY = scope.frame.midY
+        let grid = app.descendants(matching: .any)["calendar.records"].firstMatch
+        grid.swipeDown()
+        waitForScope(app, weekY: weekY, expanded: true)
+        capture("KeepUp-Card-Scroll-Month")
+        grid.swipeUp()
+        waitForScope(app, weekY: weekY, expanded: false)
+        XCTAssertTrue(app.buttons["target.pending.punchcard.50"].exists)
+        XCTAssertFalse(app.buttons["calendar.today"].exists)
+
+        // Tomorrow contains only an add button; swipes must work in its blank area too.
+        grid.swipeLeft()
+        XCTAssertTrue(app.buttons["calendar.add"].waitForExistence(timeout: 5))
+        grid.swipeDown()
+        waitForScope(app, weekY: weekY, expanded: true)
+        grid.swipeUp()
+        waitForScope(app, weekY: weekY, expanded: false)
+        app.buttons["calendar.today"].tap()
+        XCTAssertTrue(app.buttons["target.pending.punchcard.50"].waitForExistence(timeout: 5))
+    }
+
+    func testLongCardListExpandsOnlyWhenBackAtTop() {
+        let app = launch("en", longList: true)
+        let scope = app.buttons["calendar.scope"]
+        XCTAssertTrue(scope.waitForExistence(timeout: 5))
+        let weekY = scope.frame.midY
+        let grid = app.descendants(matching: .any)["calendar.records"].firstMatch
+        scope.tap()
+        waitForScope(app, weekY: weekY, expanded: true)
+        grid.swipeUp()
+        waitForScope(app, weekY: weekY, expanded: false)
+        for _ in 0..<3 { grid.swipeUp() }
+        let start = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        start.press(forDuration: 0.05, thenDragTo: grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+        XCTAssertEqual(scope.frame.midY, weekY, accuracy: 2, "Scrolling down within the list must keep the week view")
+        for _ in 0..<12 {
+            if scope.frame.midY > weekY + 50 { break }
+            grid.swipeDown()
+        }
+        waitForScope(app, weekY: weekY, expanded: true)
+        XCTAssertFalse(app.buttons["calendar.today"].exists)
+        capture("KeepUp-Card-Scroll-Returned-To-Top")
+    }
+
+    func testSlowScopeDragSettlesAndKeepsSelectedWeek() {
+        let app = launch("en")
+        let scope = app.buttons["calendar.scope"]
+        let weekY = scope.frame.midY
+        let selected = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND selected == true", "day.")).firstMatch
+        let selectedID = selected.identifier
+        let grid = app.descendants(matching: .any)["calendar.records"].firstMatch
+        func drag(_ distance: CGFloat) {
+            let start = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: distance)),
+                        withVelocity: XCUIGestureVelocity(rawValue: 80), thenHoldForDuration: 0.3)
+        }
+        drag(35)
+        waitForScope(app, weekY: weekY, expanded: false)
+        drag(150)
+        waitForScope(app, weekY: weekY, expanded: true)
+        capture("KeepUp-Continuous-Slow-Expand")
+        drag(-35)
+        waitForScope(app, weekY: weekY, expanded: true)
+        drag(-150)
+        waitForScope(app, weekY: weekY, expanded: false)
+        XCTAssertTrue(app.buttons[selectedID].isSelected)
+        XCTAssertTrue(app.buttons[selectedID].isHittable)
+        app.buttons["target.pending.punchcard.50"].tap()
+        XCTAssertTrue(app.buttons["weight.cancel"].waitForExistence(timeout: 5))
     }
     func testFreshInstallShowsDefaultResidentCards() {
         let app = launch()
