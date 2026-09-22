@@ -6,6 +6,7 @@ struct CalendarTheme: Decodable, Identifiable, Equatable {
     let calendar_background_color: String
     let day_color: String
     let month_color: String
+    var transparentCityImage: String { id == 0 ? city_image : city_image + "_transparent" }
     var color: Color { Color(hex: UInt32(calendar_background_color, radix: 16) ?? 0x006db7) }
     var dayColor: Color { Color(hex: UInt32(day_color, radix: 16) ?? 0x5abcff) }
     static let all = BundledJSON.required([CalendarTheme].self, named: "themes") { items in
@@ -58,9 +59,6 @@ private struct ThemePreviewView: View {
     let apply: () -> Void
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
-    @State private var membership = MembershipStore()
-    @State private var showMembership = false
-    @State private var checking = false
     private var isCurrent: Bool { theme.id == CalendarTheme.selected.id }
     var body: some View {
         GeometryReader { geometry in
@@ -79,24 +77,17 @@ private struct ThemePreviewView: View {
                     }.frame(width: width, height: width).clipShape(RoundedRectangle(cornerRadius: 8))
                     Text(verbatim: localized("theme.description.\(theme.id)", locale)).font(.system(size: 15*s)).lineSpacing(8).foregroundStyle(theme.color).padding(.top, 15*s)
                     Button(isCurrent ? "theme.using" : "theme.use") {
-                        checking = true
-                        Task {
-                            await membership.refreshEntitlements()
-                            checking = false
-                            if theme.id == 0 || membership.isPremium { apply() } else { showMembership = true }
-                        }
+                        apply()
                     }.font(.system(size: 15*s)).foregroundStyle(.white.opacity(0.8)).padding(.horizontal, 15*s).frame(height: 40*s)
                         .background(theme.color.opacity(0.3), in: RoundedRectangle(cornerRadius: 8*s))
-                        .frame(maxWidth: .infinity).padding(.top, 50*s).disabled(isCurrent || checking).accessibilityIdentifier("theme.apply")
+                        .frame(maxWidth: .infinity).padding(.top, 50*s).disabled(isCurrent).accessibilityIdentifier("theme.apply")
                 }.frame(width: width).frame(maxWidth: .infinity, maxHeight: .infinity)
                 VStack {
                     HStack { Spacer(); Button { dismiss() } label: { Image(systemName: "xmark").font(.system(size: 22)).foregroundStyle(.white.opacity(0.7)).frame(width: 44, height: 44) }.accessibilityLabel(Text("action.close")).accessibilityIdentifier("theme.previewClose") }
                     Spacer()
                 }.padding(.horizontal, 10*s)
             }
-        }.fullScreenCover(isPresented: $showMembership, onDismiss: {
-            Task { await membership.refreshEntitlements(); if membership.isPremium { apply() } }
-        }) { MembershipView(onClose: { showMembership = false }) }
+        }
     }
     private func englishCalendar(width: CGFloat) -> some View {
         VStack(spacing: 0) {

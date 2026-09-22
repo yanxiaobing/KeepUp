@@ -24,6 +24,47 @@ final class KeepUpUITests: XCTestCase {
         XCTAssertTrue(app.buttons["card.preset.exercise"].waitForExistence(timeout: 5))
     }
 
+    func testSinglePageHomeNavigationAndMonthPaging() {
+        let app = app()
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
+        let initialMonth = app.staticTexts["calendar.month"].label
+        app.buttons["calendar.nextMonth"].tap()
+        XCTAssertNotEqual(app.staticTexts["calendar.month"].label, initialMonth)
+        app.buttons["calendar.previousMonth"].tap()
+        XCTAssertEqual(app.staticTexts["calendar.month"].label, initialMonth)
+        let add = app.buttons["tab.calendar"]
+        XCTAssertGreaterThan(add.frame.midX, app.frame.width * 0.7)
+        XCTAssertGreaterThan(add.frame.midY, app.frame.height * 0.75)
+        attach("SinglePage-Home-English")
+
+        app.buttons["tab.history"].tap()
+        XCTAssertTrue(app.navigationBars.buttons.element(boundBy: 0).waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["tab.calendar"].exists)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 5))
+        app.buttons["tab.profile"].tap()
+        XCTAssertTrue(app.buttons["profile.settings"].waitForExistence(timeout: 5))
+        attach("SinglePage-Profile")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["calendar.month"].label, initialMonth)
+        openCatalog(app)
+        app.buttons["catalog.close"].tap()
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 5))
+    }
+
+    func testMonthArrowEntireTouchAreaRespondsWithoutBackground() {
+        let app = app()
+        app.launch()
+        XCTAssertTrue(app.buttons["calendar.nextMonth"].waitForExistence(timeout: 20))
+        let initial = app.staticTexts["calendar.month"].label
+        app.buttons["calendar.nextMonth"].coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap()
+        XCTAssertNotEqual(app.staticTexts["calendar.month"].label, initial)
+        app.buttons["calendar.previousMonth"].coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
+        XCTAssertEqual(app.staticTexts["calendar.month"].label, initial)
+    }
+
     func testEnglishSaveRelaunchAndDelete() throws {
         let app = app()
         app.launch()

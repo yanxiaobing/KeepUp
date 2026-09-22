@@ -24,7 +24,7 @@ struct MembershipView: View {
         GeometryReader { geometry in
             let s = geometry.size.width/375
             let statusHeight = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.statusBarManager?.statusBarFrame.height ?? geometry.safeAreaInsets.top
-            let bottom = (isOnboarding ? 211 : 179)*s + max(geometry.safeAreaInsets.bottom, 34)
+            let bottom = 223*s + max(geometry.safeAreaInsets.bottom, 34)
             ZStack(alignment: .top) {
                 Color.white.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
@@ -148,10 +148,14 @@ struct MembershipView: View {
                     .background(.white, in: Capsule()).scaleEffect(pulse ? 1.07 : 1)
             }.buttonStyle(.plain).padding(.horizontal, 24*s).padding(.top, 20*s).disabled(store.busy)
                 .accessibilityIdentifier("membership.purchase")
-            if isOnboarding {
-                Button("membership.giveUp") { close() }.font(.custom("PingFangSC-Regular", fixedSize: 12*s)).foregroundStyle(.white.opacity(0.5))
-                    .frame(height: 16*s).padding(.top, 16*s).accessibilityIdentifier("membership.skip")
-            }
+            Button { close() } label: {
+                Text("membership.giveUp")
+                    .font(.custom("PingFangSC-Regular", fixedSize: 12*s))
+                    .foregroundStyle(Color(white: 0.25))
+                    .frame(maxWidth: .infinity).frame(minHeight: 44*s)
+                    .contentShape(Rectangle())
+            }.buttonStyle(.plain)
+                .accessibilityIdentifier("membership.skip")
         }.padding(.bottom, bottom)
             .background {
                 LinearGradient(colors: [Color(hex: theme.hex), .white], startPoint: .top, endPoint: .bottom)

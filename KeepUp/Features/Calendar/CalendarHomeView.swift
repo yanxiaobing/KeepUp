@@ -2,6 +2,8 @@ import SwiftUI
 
 struct CalendarHomeView: View {
     @Binding var selectedDate: Date
+    let openHistory: () -> Void
+    let openProfile: () -> Void
     let openCatalog: () -> Void
     @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
@@ -36,9 +38,7 @@ struct CalendarHomeView: View {
     private var scopeTravel: CGFloat { CGFloat(monthDayCount / 7 - 1) * 32 }
     private var expansion: CGFloat { scopeProgress ?? (isMonthMode ? 1 : 0) }
     private var monthTitle: String {
-        let year = calendar.component(.year, from: selectedDate)
-        let month = selectedDate.formatted(.dateTime.month(.wide).locale(locale))
-        return "\(year) | \(month)"
+        selectedDate.formatted(.dateTime.month(.wide).year().locale(locale))
     }
 
     private var dayEntries: [CheckInEntry] { model.entries(on: selectedDay) }
@@ -56,21 +56,16 @@ struct CalendarHomeView: View {
     private var showsAddCard: Bool {
         selectedDay > LocalDay(date: .now) || selectedDay < LocalDay(date: calendar.date(byAdding: .day, value: -1, to: .now)!)
     }
-    private var visibleCardCount: Int {
-        dayEntries.count + daySchedules.count + pendingCards.count + (showsAddCard ? 1 : 0)
-    }
-
     var body: some View {
-        NavigationStack {
+        Group {
             GeometryReader { geometry in
                 VStack(spacing: 0) {
-                    Image(CalendarTheme.selected.city_image).resizable()
-                        .frame(width: geometry.size.width, height: 136 * geometry.size.width / 375)
-                        .frame(height: max(0, 34 + 136 * geometry.size.width / 375 - geometry.safeAreaInsets.top), alignment: .bottom)
-                        .accessibilityHidden(true)
                     VStack(spacing: 0) {
-                        calendarHeader
-                        calendarBody
+                        VStack(spacing: 0) {
+                            calendarHeader
+                            calendarBody
+                        }
+                        .padding(.vertical, 8)
                         if model.running.session != nil {
                             Button { showingRunning = true } label: {
                                 Label("running.resumeActivity", systemImage: model.running.session?.kind == .cycling ? "bicycle" : "figure.run")
@@ -82,9 +77,62 @@ struct CalendarHomeView: View {
                         recordGrid(width: geometry.size.width)
                     }.padding(.horizontal, 15)
                 }
-                .background(KeepUpStyle.theme.ignoresSafeArea())
+                .padding(.top, 12)
+                .background {
+                    ZStack(alignment: .bottom) {
+                        LinearGradient(stops: [
+                            .init(color: CalendarTheme.selected.color, location: 0),
+                            .init(color: .white, location: 0.72)
+                        ], startPoint: .top, endPoint: .bottom)
+                        Image(CalendarTheme.selected.transparentCityImage)
+                            .resizable().scaledToFit()
+                            .frame(width: geometry.size.width)
+                            .accessibilityHidden(true)
+                    }
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    Button(action: openCatalog) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 25, weight: .medium))
+                            .foregroundStyle(Color(white: 0.15))
+                            .frame(width: 60, height: 60)
+                            .background(.white, in: Circle())
+                            .shadow(color: .black.opacity(0.16), radius: 12, y: 4)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("action.checkIn"))
+                    .accessibilityIdentifier("tab.calendar")
+                    .padding(.trailing, 24).padding(.bottom, 18)
+                }
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button(action: openHistory) {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel(Text("nav.history"))
+                    .accessibilityIdentifier("tab.history")
+                    if !calendar.isDateInToday(selectedDate) {
+                        Button { selectedDate = .now } label: { Image(systemName: "calendar.badge.clock") }
+                            .accessibilityLabel(Text("calendar.today"))
+                            .accessibilityIdentifier("calendar.today")
+                    }
+                }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button { showingTheme = true } label: { Image(systemName: "paintpalette") }
+                        .accessibilityLabel(Text("theme.preview"))
+                        .accessibilityIdentifier("theme.open")
+                    Button(action: openProfile) { Image(systemName: "person.crop.circle") }
+                        .accessibilityLabel(Text("nav.profile"))
+                        .accessibilityIdentifier("tab.profile")
+                }
+            }
+            .tint(Color(white: 0.2))
             .fullScreenCover(isPresented: $showingTheme) { ThemeListView() }
             .fullScreenCover(isPresented: $showingRunning) { RunningView() }
             .fullScreenCover(item: $pendingCard) { card in
@@ -109,31 +157,45 @@ struct CalendarHomeView: View {
 
     private var calendarHeader: some View {
         HStack(spacing: 0) {
-            Text(monthTitle).font(.system(size: 18)).lineLimit(1).minimumScaleFactor(0.75)
+            Text(monthTitle)
+                .font(.system(size: 21, weight: .semibold, design: .rounded))
+                .lineLimit(1).minimumScaleFactor(0.75)
                 .accessibilityIdentifier("calendar.month")
             Spacer(minLength: 4)
-            if !calendar.isDateInToday(selectedDate) {
-            Button { selectedDate = .now } label: {
-                Group {
-                    if locale.language.languageCode?.identifier == "zh" {
-                        Image("homepage_btn_ic_today").resizable().scaledToFit().frame(width: 24, height: 24)
-                    } else {
-                        Text("calendar.today").font(.system(size: 11, weight: .medium))
-                    }
-                }.frame(width: 44, height: 44).contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityLabel(Text("calendar.today")).accessibilityIdentifier("calendar.today")
+            Button { moveMonth(-1) } label: {
+                Image(systemName: "chevron.left")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
-            OriginalIconButton(image: "skin_logo_\(CalendarTheme.selected.id)", label: "theme.preview") { showingTheme = true }.accessibilityIdentifier("theme.open")
+            .accessibilityLabel(Text("calendar.previousMonth"))
+            .accessibilityIdentifier("calendar.previousMonth")
+            Button { moveMonth(1) } label: {
+                Image(systemName: "chevron.right")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel(Text("calendar.nextMonth"))
+            .accessibilityIdentifier("calendar.nextMonth")
         }
-        .foregroundStyle(.white).padding(.leading, 18).padding(.trailing, 8)
-        .background(KeepUpStyle.header, in: UnevenRoundedRectangle(topLeadingRadius: 8, topTrailingRadius: 8))
+        .font(.system(size: 15, weight: .medium))
+        .buttonStyle(.plain)
+        .foregroundStyle(Color(white: 0.24))
+        .padding(.leading, 20).padding(.trailing, 8)
+    }
+
+    private func moveMonth(_ offset: Int) {
+        if let date = calendar.date(byAdding: .month, value: offset, to: selectedDate) {
+            selectedDate = date
+        }
     }
 
     private var calendarBody: some View {
         VStack(spacing: 0) {
             if dynamicTypeSize.isAccessibilitySize {
                 DatePicker("calendar.chooseDate", selection: $selectedDate, displayedComponents: .date)
-                    .datePickerStyle(.compact).padding(14)
+                    .datePickerStyle(.compact).labelsHidden()
+                    .environment(\.colorScheme, .light)
+                    .frame(maxWidth: .infinity).padding(14)
             } else {
                 let start = calendar.date(byAdding: .day, value: -monthOffset, to: monthStart)!
                 let daysWithRecords = Set(model.snapshot.entries.map(\.day))
@@ -141,10 +203,10 @@ struct CalendarHomeView: View {
                 let weekdays = calendar.veryShortStandaloneWeekdaySymbols
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { index in
-                        Text(weekdays[(index + 1) % 7]).font(.system(size: 12)).foregroundStyle(.secondary)
+                        Text(weekdays[(index + 1) % 7]).font(.system(size: 12)).foregroundStyle(Color.gray)
                             .frame(maxWidth: .infinity).frame(height: 22)
                     }
-                }.padding(.horizontal, 8).padding(.top, 9)
+                }.padding(.horizontal, 8).padding(.top, 12).padding(.bottom, 6)
                 // Keep all month rows alive: collapse by clipping and translating the selected week.
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
                     ForEach((0..<monthDayCount).map { calendar.date(byAdding: .day, value: $0, to: start)! }, id: \.self) { date in
@@ -157,7 +219,7 @@ struct CalendarHomeView: View {
                         Button { selectedDate = date } label: {
                             Text(calendar.component(.day, from: date), format: .number)
                                 .font(.custom("HelveticaNeue-Light", size: 12))
-                                .foregroundStyle(recorded && !today ? Color.white : Color.primary.opacity(0.7))
+                                .foregroundStyle(recorded && !today ? Color.white : Color(white: 0.3))
                                 .frame(width: 26, height: 26)
                                 .background(today ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : .clear), in: Circle())
                                 .overlay(Circle().stroke(planned ? Color(hex: 0xBABDC2) : .clear, style: StrokeStyle(lineWidth: 1, dash: [2, 2])))
@@ -177,19 +239,14 @@ struct CalendarHomeView: View {
                     .frame(height: 32 + scopeTravel * expansion, alignment: .top)
                     .clipped()
                     .contentShape(Rectangle())
-                Button { setMonthMode(!isMonthMode) } label: {
-                    Image(isMonthMode ? "homepage_tips_ic_up" : "homepage_tips_ic_down")
-                        .resizable().scaledToFit().frame(width: 10, height: 10)
-                        .offset(y: -5).frame(maxWidth: .infinity).frame(height: 19)
-                        .contentShape(Rectangle())
-                }.buttonStyle(.plain)
-                    .accessibilityLabel(Text(isMonthMode ? "calendar.showWeek" : "calendar.showMonth"))
-                    .accessibilityIdentifier("calendar.scope")
+
             }
         }
-        .background(KeepUpStyle.surface, in: UnevenRoundedRectangle(bottomLeadingRadius: 8, bottomTrailingRadius: 8))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("calendar.grid")
+        .accessibilityAction(named: Text(isMonthMode ? "calendar.showWeek" : "calendar.showMonth")) {
+            setMonthMode(!isMonthMode)
+        }
         .gesture(scopeGesture(fromCards: false))
 
     }
@@ -199,10 +256,6 @@ struct CalendarHomeView: View {
         let itemWidth = 88 * scale
         let spacing = (width - itemWidth * 3 - 34) / 4
         return ZStack(alignment: .bottom) {
-            if visibleCardCount <= 3 {
-                Image("pic_week_pass").resizable().scaledToFit().frame(height: 100)
-                    .opacity(1 - expansion).accessibilityHidden(true)
-            }
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(itemWidth), spacing: spacing), count: 3), spacing: 20) {
                     ForEach(dayEntries.sorted { lhs, rhs in
@@ -247,11 +300,10 @@ struct CalendarHomeView: View {
                             CalendarAddCard(future: selectedDay > LocalDay(date: .now), scale: scale)
                         }.buttonStyle(.plain).accessibilityIdentifier("calendar.add")
                     }
-                }.padding(.horizontal, spacing).padding(.vertical, 15)
+                }.padding(.horizontal, spacing).padding(.top, 15).padding(.bottom, 110)
                     // The calendar consumes downward overscroll; don't move the tickets twice.
                     .offset(y: recordsOverscroll)
             }
-            .scrollDisabled(isMonthMode)
             .scrollBounceBehavior(.always, axes: .vertical)
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y + geometry.contentInsets.top
@@ -260,7 +312,7 @@ struct CalendarHomeView: View {
                 recordsOverscroll = min(0, offset)
             }
             .id(selectedDay)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity).background(KeepUpStyle.background)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
             .simultaneousGesture(scopeGesture(fromCards: true))
             .onChange(of: draggingScope) { _, dragging in

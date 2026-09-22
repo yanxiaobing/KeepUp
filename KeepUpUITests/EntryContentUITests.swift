@@ -142,35 +142,24 @@ final class EntryContentUITests: XCTestCase {
         XCTAssertTrue(record(app).waitForExistence(timeout: 5))
         XCTAssertTrue(record(app).label.contains("体重"))
     }
-    func testThemeListPreviewAndMembershipGate() throws {
+    func testThemeAppliesWithoutMembershipAndPersists() throws {
         let app = launch("zh-Hans")
         app.buttons["theme.open"].tap()
-        XCTAssertTrue(app.buttons["theme.0"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["theme.0"].label.contains("起始点"))
-        XCTAssertTrue(app.buttons["theme.1"].label.contains("北京"))
-        shot("KeepUp-Theme-List-Chinese")
+        XCTAssertTrue(app.buttons["theme.1"].waitForExistence(timeout: 5))
         app.buttons["theme.1"].tap()
         XCTAssertTrue(app.buttons["theme.apply"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["我爱北京天安门，天安门上太阳升\n你好，这里是帝都"].exists)
-        shot("KeepUp-Theme-Preview-Chinese")
         app.buttons["theme.apply"].tap()
-        XCTAssertTrue(app.buttons["membership.close"].waitForExistence(timeout: 10))
-        app.buttons["membership.close"].tap()
-        XCTAssertTrue(app.buttons["membership.close"].waitForNonExistence(timeout: 5))
-        app.buttons["theme.previewClose"].tap()
-        app.buttons["theme.0"].tap()
-        XCTAssertTrue(app.buttons["theme.apply"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["theme.apply"].isEnabled)
-        app.buttons["theme.previewClose"].tap(); app.buttons["theme.close"].tap()
-        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["theme.open"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["membership.purchase"].exists)
         app.terminate()
-        app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
         app.launch()
         XCTAssertTrue(app.buttons["theme.open"].waitForExistence(timeout: 15))
-        app.buttons["theme.open"].tap(); app.buttons["theme.1"].tap()
+        app.buttons["theme.open"].tap()
+        app.buttons["theme.1"].tap()
         XCTAssertTrue(app.buttons["theme.apply"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Beijing"].exists)
-        shot("KeepUp-Theme-Preview-English")
+        XCTAssertFalse(app.buttons["theme.apply"].isEnabled)
+        shot("KeepUp-Theme-Applied-Without-Membership")
     }
 
     func testDeniedPhotoAccessOffersSettingsWithoutLosingPreview() throws {

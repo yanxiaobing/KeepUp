@@ -33,16 +33,23 @@ struct RootView: View {
                     return saved
                 }
             } else if model.isReady {
-                Group {
-                    switch selectedTab {
-                    case .calendar:
-                        CalendarHomeView(selectedDate: $selectedDate) { openCatalog() }
-                            .background(HomeVisibilityObserver { homeIsVisible = $0 })
-                    case .history: HistoryView()
-                    case .profile: ProfileView()
-                    }
+                NavigationStack(path: Binding(
+                    get: { selectedTab == .calendar ? [] : [selectedTab] },
+                    set: { selectedTab = $0.last ?? .calendar }
+                )) {
+                    CalendarHomeView(selectedDate: $selectedDate,
+                                     openHistory: { selectedTab = .history },
+                                     openProfile: { selectedTab = .profile },
+                                     openCatalog: { openCatalog() })
+                        .background(HomeVisibilityObserver { homeIsVisible = $0 })
+                        .navigationDestination(for: AppTab.self) { destination in
+                            switch destination {
+                            case .history: HistoryView()
+                            case .profile: ProfileView()
+                            case .calendar: EmptyView()
+                            }
+                        }
                 }
-                .safeAreaInset(edge: .bottom, spacing: 0) { tabBar }
                 .fullScreenCover(item: $catalogRequest) { request in
                     CardCatalogView(day: request.day, initialCardID: request.initialCardID)
                         .environment(\.dynamicTypeSize, dynamicTypeSize)
@@ -91,44 +98,6 @@ struct RootView: View {
         #else
         false
         #endif
-    }
-
-    private var tabBar: some View {
-        HStack(alignment: .center, spacing: 0) {
-            tab(.history, title: "nav.history", image: "homepage_tab_btn_store")
-            Button {
-                if selectedTab == .calendar { openCatalog() }
-                else { selectedTab = .calendar }
-            } label: {
-                Group {
-                    if selectedTab == .calendar {
-                        Image("homepage_btn_go").resizable().scaledToFit().frame(width: 64.5, height: 67).offset(y: -16.5)
-                    } else {
-                        VStack(spacing: 6) {
-                            Image("homepage_tab_btn_homepage_n").resizable().scaledToFit().frame(width: 24, height: 24)
-                            Text("nav.calendar").font(.system(size: 10))
-                        }
-                    }
-                }.frame(maxWidth: .infinity).frame(height: 49).contentShape(Rectangle())
-            }.buttonStyle(.plain)
-                .accessibilityLabel(Text(selectedTab == .calendar ? "action.checkIn" : "nav.calendar"))
-                .accessibilityIdentifier("tab.calendar")
-            tab(.profile, title: "nav.profile", image: "homepage_tab_btn_my")
-        }
-        .foregroundStyle(Color.black.opacity(0.65))
-        .background(KeepUpStyle.theme.ignoresSafeArea(edges: .bottom))
-    }
-
-    private func tab(_ tab: AppTab, title: LocalizedStringKey, image: String) -> some View {
-        Button { selectedTab = tab } label: {
-            VStack(spacing: 6) {
-                Image(image + (selectedTab == tab ? "_p" : "_n"))
-                    .resizable().scaledToFit().frame(width: 24, height: 24)
-                Text(title).font(.system(size: 10))
-            }.frame(maxWidth: .infinity).frame(height: 49).contentShape(Rectangle())
-        }.buttonStyle(.plain)
-            .accessibilityIdentifier(tab == .history ? "tab.history" : "tab.profile")
-            .accessibilityAddTraits(selectedTab == tab ? [.isSelected] : [])
     }
 
     private func openRequestedReminder() {

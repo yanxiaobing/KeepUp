@@ -8,7 +8,7 @@ struct HistoryView: View {
     private var days: [LocalDay] { Array(Set(model.snapshot.entries.map(\.day))).sorted(by: >) }
 
     var body: some View {
-        NavigationStack {
+        Group {
             Group {
                 if days.isEmpty {
                     VStack(spacing: 15) {

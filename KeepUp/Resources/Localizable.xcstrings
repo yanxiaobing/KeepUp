@@ -3962,7 +3962,6 @@
       }
     },
     "membership.giveUp": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {

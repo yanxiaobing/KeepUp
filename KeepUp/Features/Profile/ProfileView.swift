@@ -14,7 +14,7 @@ struct ProfileView: View {
     private var entries: [CheckInEntry] { model.snapshot.entries }
 
     var body: some View {
-        NavigationStack {
+        Group {
             GeometryReader { geometry in
                 let scale = geometry.size.width / 375
                 ScrollView {
@@ -50,7 +50,10 @@ struct ProfileView: View {
                             .accessibilityIdentifier("profile.settings")
                     }
             }.background(alignment: .top) { KeepUpStyle.theme.ignoresSafeArea(edges: .top) }
-                .toolbar(.hidden, for: .navigationBar)
+                .navigationTitle("nav.profile")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(KeepUpStyle.theme, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
                 .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
                 .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
                 .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
