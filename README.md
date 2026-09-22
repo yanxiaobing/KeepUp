@@ -48,6 +48,7 @@ python3 Scripts/validate_configuration.py
 12. [体重记录与目标](docs/weight-cards.md)
 13. [预置 JSON 配置与维护](docs/bundled-configuration.md)
 14. [首页卡片与长按操作还原](docs/calendar-cards-restoration.md)
+15. [IAAP、会员权益与 AdMob 接入进展](docs/monetization-status.md)
 
 ## 验证原型
 
