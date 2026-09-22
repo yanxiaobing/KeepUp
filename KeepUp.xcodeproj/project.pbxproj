@@ -149,6 +149,7 @@
 		C076275F73943EDA66CF7E9D /* CalendarTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AD838484C63B1F1B4D16B65 /* CalendarTheme.swift */; };
 		C0FC2FA5F288B91F2D9B39E6 /* RunningPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C58511C9FD226DFDD89BCC9 /* RunningPersistenceTests.swift */; };
 		C7557D578C65B83A158E7964 /* SwiftyRSA in Frameworks */ = {isa = PBXBuildFile; productRef = D0FD9CCD1A12EC4867B0ACA6 /* SwiftyRSA */; };
+		C7557D578C65B83A158E7965 /* SwiftyRSA in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D0FD9CCD1A12EC4867B0ACA6 /* SwiftyRSA */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C7FCB41620BE38121A29D577 /* ScheduledCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28BAC6661DD813D0D59F3AB /* ScheduledCard.swift */; };
 		C84D943ABDD60A0123229A9E /* MembershipProductCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F08DADA4FD08824068166C0 /* MembershipProductCatalogTests.swift */; };
 		C8B5F6535EBB0FC1615C0648 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 915C92B71E30AC30251A58E7 /* Foundation.framework */; };
@@ -427,6 +428,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C7557D578C65B83A158E7966 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C7557D578C65B83A158E7965 /* SwiftyRSA in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXGroup section */
 		060B49A39ABCCD1406ED5DBD /* Design */ = {
@@ -880,6 +895,7 @@
 				8CDCF602E4DE0C041016CC91 /* Sources */,
 				D3C3885211AC879439652C10 /* Frameworks */,
 				7577E5AA4BDA0BE2ED3E8ABA /* Resources */,
+				C7557D578C65B83A158E7966 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
