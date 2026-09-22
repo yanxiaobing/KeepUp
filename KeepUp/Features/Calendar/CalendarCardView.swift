@@ -93,7 +93,7 @@ struct CalendarTicketCard: View {
                         .accessibilityIdentifier("target.progress.\(card.id)")
                 }
             }
-            .overlay { Image("xbcalendarItemCover").resizable().allowsHitTesting(false) }
+            .clipShape(RoundedRectangle(cornerRadius: 5 * scale, style: .circular))
             .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
             .accessibilityElement(children: .combine)
     }
@@ -113,7 +113,7 @@ struct CalendarAddCard: View {
                     .lineLimit(1).minimumScaleFactor(0.65).frame(maxWidth: .infinity).frame(height: 18)
                     .background(Color(hex: 0xBABDC2))
             }
-            .overlay { Image("xbcalendarItemCover").resizable().allowsHitTesting(false) }
+            .clipShape(RoundedRectangle(cornerRadius: 5 * scale, style: .circular))
     }
 }
 

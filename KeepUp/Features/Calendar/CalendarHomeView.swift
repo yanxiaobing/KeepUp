@@ -304,6 +304,7 @@ struct CalendarHomeView: View {
                     // The calendar consumes downward overscroll; don't move the tickets twice.
                     .offset(y: recordsOverscroll)
             }
+            .scrollIndicators(.hidden)
             .scrollBounceBehavior(.always, axes: .vertical)
             .onScrollGeometryChange(for: CGFloat.self) { geometry in
                 geometry.contentOffset.y + geometry.contentInsets.top
