@@ -56,6 +56,30 @@ project.root_object.package_references << defaults
   target.frameworks_build_phase.files << build_file
 end
 
+alamofire = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+alamofire.repositoryURL = 'https://github.com/Alamofire/Alamofire.git'
+alamofire.requirement = { 'kind' => 'exactVersion', 'version' => '5.12.2' }
+project.root_object.package_references << alamofire
+alamofire_product = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+alamofire_product.package = alamofire
+alamofire_product.product_name = 'Alamofire'
+app.package_product_dependencies << alamofire_product
+alamofire_build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
+alamofire_build_file.product_ref = alamofire_product
+app.frameworks_build_phase.files << alamofire_build_file
+
+swiftyrsa = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+swiftyrsa.repositoryURL = 'https://github.com/TakeScoop/SwiftyRSA.git'
+swiftyrsa.requirement = { 'kind' => 'exactVersion', 'version' => '1.8.0' }
+project.root_object.package_references << swiftyrsa
+swiftyrsa_product = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+swiftyrsa_product.package = swiftyrsa
+swiftyrsa_product.product_name = 'SwiftyRSA'
+app.package_product_dependencies << swiftyrsa_product
+swiftyrsa_build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
+swiftyrsa_build_file.product_ref = swiftyrsa_product
+app.frameworks_build_phase.files << swiftyrsa_build_file
+
 def add_directory(group, path, target)
   Dir.children(path).sort.each do |name|
     full = File.join(path, name)

@@ -8,7 +8,7 @@ enum BundledJSON {
         guard let url = bundle.url(forResource: name, withExtension: "json") else {
             throw ConfigurationError.missingResource(name)
         }
-        return try JSONDecoder().decode(type, from: Data(contentsOf: url))
+        return try JSONPayloadCodec().decode(type, from: Data(contentsOf: url))
     }
 
     static func required<T: Decodable>(_ type: T.Type, named name: String, validate: (T) throws -> Void) -> T {
