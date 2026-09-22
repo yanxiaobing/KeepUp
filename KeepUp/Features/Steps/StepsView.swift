@@ -47,6 +47,7 @@ struct StepsView: View {
                                 Text("unit.kilometers").font(.system(size: 12)).foregroundStyle(.secondary)
                             }.frame(maxWidth: .infinity).padding(.bottom, 20).accessibilityLabel(Text("steps.distance"))
                         }
+                        StepsEnergyView(kilocalories: presentation.estimatedKilocalories).padding(.horizontal, 24)
                         StepsIntradayView(data: presentation).padding(24)
                         if controller.loadingIntraday { ProgressView("steps.loading").padding(.bottom, 16) }
                         if !controller.loadingIntraday && controller.state == .ready && presentation.intraday?.isComplete != true {

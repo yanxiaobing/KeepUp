@@ -1,6 +1,7 @@
 import Foundation
 
-/// Manual cards use fixed estimates from activity-energy.json; recorded workouts use their saved energy summary.
+/// Manual cards use fixed estimates from activity-energy.json; steps use a fixed per-step estimate;
+/// recorded workouts use their saved energy summary.
 /// Keep version-one coefficients stable because historical manual entries derive energy from quantity.
 enum ActivityEnergy {
     struct Coefficient: Decodable {
@@ -52,8 +53,20 @@ enum ActivityEnergy {
         return Int(result)
     }
 
+    /// PunchCard's fixed walking estimate, truncated to whole kcal. Integer arithmetic
+    /// keeps decimal boundaries stable; this is not a measured or weight-based value.
+    static func stepCalories(steps: Int?) -> Int? {
+        guard let steps, (0...1_000_000).contains(steps) else { return nil }
+        return steps * 3 / 100
+    }
+
     static func calories(entry: CheckInEntry, card: HabitCard) -> Int? {
         guard entry.cardID == card.id, entry.unit == card.unit else { return nil }
+        if entry.cardID == "punchcard.1" {
+            guard entry.unit == .steps, let quantity = entry.quantity, quantity.isFinite,
+                  quantity >= 0, quantity <= 1_000_000, quantity.rounded(.towardZero) == quantity else { return nil }
+            return stepCalories(steps: Int(quantity))
+        }
         if entry.runningKind != nil {
             return RunningMetrics.roundedEnergy(entry.runningKilocalories)
         }

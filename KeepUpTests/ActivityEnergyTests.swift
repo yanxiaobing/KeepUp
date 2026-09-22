@@ -78,3 +78,28 @@ import Testing
     let duplicate = try JSONDecoder().decode(OriginalCatalog.Configuration.self, from: JSONSerialization.data(withJSONObject: cards))
     #expect(throws: BundledJSON.ConfigurationError.self) { try duplicate.validate() }
 }
+
+@Test func stepEnergyUsesFixedEstimateAndRejectsUnknownOrInvalidCounts() {
+    #expect(ActivityEnergy.stepCalories(steps: nil) == nil)
+    #expect(ActivityEnergy.stepCalories(steps: -1) == nil)
+    #expect(ActivityEnergy.stepCalories(steps: Int.max) == nil)
+    for (steps, expected) in [(0, 0), (1, 0), (33, 0), (34, 1), (100, 3), (6500, 195), (9999, 299), (1_000_000, 30_000)] {
+        #expect(ActivityEnergy.stepCalories(steps: steps) == expected)
+    }
+    let card = OriginalCatalog.card(1)!
+    let day = LocalDay(rawValue: "2020-09-08")!
+    func measuredEntry(_ quantity: Double?) -> CheckInEntry {
+        CheckInEntry(id: "steps.2020-09-08", cardID: card.id, day: day, timeZoneID: "UTC", createdAt: .now,
+                     quantity: quantity, unit: .steps, note: "")
+    }
+    let entry = measuredEntry(6500)
+    #expect(ActivityEnergy.calories(entry: entry, card: card) == 195)
+    let record = StepRecord(day: day, timeZoneID: "UTC", steps: 6500, distance: nil, measuredAt: day.date(), goal: nil)
+    let presentation = StepsPresentation(day: day, reading: nil, saved: record, goal: nil)
+    #expect(presentation.estimatedKilocalories == ActivityEnergy.calories(entry: entry, card: card))
+    for value in [Double.nan, .infinity, -1, 12.5, 1_000_001] {
+        #expect(ActivityEnergy.calories(entry: measuredEntry(value), card: card) == nil)
+    }
+    #expect(ActivityEnergy.calories(entry: measuredEntry(nil), card: card) == nil)
+    #expect(StepsPresentation(day: day, reading: nil, saved: nil, goal: nil).estimatedKilocalories == nil)
+}

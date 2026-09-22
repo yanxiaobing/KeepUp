@@ -10,6 +10,7 @@ struct StepsPresentation: Equatable {
     let isSaved: Bool
     let intraday: StepIntraday?
     let timeZoneID: String
+    var estimatedKilocalories: Int? { ActivityEnergy.stepCalories(steps: steps) }
 
     init(day: LocalDay, reading: StepReading?, saved: StepRecord?, goal: Int?) {
         self.day = day
@@ -89,6 +90,7 @@ struct StepsPoster: View {
                 if let distance = data.distance {
                     metric("steps.distance", value: (distance / 1_000).formatted(.number.precision(.fractionLength(2)).locale(locale)) + " " + localized("unit.kilometers", locale))
                 }
+                StepsEnergyView(kilocalories: data.estimatedKilocalories)
                 if let goal = data.goal {
                     metric("steps.dailyGoal", value: goal.formatted(.number.locale(locale)) + " " + localized("unit.steps", locale))
                 }
@@ -193,5 +195,25 @@ struct StepsIntradayView: View {
                 Text("steps.intradayMissing").foregroundStyle(.secondary).accessibilityIdentifier("steps.intradayMissing")
             }
         }.font(.caption).frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Shared by on-screen details, card preview and both exported poster styles.
+struct StepsEnergyView: View {
+    let kilocalories: Int?
+    @Environment(\.locale) private var locale
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("steps.energyEstimate").font(.system(size: 14)).foregroundStyle(.secondary)
+                Spacer(minLength: 12)
+                Text(kilocalories.map { String(format: localized("steps.energyValue %@", locale), $0.formatted(.number.locale(locale))) } ?? "—")
+                    .font(.system(size: 18, weight: .medium))
+                    .accessibilityIdentifier("steps.energy")
+            }
+            Text("steps.energyExplanation").font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

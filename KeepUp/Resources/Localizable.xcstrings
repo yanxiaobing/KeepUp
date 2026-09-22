@@ -10714,6 +10714,54 @@
           }
         }
       }
+    },
+    "steps.energyEstimate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated energy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "估算热量"
+          }
+        }
+      }
+    },
+    "steps.energyValue %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kcal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 大卡"
+          }
+        }
+      }
+    },
+    "steps.energyExplanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated at 0.03 kcal per step, rounded down to whole kcal."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按每步 0.03 大卡估算，取整数大卡。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

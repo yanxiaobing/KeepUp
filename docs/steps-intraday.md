@@ -6,7 +6,7 @@
 
 原版 `PCHealthDataService.requestHourStepCountSetByDate` 每五分钟查询 Core Motion；`BCWalkTimeSlotService.getWalkActiveTimeWithWalkCard` 累加超过 5 步的区间时长。本次沿用该阈值，界面明确标为“估算活跃时长”，并解释这不是精确运动时长。末尾不足五分钟的区间只累加实际查询时长。零步显示 0 分钟；有任何区间缺测时不生成完整活跃时长。
 
-原版 `PCWalkCardService` 使用步数乘 0.03 的固定热量估算，并非系统测量。此次不新增该热量显示，继续保持此前不编造计步热量的口径。
+原版 `PCWalkCardService` 使用步数乘 0.03 的固定热量估算，并非系统测量。分时批次未新增该热量显示；后续已按用户要求补齐明确标注的估算值，见[计步估算热量](steps-energy.md)。
 
 参考 [Apple CMPedometer](https://developer.apple.com/documentation/coremotion/cmpedometer)：对指定起止时间查询历史数据，分时值不由日总步数均摊生成。
 
