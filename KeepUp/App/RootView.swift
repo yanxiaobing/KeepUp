@@ -6,6 +6,9 @@ struct RootView: View {
     @Default(.privacyAccepted) private var privacyAccepted
     @Binding var selectedTab: AppTab
     @Environment(AppModel.self) private var model
+    @Environment(MembershipStore.self) private var membership
+    @Environment(IAAPConfigurationStore.self) private var iaap
+    @Environment(AppAdvertising.self) private var advertising
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var showWelcomeMembership = false
@@ -14,6 +17,9 @@ struct RootView: View {
     @State private var stepPermission = HomeStepPermission()
     @State private var selectedDate = Date.now
     @State private var catalogRequest: CatalogRequest?
+    @State private var startupFinished = false
+    @State private var showLaunchMembership = false
+    @State private var launchMembershipID: UUID?
 
     var body: some View {
         Group {
@@ -24,11 +30,10 @@ struct RootView: View {
                     completingOnboarding = true
                     let saved = await model.saveProfile(profile)
                     if saved {
-                        let membership = MembershipStore()
                         await membership.refreshEntitlements()
-                        if !membership.isPremium && !membership.configuration.offers.isEmpty {
+                        if !membership.isPremium && !iaap.configuration.membershipConfiguration(for: "guide").offers.isEmpty {
                             showWelcomeMembership = true
-                        } else { completingOnboarding = false }
+                        } else { await finishOnboardingAdvertising() }
                     } else { completingOnboarding = false }
                     return saved
                 }
@@ -45,7 +50,7 @@ struct RootView: View {
                         .navigationDestination(for: AppTab.self) { destination in
                             switch destination {
                             case .history: HistoryView()
-                            case .profile: ProfileView()
+                            case .profile: ProfileView(isCurrentDestination: { selectedTab == .profile })
                             case .calendar: EmptyView()
                             }
                         }
@@ -62,8 +67,31 @@ struct RootView: View {
                 }
             } else { ProgressView("app.loading") }
         }
-        .fullScreenCover(isPresented: $showWelcomeMembership, onDismiss: { completingOnboarding = false }) {
+        .overlay {
+            if model.isReady && !startupFinished {
+                ZStack { Color(uiColor: .systemBackground).ignoresSafeArea(); ProgressView("app.loading") }
+            }
+        }
+        .fullScreenCover(isPresented: $showWelcomeMembership, onDismiss: {
+            Task { await finishOnboardingAdvertising() }
+        }) {
             MembershipView(isOnboarding: true, onClose: { showWelcomeMembership = false })
+        }
+        .fullScreenCover(isPresented: $showLaunchMembership, onDismiss: {
+            if let id = launchMembershipID { advertising.presentation.launchMembershipDidDismiss(requestID: id) }
+            launchMembershipID = nil
+        }) {
+            MembershipView(onClose: { showLaunchMembership = false }, entryPoint: "launch")
+        }
+        .onChange(of: advertising.presentation.launchMembershipRequestID) { _, id in
+            guard let id else { showLaunchMembership = false; return }
+            guard !membership.isPremium, catalogRequest == nil, !showWelcomeMembership,
+                  !iaap.configuration.membershipConfiguration(for: "launch").offers.isEmpty else {
+                advertising.presentation.launchMembershipDidDismiss(requestID: id)
+                return
+            }
+            launchMembershipID = id
+            showLaunchMembership = true
         }
         .task(id: canRequestStepPermission) {
             await stepPermission.requestIfNeeded(profileComplete: model.snapshot.profile != nil,
@@ -72,10 +100,15 @@ struct RootView: View {
         .task {
             await model.load()
             if model.snapshot.profile != nil { privacyAccepted = true }
+            await handleColdStart()
             openRequestedReminder()
             #if DEBUG
             await ReminderNotificationDelegate.scheduleRouteTestIfRequested()
             #endif
+        }
+        .onChange(of: selectedTab) { _, _ in
+            advertising.features.cancel()
+            advertising.presentation.cancelAll()
         }
         .onChange(of: model.isReady) { _, ready in if ready { openRequestedReminder() } }
         .onChange(of: model.snapshot.profile != nil) { _, _ in openRequestedReminder() }
@@ -89,7 +122,47 @@ struct RootView: View {
 
     private var canRequestStepPermission: Bool {
         model.isReady && model.snapshot.profile != nil && selectedTab == .calendar && homeIsVisible &&
-        scenePhase == .active && !completingOnboarding && !showWelcomeMembership && catalogRequest == nil
+        scenePhase == .active && startupFinished && !advertising.presentation.isRunning &&
+        !completingOnboarding && !showWelcomeMembership && !showLaunchMembership && catalogRequest == nil
+    }
+
+    @MainActor private func finishOnboardingAdvertising() async {
+        defer { completingOnboarding = false }
+        await advertising.prepareConsentIfNeeded()
+        guard !Task.isCancelled else { return }
+        advertising.presentation.guideDidDismiss()
+        while advertising.presentation.isRunning {
+            do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
+        }
+    }
+
+    @MainActor private func handleColdStart() async {
+        guard !startupFinished else { return }
+        defer {
+            advertising.presentation.invalidateColdStartOpportunity()
+            startupFinished = true
+        }
+        // Use the already loaded bundle/cache. A late network response is not a launch opportunity.
+        advertising.update(configuration: iaap.configuration)
+        guard model.snapshot.profile != nil, !skipOnboardingForTests, catalogRequest == nil else {
+            advertising.presentation.coldStart(isExistingUser: false)
+            return
+        }
+        for _ in 0..<20 where !advertising.membershipReady {
+            do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+        }
+        guard advertising.membershipReady, !Task.isCancelled else { return }
+        if advertising.configuration.enabled, advertising.configuration.appOpenAdUnitID != nil {
+            await advertising.prepareConsentIfNeeded()
+        }
+        guard !Task.isCancelled else { return }
+        advertising.presentation.coldStart(isExistingUser: true)
+        while advertising.presentation.isRunning {
+            do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
+        }
+        guard !Task.isCancelled, !membership.isPremium, catalogRequest == nil,
+              !iaap.configuration.membershipConfiguration(for: "launch").offers.isEmpty else { return }
+        advertising.presentation.requestLaunchMembership()
     }
 
     private var skipOnboardingForTests: Bool {
@@ -101,7 +174,7 @@ struct RootView: View {
     }
 
     private func openRequestedReminder() {
-        guard model.isReady, model.snapshot.profile != nil || skipOnboardingForTests,
+        guard model.isReady, startupFinished, model.snapshot.profile != nil || skipOnboardingForTests,
               let cardID = ReminderRoute.shared.cardID else { return }
         ReminderRoute.shared.cardID = nil
         guard !model.snapshot.archivedCardIDs.contains(cardID), model.snapshot.cards.contains(where: { $0.id == cardID }) else { return }

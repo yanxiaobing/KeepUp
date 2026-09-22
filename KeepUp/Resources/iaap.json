@@ -1,0 +1,197 @@
+{
+  "system": {
+    "isBanana": false
+  },
+  "ads": {
+    "enabled": false,
+    "admobAppId": "ca-app-pub-6174324407635385~7652648280",
+    "gromoreAppId": "",
+    "splash": {
+      "enabled": false,
+      "mainland": "",
+      "oversea": "ca-app-pub-6174324407635385/7734118348"
+    },
+    "insert": {
+      "enabled": false,
+      "mainland": "",
+      "oversea": "ca-app-pub-6174324407635385/4595065091"
+    },
+    "reward": {
+      "enabled": false,
+      "mainland": "",
+      "oversea": "ca-app-pub-6174324407635385/1673388287"
+    }
+  },
+  "skus": [
+    {
+      "pid": "com.bestlife.keepup.premium.lifetime",
+      "type": "lifetime",
+      "titleType": "timer"
+    },
+    {
+      "pid": "com.bestlife.keepup.premium.year",
+      "type": "subscribe",
+      "titleType": "appstoreDesc"
+    },
+    {
+      "pid": "com.bestlife.keepup.premium.quarter",
+      "type": "subscribe",
+      "titleType": "appstoreDesc"
+    },
+    {
+      "pid": "com.bestlife.keepup.premium.month",
+      "type": "subscribe",
+      "titleType": "appstoreDesc"
+    }
+  ],
+  "iaaps": [
+    {
+      "type": "guide",
+      "place": "引导页",
+      "closeAlpha": 0,
+      "priceAlpha": 0.5,
+      "showGiveUp": true,
+      "iap": {
+        "pids": [
+          "com.bestlife.keepup.premium.lifetime",
+          "com.bestlife.keepup.premium.year",
+          "com.bestlife.keepup.premium.quarter",
+          "com.bestlife.keepup.premium.month"
+        ],
+        "timeInterval": 5,
+        "hidePageControl": false
+      },
+      "benefits": [
+        {
+          "type": "themes",
+          "footer": 30,
+          "timeInterval": 5,
+          "hidePageControl": true
+        },
+        {
+          "type": "noad",
+          "footer": 50
+        },
+        {
+          "type": "cloud",
+          "footer": 15
+        }
+      ]
+    },
+    {
+      "type": "launch",
+      "place": "冷启动",
+      "closeAlpha": 0.5,
+      "priceAlpha": 0.5,
+      "showGiveUp": true,
+      "iap": {
+        "pids": [
+          "com.bestlife.keepup.premium.lifetime",
+          "com.bestlife.keepup.premium.year",
+          "com.bestlife.keepup.premium.quarter",
+          "com.bestlife.keepup.premium.month"
+        ],
+        "timeInterval": 5,
+        "hidePageControl": false
+      },
+      "benefits": [
+        {
+          "type": "themes",
+          "footer": 30,
+          "timeInterval": 5,
+          "hidePageControl": true
+        },
+        {
+          "type": "noad",
+          "footer": 50
+        },
+        {
+          "type": "cloud",
+          "footer": 15
+        }
+      ]
+    },
+    {
+      "type": "limited",
+      "place": "功能拦截",
+      "closeAlpha": 0.5,
+      "priceAlpha": 0.5,
+      "showGiveUp": false,
+      "iap": {
+        "pids": [
+          "com.bestlife.keepup.premium.lifetime",
+          "com.bestlife.keepup.premium.year",
+          "com.bestlife.keepup.premium.quarter",
+          "com.bestlife.keepup.premium.month"
+        ],
+        "timeInterval": 5,
+        "hidePageControl": false
+      },
+      "hideFuncBtn": false,
+      "reward": {
+        "rewardId": {
+          "mainland": "",
+          "oversea": "ca-app-pub-6174324407635385/1673388287",
+          "enabled": false
+        },
+        "insertId": {
+          "mainland": "",
+          "oversea": "ca-app-pub-6174324407635385/4595065091",
+          "enabled": false
+        },
+        "count": 1,
+        "hideGiveUpWhenNoAd": false,
+        "enabled": false
+      },
+      "benefits": [
+        {
+          "type": "themes",
+          "footer": 30,
+          "timeInterval": 5,
+          "hidePageControl": true
+        },
+        {
+          "type": "noad",
+          "footer": 50
+        },
+        {
+          "type": "cloud",
+          "footer": 15
+        }
+      ]
+    },
+    {
+      "type": "vip",
+      "place": "会员页",
+      "closeAlpha": 0.5,
+      "priceAlpha": 0.5,
+      "showGiveUp": true,
+      "iap": {
+        "pids": [
+          "com.bestlife.keepup.premium.lifetime",
+          "com.bestlife.keepup.premium.year",
+          "com.bestlife.keepup.premium.quarter",
+          "com.bestlife.keepup.premium.month"
+        ],
+        "timeInterval": 5,
+        "hidePageControl": false
+      },
+      "benefits": [
+        {
+          "type": "themes",
+          "footer": 30,
+          "timeInterval": 5,
+          "hidePageControl": true
+        },
+        {
+          "type": "noad",
+          "footer": 50
+        },
+        {
+          "type": "cloud",
+          "footer": 15
+        }
+      ]
+    }
+  ]
+}

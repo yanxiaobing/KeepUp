@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct ProfileView: View {
+    var isCurrentDestination: () -> Bool = { true }
+    @Environment(AppAdvertising.self) private var advertising
+    @Environment(MembershipStore.self) private var membership
     @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showMembership = false
     @State private var showPersonalInfo = false
     @Default(.stepGoalChanges) private var stepGoalChanges
@@ -11,6 +15,13 @@ struct ProfileView: View {
     @State private var showReminders = false
     @State private var showRunningStatistics = false
     @State private var pendingFeature: String?
+    @State private var rewardGate: RewardGateRequest?
+    @State private var rewardDecision: (RewardedFeatureAccess.FeatureID, RewardedFeatureAccessView.Decision)?
+    @State private var preparingFeature = false
+    @State private var privacyError = false
+    @State private var contextID = UUID()
+    @State private var featureTask: Task<Void, Never>?
+    @State private var privacyTask: Task<Void, Never>?
     private var entries: [CheckInEntry] { model.snapshot.entries }
 
     var body: some View {
@@ -21,8 +32,14 @@ struct ProfileView: View {
                     VStack(spacing: 10 * scale) {
                         header(scale: scale)
                         VStack(spacing: 0) {
-                            row("profile.premium", subtitle: "profile.premiumSubtitle", image: "setting_ic_suggestion", scale: scale)
+                            row("profile.premium", subtitle: membership.isPremium ? "membership.active" : "profile.premiumSubtitle", image: "setting_ic_suggestion", scale: scale)
                             row("profile.ad", subtitle: "profile.adSubtitle", image: "setting_ic_week_pre", scale: scale)
+                            if advertising.consent.privacyOptionsRequired {
+                                Button("ads.privacyOptions", action: presentPrivacyOptions)
+                                    .font(.system(size: 14 * scale)).frame(maxWidth: .infinity, minHeight: 50 * scale)
+                                    .background(.white).disabled(advertising.consent.isBusy || preparingFeature)
+                                    .accessibilityIdentifier("ads.privacyOptions")
+                            }
                         }
                         VStack(spacing: 0) {
                             row("profile.weightTarget", subtitle: model.snapshot.weightTarget.map { String(format: "%.1fkg", $0.target) } ?? "profile.noTarget", image: "setting_ic_weight_target", scale: scale)
@@ -46,7 +63,7 @@ struct ProfileView: View {
                     .overlay(alignment: .topTrailing) {
                         NavigationLink { ProfileSettingsView() } label: {
                             Image("gps_exercise_confirm_ic_set").resizable().frame(width: 24 * scale, height: 24 * scale)
-                        }.padding(.trailing, 15 * scale).padding(.top, 10).accessibilityLabel(Text("settings.title"))
+                        }.disabled(preparingFeature).padding(.trailing, 15 * scale).padding(.top, 10).accessibilityLabel(Text("settings.title"))
                             .accessibilityIdentifier("profile.settings")
                     }
             }.background(alignment: .top) { KeepUpStyle.theme.ignoresSafeArea(edges: .top) }
@@ -54,6 +71,15 @@ struct ProfileView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
+                .fullScreenCover(item: $rewardGate, onDismiss: finishRewardGate) { request in
+                    RewardedFeatureAccessView(feature: request.feature) { decision in
+                        rewardDecision = (request.feature, decision)
+                        rewardGate = nil
+                    }
+                }
+                .alert("error.title", isPresented: $privacyError) {
+                    Button("action.ok") {}
+                } message: { Text("ads.privacyError") }
                 .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
                 .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
                 .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
@@ -64,7 +90,93 @@ struct ProfileView: View {
                     Button("action.ok") { pendingFeature = nil }
                 } message: { Text("feature.pending") }
         }
+        .onDisappear { if !isCurrentDestination() { invalidateFeatureContext() } }
+        .onChange(of: isCurrentDestination()) { _, active in
+            if !active { invalidateFeatureContext() }
+        }
     }
+
+    private func invalidateFeatureContext() {
+        contextID = UUID()
+        featureTask?.cancel()
+        featureTask = nil
+        privacyTask?.cancel()
+        privacyTask = nil
+        rewardDecision = nil
+        rewardGate = nil
+        preparingFeature = false
+        advertising.features.cancel()
+        advertising.presentation.cancelAll()
+    }
+
+    private func requestFeature(_ feature: RewardedFeatureAccess.FeatureID) {
+        guard isCurrentDestination(), !preparingFeature, rewardGate == nil else { return }
+        preparingFeature = true
+        let token = contextID
+        featureTask = Task { @MainActor in
+            await advertising.prepareConsentIfNeeded()
+            guard contextID == token, isCurrentDestination() else { return }
+            guard !Task.isCancelled, scenePhase == .active else { preparingFeature = false; return }
+            if advertising.requiresReward(for: feature) {
+                rewardGate = RewardGateRequest(feature: feature)
+            } else {
+                openFeature(feature)
+            }
+            preparingFeature = false
+            featureTask = nil
+        }
+    }
+
+    private func openFeature(_ feature: RewardedFeatureAccess.FeatureID) {
+        guard isCurrentDestination(), scenePhase == .active else { return }
+        switch feature {
+        case .stepGoal: showStepsTarget = true
+        case .weightTarget: showWeightTarget = true
+        case .reminders: showReminders = true
+        }
+    }
+
+    private func finishRewardGate() {
+        guard isCurrentDestination(), let (feature, decision) = rewardDecision else {
+            advertising.features.cancel()
+            return
+        }
+        rewardDecision = nil
+        switch decision {
+        case .reward(let outcome):
+            guard outcome.granted else { return }
+            preparingFeature = true
+            let token = contextID
+            advertising.presentation.rewardDidDismiss(requestID: outcome.requestID) {
+                guard contextID == token, isCurrentDestination() else { return }
+                preparingFeature = false
+                if scenePhase == .active && outcome.granted && advertising.features.consume(featureID: feature, requestID: outcome.requestID) {
+                    openFeature(feature)
+                }
+            }
+        case .bypass:
+            openFeature(feature)
+        case .premium:
+            if membership.isPremium { openFeature(feature) }
+        case .cancelled:
+            break
+        }
+    }
+
+    private func presentPrivacyOptions() {
+        guard !advertising.consent.isBusy, !preparingFeature,
+              let presenter = AdMobRewardedAdProvider.activePresenter() else { return }
+        advertising.features.cancel()
+        advertising.presentation.cancelAll()
+        let token = contextID
+        privacyTask = Task { @MainActor in
+            do { try await advertising.consent.presentPrivacyOptions(from: presenter) }
+            catch { if contextID == token && !Task.isCancelled { privacyError = true } }
+            advertising.synchronize()
+            if contextID == token { privacyTask = nil }
+        }
+    }
+
     @ViewBuilder private var profileAvatar: some View {
         if let data = model.snapshot.profile?.avatar, let image = UIImage(data: data) { Image(uiImage: image).resizable().scaledToFill().clipped() }
         else { Image("user_default_head").resizable() }
@@ -80,7 +192,7 @@ struct ProfileView: View {
                     profileAvatar.frame(width: 70 * scale, height: 70 * scale)
                         .clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2.5 * scale))
                         .overlay(alignment: .bottomTrailing) { Image(model.snapshot.profile?.isMale == true ? "personal_ic_boy" : "personal_ic_girl").resizable().frame(width: 20 * scale, height: 20 * scale) }
-                }.offset(x: 20 * scale, y: -35 * scale)
+                }.disabled(preparingFeature).offset(x: 20 * scale, y: -35 * scale)
                 Text(verbatim: String(format: localized("profile.streakFormat %lld", locale), Int64(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))))
                     .font(.system(size: 13 * scale, weight: .bold)).foregroundStyle(.white).padding(.horizontal, 3 * scale)
                     .frame(height: 18 * scale).background(KeepUpStyle.accent, in: RoundedRectangle(cornerRadius: 2 * scale))
@@ -99,7 +211,7 @@ struct ProfileView: View {
             .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3) }
     }
     private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat, systemImage: Bool = false) -> some View {
-        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { showStepsTarget = true } else if title == "profile.weightTarget" { showWeightTarget = true } else if title == "profile.alarms" { showReminders = true } else if title == "runningStats.title" { showRunningStatistics = true } else { pendingFeature = title } } label: {
+        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { requestFeature(.stepGoal) } else if title == "profile.weightTarget" { requestFeature(.weightTarget) } else if title == "profile.alarms" { requestFeature(.reminders) } else if title == "runningStats.title" { showRunningStatistics = true } else { pendingFeature = title } } label: {
             HStack(spacing: 15 * scale) {
                 Group {
                     if systemImage { Image(systemName: image).resizable().scaledToFit().foregroundStyle(KeepUpStyle.accent) }
@@ -113,7 +225,7 @@ struct ProfileView: View {
                 }
             }.padding(.horizontal, 15 * scale).frame(height: 50 * scale).background(.white)
                 .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3).padding(.leading, 15 * scale) }
-        }.buttonStyle(.plain).accessibilityIdentifier(title)
+        }.buttonStyle(.plain).disabled(preparingFeature).accessibilityIdentifier(title)
     }
 }
 
@@ -155,4 +267,9 @@ struct LanguageSettingsView: View {
             }
         }.navigationTitle("settings.language").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
     }
+}
+
+private struct RewardGateRequest: Identifiable {
+    let id = UUID()
+    let feature: RewardedFeatureAccess.FeatureID
 }

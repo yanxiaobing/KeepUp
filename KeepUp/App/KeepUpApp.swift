@@ -21,6 +21,7 @@ enum AppLanguage: String, CaseIterable {
 
 @main
 struct KeepUpApp: App {
+    @Default(.privacyAccepted) private var privacyAccepted
     @Default(.appLanguage) private var language
     @Default(.themeID) private var themeID
     @Default(.stepGoalChanges) private var stepGoalChanges
@@ -30,8 +31,25 @@ struct KeepUpApp: App {
     @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab = AppTab.calendar
+    @State private var membership: MembershipStore
+    @State private var advertising: AppAdvertising
+    @State private var iaap: IAAPConfigurationStore
 
     init() {
+        #if DEBUG
+        let isolatedConfiguration = ProcessInfo.processInfo.arguments.contains("-ui-testing")
+        #else
+        let isolatedConfiguration = false
+        #endif
+        _iaap = State(initialValue: IAAPConfigurationStore(
+            remoteURL: isolatedConfiguration ? nil : IAAPConfigurationStore.configuredRemoteURL,
+            cacheURL: isolatedConfiguration ? nil : IAAPConfigurationStore.defaultCacheURL
+        ))
+        let membership = MembershipStore()
+        _membership = State(initialValue: membership)
+        let advertising = AppAdvertising(membership: membership, receiptURL: isolatedConfiguration
+            ? URL.applicationSupportDirectory.appendingPathComponent("KeepUp/ui-tests/reward-receipts.json") : nil)
+        _advertising = State(initialValue: advertising)
         UNUserNotificationCenter.current().delegate = ReminderNotificationDelegate.shared
         let support = URL.applicationSupportDirectory.appendingPathComponent("KeepUp", isDirectory: true)
         var databaseURL = support.appendingPathComponent("keepup.sqlite")
@@ -52,6 +70,29 @@ struct KeepUpApp: App {
         WindowGroup {
             RootView(selectedTab: $selectedTab)
                 .environment(model)
+                .environment(membership)
+                .environment(advertising)
+                .environment(advertising.consent)
+                .task(id: "\(membership.canShowAds)-\(privacyAccepted)-\(advertising.consent.canRequestAds)") {
+                    advertising.synchronize()
+                }
+                .onChange(of: iaap.configuration) { _, configuration in
+                    advertising.update(configuration: configuration)
+                    membership.applyConfiguration(configuration: configuration.membershipConfiguration(), entitlementProductIDs: iaap.entitlementProductIDs)
+                }
+                .task(id: Set(iaap.configuration.iaaps.flatMap { $0.iap.pids })) {
+                    await membership.prefetchProducts(ids: Set(iaap.configuration.iaaps.flatMap { $0.iap.pids }))
+                }
+                .environment(iaap)
+                .task {
+                    membership.applyConfiguration(configuration: iaap.configuration.membershipConfiguration(), entitlementProductIDs: iaap.entitlementProductIDs)
+                    advertising.update(configuration: iaap.configuration)
+                    await membership.start()
+                    advertising.finishedMembershipRefresh()
+                    await iaap.refresh()
+                    membership.applyConfiguration(configuration: iaap.configuration.membershipConfiguration(), entitlementProductIDs: iaap.entitlementProductIDs)
+                    await membership.refreshEntitlements()
+                }
                 .environment(\.locale, (AppLanguage(rawValue: language) ?? .system).locale)
                 // Rebuild navigation titles as well as content after an in-app language change.
                 .id("\(language)-\(themeID)-\(ReminderRoute.shared.requestID)")
@@ -64,7 +105,22 @@ struct KeepUpApp: App {
                 .task(id: "\(model.isReady)-\(model.snapshot.profile != nil)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
                     refreshStepMonitoring()
                 }
-                .onChange(of: scenePhase) { _, _ in
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active {
+                        Task {
+                            await membership.refreshEntitlements()
+                            guard scenePhase == .active else { return }
+                            advertising.synchronize()
+                            if advertising.presentation.hasHotStartOpportunity {
+                                await advertising.prepareConsentIfNeeded()
+                            }
+                            guard scenePhase == .active else { return }
+                            advertising.presentation.didBecomeActive()
+                        }
+                    }
+                    if phase == .background {
+                        advertising.didEnterBackground()
+                    }
                     if model.running.session != nil { Task { await model.running.tick() } }
                 }
                 .onChange(of: runningSettings) { _, _ in model.refreshRunningSettings() }

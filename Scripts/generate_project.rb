@@ -56,6 +56,18 @@ project.root_object.package_references << defaults
   target.frameworks_build_phase.files << build_file
 end
 
+admob = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+admob.repositoryURL = 'https://github.com/googleads/swift-package-manager-google-mobile-ads.git'
+admob.requirement = { 'kind' => 'exactVersion', 'version' => '13.10.0' }
+project.root_object.package_references << admob
+admob_product = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+admob_product.package = admob
+admob_product.product_name = 'GoogleMobileAds'
+app.package_product_dependencies << admob_product
+admob_build_file = project.new(Xcodeproj::Project::Object::PBXBuildFile)
+admob_build_file.product_ref = admob_product
+app.frameworks_build_phase.files << admob_build_file
+
 alamofire = project.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
 alamofire.repositoryURL = 'https://github.com/Alamofire/Alamofire.git'
 alamofire.requirement = { 'kind' => 'exactVersion', 'version' => '5.12.2' }

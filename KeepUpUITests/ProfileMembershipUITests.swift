@@ -74,9 +74,13 @@ final class ProfileMembershipUITests: XCTestCase {
         app.terminate()
         app.launchArguments.removeAll { $0 == "-reset-test-data" }
         app.launch()
+        // Launch membership is independent of the bundled disabled advertising switches.
+        XCTAssertTrue(app.buttons["membership.skip"].waitForExistence(timeout: 15))
+        screenshot("KeepUp-Cold-Launch-Membership-Ads-Disabled")
+        app.buttons["membership.skip"].tap()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.buttons["info.next"].exists)
-        XCTAssertFalse(app.buttons["membership.skip"].exists)
     }
 
     func testChineseProfileAndMembership() throws {
@@ -115,13 +119,14 @@ final class ProfileMembershipUITests: XCTestCase {
         XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 15))
         XCTAssertFalse(app.textFields["info.nickname"].exists)
         app.buttons["tab.profile"].tap()
-        XCTAssertTrue(app.staticTexts["KeepUp"].exists)
+        XCTAssertTrue(app.staticTexts["profile.journey"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["profile.journey"].label.contains("KeepUp"))
         app.buttons["profile.premium"].tap()
         XCTAssertTrue(app.buttons["membership.restore"].waitForExistence(timeout: 5))
         screenshot("KeepUp-Membership-Chinese")
-        app.buttons["membership.purchase"].tap()
-        XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
-        app.alerts.buttons.firstMatch.tap()
+        // UI tests intentionally do not load StoreKit products. Unavailable offers
+        // must not initiate a purchase or display invented prices.
+        XCTAssertFalse(app.buttons["membership.purchase"].isEnabled)
         app.buttons["membership.close"].tap()
         XCTAssertTrue(app.buttons["membership.close"].waitForNonExistence(timeout: 5))
         app.buttons["profile.settings"].tap()
