@@ -162,31 +162,25 @@ struct CalendarHomeView: View {
                 .lineLimit(1).minimumScaleFactor(0.75)
                 .accessibilityIdentifier("calendar.month")
             Spacer(minLength: 4)
-            Button { moveMonth(-1) } label: {
+            Button { movePage(-1) } label: {
                 Image(systemName: "chevron.left")
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel(Text("calendar.previousMonth"))
-            .accessibilityIdentifier("calendar.previousMonth")
-            Button { moveMonth(1) } label: {
+            .accessibilityLabel(Text(isMonthMode ? "calendar.previousMonth" : "calendar.previousWeek"))
+            .accessibilityIdentifier(isMonthMode ? "calendar.previousMonth" : "calendar.previousWeek")
+            Button { movePage(1) } label: {
                 Image(systemName: "chevron.right")
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel(Text("calendar.nextMonth"))
-            .accessibilityIdentifier("calendar.nextMonth")
+            .accessibilityLabel(Text(isMonthMode ? "calendar.nextMonth" : "calendar.nextWeek"))
+            .accessibilityIdentifier(isMonthMode ? "calendar.nextMonth" : "calendar.nextWeek")
         }
         .font(.system(size: 15, weight: .medium))
         .buttonStyle(.plain)
         .foregroundStyle(Color(white: 0.24))
         .padding(.leading, 20).padding(.trailing, 8)
-    }
-
-    private func moveMonth(_ offset: Int) {
-        if let date = calendar.date(byAdding: .month, value: offset, to: selectedDate) {
-            selectedDate = date
-        }
     }
 
     private var calendarBody: some View {

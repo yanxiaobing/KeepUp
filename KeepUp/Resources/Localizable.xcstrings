@@ -1,6 +1,40 @@
 {
   "sourceLanguage": "en",
   "strings": {
+  "calendar.previousWeek": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Previous week"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "上一周"
+        }
+      }
+    }
+  },
+  "calendar.nextWeek": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Next week"
+        }
+      },
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "下一周"
+        }
+      }
+    }
+  },
     "%@ / %@": {
       "localizations": {
         "en": {

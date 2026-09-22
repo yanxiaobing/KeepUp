@@ -24,10 +24,19 @@ final class KeepUpUITests: XCTestCase {
         XCTAssertTrue(app.buttons["card.preset.exercise"].waitForExistence(timeout: 5))
     }
 
+    private func setCalendarScope(_ app: XCUIApplication, month: Bool) {
+        let grid = app.otherElements["calendar.grid"]
+        XCTAssertTrue(grid.waitForExistence(timeout: 20))
+        let start = grid.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: month ? 200 : -200)))
+        XCTAssertTrue(app.buttons[month ? "calendar.nextMonth" : "calendar.nextWeek"].waitForExistence(timeout: 5))
+    }
+
     func testSinglePageHomeNavigationAndMonthPaging() {
         let app = app()
         app.launch()
         XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
+        setCalendarScope(app, month: true)
         let initialMonth = app.staticTexts["calendar.month"].label
         app.buttons["calendar.nextMonth"].tap()
         XCTAssertNotEqual(app.staticTexts["calendar.month"].label, initialMonth)
@@ -57,12 +66,44 @@ final class KeepUpUITests: XCTestCase {
     func testMonthArrowEntireTouchAreaRespondsWithoutBackground() {
         let app = app()
         app.launch()
+        setCalendarScope(app, month: true)
         XCTAssertTrue(app.buttons["calendar.nextMonth"].waitForExistence(timeout: 20))
         let initial = app.staticTexts["calendar.month"].label
         app.buttons["calendar.nextMonth"].coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap()
         XCTAssertNotEqual(app.staticTexts["calendar.month"].label, initial)
         app.buttons["calendar.previousMonth"].coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
         XCTAssertEqual(app.staticTexts["calendar.month"].label, initial)
+    }
+
+    func testWeekPagingAndScopePreserveSelectedDate() {
+        let app = app()
+        app.launch()
+        XCTAssertTrue(app.buttons["calendar.nextWeek"].waitForExistence(timeout: 20))
+        let calendar = Calendar(identifier: .gregorian)
+        let today = Date()
+        func selectedDay(_ offset: Int) -> XCUIElement {
+            let date = calendar.date(byAdding: .day, value: offset, to: today)!
+            let parts = calendar.dateComponents([.year, .month, .day], from: date)
+            return app.buttons[String(format: "day.%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)]
+        }
+        // Several pages cover month boundaries regardless of today's date.
+        for week in 1...5 {
+            app.buttons["calendar.nextWeek"].tap()
+            XCTAssertTrue(selectedDay(week * 7).isSelected)
+        }
+        setCalendarScope(app, month: true)
+        XCTAssertTrue(app.buttons["calendar.nextMonth"].exists)
+        XCTAssertTrue(selectedDay(35).isSelected)
+        setCalendarScope(app, month: false)
+        XCTAssertTrue(selectedDay(35).isSelected)
+        for week in stride(from: 4, through: 0, by: -1) {
+            app.buttons["calendar.previousWeek"].tap()
+            XCTAssertTrue(selectedDay(week * 7).isSelected)
+        }
+        app.otherElements["calendar.grid"].swipeLeft()
+        XCTAssertTrue(selectedDay(7).isSelected)
+        app.buttons["calendar.today"].tap()
+        XCTAssertTrue(selectedDay(0).isSelected)
     }
 
     func testEnglishSaveRelaunchAndDelete() throws {
@@ -184,12 +225,12 @@ final class KeepUpUITests: XCTestCase {
     func testCalendarScopeAndBackfill() throws {
         let app = app()
         app.launch()
-        XCTAssertTrue(app.buttons["calendar.scope"].waitForExistence(timeout: 20))
-        let weekY = app.buttons["calendar.scope"].frame.midY
+        XCTAssertTrue(app.otherElements["calendar.grid"].waitForExistence(timeout: 20))
+        let weekHeight = app.otherElements["calendar.grid"].frame.height
         attach("PunchCard-Calendar-Week")
-        app.buttons["calendar.scope"].tap()
+        setCalendarScope(app, month: true)
         let monthLayout = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            MainActor.assumeIsolated { app.buttons["calendar.scope"].frame.midY > weekY + 50 }
+            MainActor.assumeIsolated { app.otherElements["calendar.grid"].frame.height > weekHeight + 50 }
         }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [monthLayout], timeout: 5), .completed)
         attach("PunchCard-Calendar-Month")
