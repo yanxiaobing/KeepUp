@@ -106,7 +106,7 @@ enum RewardedAdLoadError: Error { case unavailable }
         guard AdMobRuntime.isConfigured else { throw RewardedAdLoadError.unavailable }
         await AdMobRuntime.initializeIfNeeded()
         try Task.checkCancellation()
-        do { return AdMobLoadedRewardedAd(try await RewardedAd.load(with: adUnitID, request: Request())) }
+        do { return AdMobLoadedRewardedAd(try await RewardedAd.load(with: AdMobAdUnit.resolve(adUnitID, format: .rewarded), request: Request())) }
         catch {
             let error = error as NSError
             if error.domain == GADErrorDomain && error.code == RequestError.Code.noFill.rawValue {

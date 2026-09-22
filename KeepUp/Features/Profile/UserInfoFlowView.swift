@@ -15,6 +15,7 @@ struct UserInfoFlowView: View {
     @State private var saving = false
     @State private var showAvatarActions = false
     @State private var avatarSource: AvatarSource?
+    @State private var pendingAvatarSource: AvatarSource?
     @State private var photoError = false
     @State private var nicknameFocused = false
 
@@ -64,7 +65,20 @@ struct UserInfoFlowView: View {
                     }.ignoresSafeArea()
                 }
                 if confirming { confirmation(s).ignoresSafeArea() }
-                if showAvatarActions { avatarActions(s).ignoresSafeArea() }
+            }
+            .sheet(isPresented: $showAvatarActions, onDismiss: {
+                guard let selection = pendingAvatarSource else { return }
+                pendingAvatarSource = nil
+                if selection == .camera, !UIImagePickerController.isSourceTypeAvailable(.camera) { photoError = true }
+                else { avatarSource = selection }
+            }) {
+                AvatarSourceSheet(options: [
+                    .init(id: "info.camera", titleKey: "info.camera"),
+                    .init(id: "info.library", titleKey: "info.library")
+                ]) { selection in
+                    pendingAvatarSource = selection == "info.camera" ? .camera : selection == "info.library" ? .library : nil
+                    showAvatarActions = false
+                }
             }
             .fullScreenCover(item: $avatarSource) { source in
                 AvatarPicker(camera: source == .camera, locale: locale) { image in
@@ -81,19 +95,6 @@ struct UserInfoFlowView: View {
     }
 
     private enum AvatarSource: String, Identifiable { case camera, library; var id: String { rawValue } }
-    private func avatarActions(_ s: CGFloat) -> some View {
-        ZStack(alignment: .bottom) {
-            Color.black.opacity(0.5).onTapGesture { showAvatarActions = false }
-            VStack(spacing: 8*s) {
-                Button("info.camera") {
-                    showAvatarActions = false
-                    if UIImagePickerController.isSourceTypeAvailable(.camera) { avatarSource = .camera } else { photoError = true }
-                }.accessibilityIdentifier("info.camera")
-                Button("info.library") { showAvatarActions = false; avatarSource = .library }.accessibilityIdentifier("info.library")
-                Button("action.cancel") { showAvatarActions = false }.foregroundStyle(Color(hex: 0x48484D).opacity(0.6)).padding(.top, 4*s)
-            }.buttonStyle(AvatarActionStyle(scale: s)).padding(.horizontal, 15*s).padding(.bottom, 34)
-        }
-    }
     private func socialItems(_ s: CGFloat) -> some View {
         Group {
             ZStack(alignment: .topLeading) {
@@ -215,12 +216,4 @@ func localized(_ key: String, _ locale: Locale) -> String {
     let language = locale.identifier.hasPrefix("zh") ? "zh-Hans" : "en"
     let bundle = Bundle.main.path(forResource: language, ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
     return bundle.localizedString(forKey: key, value: nil, table: nil)
-}
-
-private struct AvatarActionStyle: ButtonStyle {
-    let scale: CGFloat
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label.font(.custom("PingFangSC-Regular", fixedSize: 17*scale)).frame(maxWidth: .infinity).frame(height: 56*scale)
-            .foregroundStyle(Color(hex: 0x48484D)).background(configuration.isPressed ? Color(white: 233/255) : .white, in: RoundedRectangle(cornerRadius: 12*scale))
-    }
 }

@@ -1,74 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "membership.todayRemaining" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time left today"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日剩余"
-          }
-        }
-      }
-    },
-    "membership.introTrial %@ %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Free for %@, then %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "免费试用%@，之后%@"
-          }
-        }
-      }
-    },
-    "membership.introUpfront %@ %@ %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ for %@, then %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "前%@共%@，之后%@"
-          }
-        }
-      }
-    },
-    "membership.introRecurring %@ %@ %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ at %@, then %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "前%@按%@，之后%@"
-          }
-        }
-      }
-    },
     "%@ / %@" : {
       "localizations" : {
         "en" : {
@@ -695,23 +627,6 @@
         }
       }
     },
-    "calendar.previousMonth" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Previous month"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上个月"
-          }
-        }
-      }
-    },
     "calendar.nextWeek" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -725,6 +640,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下一周"
+          }
+        }
+      }
+    },
+    "calendar.previousMonth" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous month"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上个月"
           }
         }
       }
@@ -3643,18 +3575,18 @@
       }
     },
     "iCloud" : {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iCloud"
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iCloud"
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud"
           }
         }
       }
@@ -3693,7 +3625,6 @@
       }
     },
     "info.camera" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3894,7 +3825,6 @@
       }
     },
     "info.library" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4217,6 +4147,23 @@
         }
       }
     },
+    "membership.cloudControl" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your control"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自主可控"
+          }
+        }
+      }
+    },
     "membership.cloudDescription" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4230,6 +4177,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "私有存储 · 设备同步"
+          }
+        }
+      }
+    },
+    "membership.cloudPrivacy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy & security"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私安全"
+          }
+        }
+      }
+    },
+    "membership.cloudPrivate" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private storage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "私有存储"
+          }
+        }
+      }
+    },
+    "membership.cloudSync" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device sync"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设备同步"
           }
         }
       }
@@ -4307,13 +4305,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Continue without membership"
+            "value" : "Skip offer and continue"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "暂不升级，继续使用"
+            "value" : "放弃优惠继续"
           }
         }
       }
@@ -4331,6 +4329,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打造更健康的自己"
+          }
+        }
+      }
+    },
+    "membership.introRecurring %@ %@ %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ at %@, then %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前%@按%@，之后%@"
+          }
+        }
+      }
+    },
+    "membership.introTrial %@ %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free for %@, then %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免费试用%@，之后%@"
+          }
+        }
+      }
+    },
+    "membership.introUpfront %@ %@ %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ for %@, then %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前%@共%@，之后%@"
           }
         }
       }
@@ -4622,6 +4671,23 @@
         }
       }
     },
+    "membership.themesUnlocked" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All themes unlocked"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已解锁全部皮肤"
+          }
+        }
+      }
+    },
     "membership.title" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4635,6 +4701,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "成为高级会员"
+          }
+        }
+      }
+    },
+    "membership.todayRemaining" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time left today"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日剩余"
           }
         }
       }
@@ -4737,6 +4820,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已全部解锁"
+          }
+        }
+      }
+    },
+    "membership.unlockThemes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock all themes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁全部皮肤"
           }
         }
       }

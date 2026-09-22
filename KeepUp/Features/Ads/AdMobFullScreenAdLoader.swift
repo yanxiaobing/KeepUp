@@ -9,9 +9,9 @@ import UIKit
         do {
             switch format {
             case .appOpen:
-                return AdMobLoadedFullScreenAd(appOpen: try await AppOpenAd.load(with: adUnitID, request: Request()))
+                return AdMobLoadedFullScreenAd(appOpen: try await AppOpenAd.load(with: AdMobAdUnit.resolve(adUnitID, format: .appOpen), request: Request()))
             case .interstitial:
-                return AdMobLoadedFullScreenAd(interstitial: try await InterstitialAd.load(with: adUnitID, request: Request()))
+                return AdMobLoadedFullScreenAd(interstitial: try await InterstitialAd.load(with: AdMobAdUnit.resolve(adUnitID, format: .interstitial), request: Request()))
             }
         } catch {
             let requestError = error as NSError

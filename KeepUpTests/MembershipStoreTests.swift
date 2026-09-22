@@ -172,3 +172,28 @@ private func entitlement(_ id: UInt64 = 1, product: String = "keepup.premium", e
     await cancelled.value
     #expect(store.isPremium)
 }
+
+@Test @MainActor func membershipMissingProductsShowsInlineErrorWithoutAlert() async {
+    let gateway = MembershipGatewayStub()
+    let store = MembershipStore(configuration: membershipFixture, transactions: gateway)
+    await store.load()
+    #expect(store.productLoadError == "membership.unavailable")
+    #expect(store.message == nil)
+    await store.load(cache: false)
+    #expect(gateway.loadedIDs.count == 2)
+    #expect(store.message == nil)
+    gateway.continuation?.finish()
+}
+
+@Test func adMobUsesFormatSpecificUnitsForCurrentBuild() {
+    let configured = "ca-app-pub-1234567890123456/1234567890"
+    #if DEBUG
+    #expect(AdMobAdUnit.resolve(configured, format: .appOpen) == "ca-app-pub-3940256099942544/5575463023")
+    #expect(AdMobAdUnit.resolve(configured, format: .interstitial) == "ca-app-pub-3940256099942544/4411468910")
+    #expect(AdMobAdUnit.resolve(configured, format: .rewarded) == "ca-app-pub-3940256099942544/1712485313")
+    #else
+    #expect(AdMobAdUnit.resolve(configured, format: .appOpen) == configured)
+    #expect(AdMobAdUnit.resolve(configured, format: .interstitial) == configured)
+    #expect(AdMobAdUnit.resolve(configured, format: .rewarded) == configured)
+    #endif
+}

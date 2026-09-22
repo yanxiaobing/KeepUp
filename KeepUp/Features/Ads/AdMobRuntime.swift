@@ -35,3 +35,19 @@ import GoogleMobileAds
         await task.value
     }
 }
+
+/// Resolve at the SDK boundary so remote configuration cannot send live requests in Debug.
+enum AdMobAdUnit {
+    enum Format { case appOpen, interstitial, rewarded }
+    static func resolve(_ configuredID: String, format: Format) -> String {
+        #if DEBUG
+        switch format {
+        case .appOpen: "ca-app-pub-3940256099942544/5575463023"
+        case .interstitial: "ca-app-pub-3940256099942544/4411468910"
+        case .rewarded: "ca-app-pub-3940256099942544/1712485313"
+        }
+        #else
+        configuredID
+        #endif
+    }
+}

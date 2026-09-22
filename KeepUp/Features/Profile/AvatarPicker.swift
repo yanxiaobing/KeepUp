@@ -33,7 +33,7 @@ struct AvatarPicker: UIViewControllerRepresentable {
 }
 
 
-private func squareCropController(image: UIImage, locale: Locale) -> TOCropViewController {
+@MainActor private func squareCropController(image: UIImage, locale: Locale) -> TOCropViewController {
     let crop = TOCropViewController(croppingStyle: .default, image: image)
     crop.title = localized("info.crop", locale)
     crop.doneButtonTitle = localized("info.done", locale)
@@ -70,4 +70,40 @@ struct ExistingImageCropper: UIViewControllerRepresentable {
         func cropViewController(_ controller: TOCropViewController, didCropTo image: UIImage, with cropRect: CGRect, angle: Int) { completion(image) }
         func cropViewController(_ controller: TOCropViewController, didFinishCancelled cancelled: Bool) { if cancelled { completion(nil) } }
     }
+}
+
+/// The system owns the bottom presentation and dismissal; actions run after dismissal.
+struct AvatarSourceSheet: View {
+    let options: [AvatarSheetOption]
+    let select: (String?) -> Void
+    @ScaledMetric private var rowHeight = 52.0
+
+    var body: some View {
+        VStack(spacing: 12) {
+            VStack(spacing: 0) {
+                ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                    if index > 0 { Divider() }
+                    Button { select(option.id) } label: {
+                        Text(LocalizedStringKey(option.titleKey))
+                            .frame(maxWidth: .infinity, minHeight: rowHeight).contentShape(Rectangle())
+                    }.accessibilityIdentifier(option.id)
+                }
+            }.background(.background, in: RoundedRectangle(cornerRadius: 14))
+            Button(role: .cancel) { select(nil) } label: {
+                Text("action.cancel").frame(maxWidth: .infinity, minHeight: rowHeight).contentShape(Rectangle())
+            }
+            .background(.background, in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityIdentifier("info.avatar.cancel")
+        }
+        .buttonStyle(.plain).font(.body).foregroundStyle(.primary)
+        .padding(.horizontal, 16).padding(.top, 24).padding(.bottom, 12)
+        .presentationDetents([.height(rowHeight * Double(options.count + 1) + 49)])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color(uiColor: .secondarySystemBackground))
+    }
+}
+
+struct AvatarSheetOption: Identifiable {
+    let id: String
+    let titleKey: String
 }

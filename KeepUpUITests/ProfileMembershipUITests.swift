@@ -90,9 +90,11 @@ final class ProfileMembershipUITests: XCTestCase {
         app.textFields["info.nickname"].typeText("KeepUp\n")
         screenshot("KeepUp-Profile-Social-Chinese")
         app.buttons["info.avatar"].tap()
-        XCTAssertTrue(app.buttons["info.library"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["info.library"].firstMatch.waitForExistence(timeout: 5))
         screenshot("KeepUp-Profile-Avatar-Actions")
-        app.buttons["取消"].tap()
+        let cancel = app.sheets.buttons["取消"].firstMatch
+        if cancel.exists { cancel.tap() }
+        else { app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap() }
         app.buttons["info.male"].tap()
         app.buttons["info.next"].tap()
         screenshot("KeepUp-Profile-Body-Chinese")
@@ -147,7 +149,11 @@ final class ProfileMembershipUITests: XCTestCase {
         let app = launch("en")
         XCTAssertTrue(app.buttons["info.avatar"].waitForExistence(timeout: 20))
         app.buttons["info.avatar"].tap()
-        app.buttons["info.library"].tap()
+        XCTAssertTrue(app.buttons["info.avatar.cancel"].waitForExistence(timeout: 5))
+        screenshot("Avatar-System-Bottom-Sheet")
+        app.buttons["info.avatar.cancel"].tap()
+        app.buttons["info.avatar"].tap()
+        app.buttons["info.library"].firstMatch.tap()
         let photo = app.images.matching(identifier: "PXGGridLayout-Info").firstMatch
         XCTAssertTrue(photo.waitForExistence(timeout: 10))
         photo.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
@@ -157,6 +163,96 @@ final class ProfileMembershipUITests: XCTestCase {
         XCTAssertTrue(app.buttons["info.next"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["info.avatar"].label.contains("Set your avatar"))
         screenshot("KeepUp-Profile-Avatar-Selected")
+    }
+
+    func testPersonalInfoSavesOnBackAndKeepsMetricPickersIndependent() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-reset-test-data", "-ui-testing-skip-onboarding", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
+        app.buttons["tab.profile"].tap()
+        app.buttons["profile.settings"].tap()
+        app.buttons["profile.edit"].tap()
+        let nickname = app.textFields["info.nickname"]
+        nickname.tap()
+        let old = nickname.value as? String ?? ""
+        nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "Alex")
+        app.buttons["profile.info.back"].tap()
+        XCTAssertTrue(app.buttons["profile.edit"].waitForExistence(timeout: 5))
+        app.buttons["profile.edit"].tap()
+        XCTAssertEqual(nickname.value as? String, "Alex")
+        app.buttons["profile.info.avatar"].tap()
+        XCTAssertTrue(app.buttons["info.avatar.cancel"].waitForExistence(timeout: 5))
+        screenshot("Personal-Info-Avatar-Bottom-Sheet")
+        app.buttons["info.avatar.cancel"].tap()
+        app.buttons["profile.info.gender"].tap()
+        XCTAssertTrue(app.buttons["info.gender.female"].waitForExistence(timeout: 5))
+        screenshot("Personal-Info-Gender-Bottom-Sheet")
+        app.buttons["info.gender.female"].tap()
+        XCTAssertTrue(app.buttons["profile.info.gender"].staticTexts["女"].waitForExistence(timeout: 5))
+        var values: [String: String] = [:]
+        for key in ["year", "height", "weight"] {
+            app.buttons["profile.info.\(key)"].tap()
+            let ruler = app.otherElements["info.ruler"]
+            XCTAssertTrue(ruler.waitForExistence(timeout: 5))
+            let initial = ruler.value as? String
+            ruler.swipeLeft(velocity: .slow)
+            let updated = ruler.value as? String
+            XCTAssertNotEqual(initial, updated)
+            values[key] = updated
+            screenshot("Personal-Info-\(key)-Edited")
+            app.buttons["info.ruler.confirm"].tap()
+            app.buttons["profile.info.\(key)"].tap()
+            XCTAssertEqual(ruler.value as? String, updated)
+            ruler.swipeRight(velocity: .slow)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+            app.buttons["profile.info.\(key)"].tap()
+            XCTAssertEqual(ruler.value as? String, updated)
+            app.buttons["info.ruler.confirm"].tap()
+        }
+        app.buttons["profile.info.back"].tap()
+        app.buttons["profile.edit"].tap()
+        XCTAssertEqual(nickname.value as? String, "Alex")
+        for key in ["year", "height", "weight"] {
+            app.buttons["profile.info.\(key)"].tap()
+            XCTAssertEqual(app.otherElements["info.ruler"].value as? String, values[key])
+            app.buttons["info.ruler.confirm"].tap()
+        }
+        screenshot("Personal-Info-Saved")
+    }
+
+    func testMembershipRestoredCloudAndSkipCopy() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-reset-test-data", "-ui-testing-skip-onboarding", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
+        app.buttons["tab.profile"].tap()
+        app.buttons["profile.premium"].tap()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["membership.skip"].label, "放弃优惠继续")
+        XCTAssertEqual(app.alerts.count, 0)
+        screenshot("Membership-Restored-Cloud")
+        app.buttons["membership.skip"].tap()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForNonExistence(timeout: 5))
+    }
+
+    func testMembershipUnavailableProductsUsesInlineRetryInEnglish() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-reset-test-data", "-ui-testing-skip-onboarding", "-ui-testing-products-unavailable", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
+        app.buttons["tab.profile"].tap()
+        app.buttons["profile.premium"].tap()
+        XCTAssertTrue(app.buttons["membership.retry"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.alerts.count, 0)
+        XCTAssertFalse(app.buttons["membership.purchase"].isEnabled)
+        app.buttons["membership.retry"].tap()
+        XCTAssertEqual(app.alerts.count, 0)
+        XCTAssertEqual(app.buttons["membership.skip"].label, "Skip offer and continue")
+        app.scrollViews["membership.benefits"].swipeUp()
+        screenshot("Membership-Unavailable-English-Inline-Retry")
+        app.buttons["membership.skip"].tap()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForNonExistence(timeout: 5))
     }
 
     func testMembershipCloseButton() throws {

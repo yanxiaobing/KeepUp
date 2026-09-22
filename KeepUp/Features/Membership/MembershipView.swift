@@ -22,6 +22,7 @@ struct MembershipView: View {
     @State private var offerIndex = 0
     @State private var pulse = false
     @State private var pauseOffers = false
+    @State private var purchaseAreaHeight: CGFloat = 0
     private var canPurchaseSelection: Bool {
         guard configuration.offers.indices.contains(offerIndex) else { return false }
         return !store.busy && store.products[configuration.offers[offerIndex].id] != nil
@@ -39,7 +40,7 @@ struct MembershipView: View {
         GeometryReader { geometry in
             let s = geometry.size.width/375
             let statusHeight = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.statusBarManager?.statusBarFrame.height ?? geometry.safeAreaInsets.top
-            let bottom = 223*s + max(geometry.safeAreaInsets.bottom, 34)
+            let bottom = store.isPremium ? 0 : purchaseAreaHeight
             ZStack(alignment: .top) {
                 Color.white.ignoresSafeArea()
                 ScrollView(showsIndicators: false) {
@@ -66,6 +67,7 @@ struct MembershipView: View {
                 }.ignoresSafeArea().accessibilityIdentifier("membership.benefits")
                 ZStack {
                     MembershipHornText(text: localized(store.isPremium ? "membership.active" : "membership.title", locale), first: 18*s, last: 20*s, weight: .semibold)
+                        .padding(.horizontal, 65*s)
                         .allowsHitTesting(false)
                     HStack {
                         Button { close() } label: {
@@ -110,9 +112,6 @@ struct MembershipView: View {
                 }
             }
             .alert("error.title", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
-                if store.message == "membership.loadError" || store.message == "membership.unavailable" {
-                    Button("action.retry") { Task { await store.load(offers: configuration.offers, cache: false) } }
-                }
                 Button("action.ok") { store.message = nil }
             } message: { Text(LocalizedStringKey(store.message ?? "error.storage")) }
         }.preferredColorScheme(.light)
@@ -140,7 +139,7 @@ struct MembershipView: View {
                         Text(locale.identifier.hasPrefix("zh") ? theme.name + " (" + theme.english + ")" : theme.english)
                             .font(.custom("PingFangSC-Regular", fixedSize: 16*s)).foregroundStyle(.black.opacity(0.3))
                         Spacer(minLength: 5)
-                        MembershipHornText(text: localized("theme.list", locale), first: 16*s, last: 18*s,
+                        MembershipHornText(text: localized(store.isPremium ? "membership.themesUnlocked" : "membership.unlockThemes", locale), first: 16*s, last: 18*s,
                                            colors: [UIColor(red: 79/255, green: 164/255, blue: 73/255, alpha: 1), UIColor(red: 110/255, green: 36/255, blue: 68/255, alpha: 1)])
                     }.padding(.horizontal, 20*s).frame(height: 18*s).frame(maxHeight: .infinity, alignment: .top).padding(.top, top+(isFirst ? 44 : 0)+24*s)
                 }.tag(index)
@@ -158,15 +157,28 @@ struct MembershipView: View {
         }.frame(height: 85*s)
     }
     private func cloud(_ s: CGFloat) -> some View {
-        VStack(spacing: 12*s) {
-            Image(systemName: "icloud").font(.system(size: 64*s, weight: .thin))
+        ZStack {
+            Image(uiImage: UIImage(systemName: "icloud", withConfiguration: UIImage.SymbolConfiguration(pointSize: 110*s, weight: .thin, scale: .small)) ?? UIImage())
+                .frame(width: 120*s, height: 120*s)
+                .overlay { Text("iCloud").font(.system(size: 15*s, weight: .heavy, design: .monospaced)).offset(y: 15*s) }
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: "arrow.up.arrow.down").font(.system(size: 20*s, weight: .bold)).imageScale(.small)
+                        .padding(35*s)
+                }
                 .accessibilityHidden(true)
-            Text("iCloud").font(.system(size: 22*s, weight: .semibold))
-            Text("membership.cloudDescription")
-                .font(.system(size: 12*s)).foregroundStyle(Color(hex: 0x999999))
-                .multilineTextAlignment(.center)
-        }.foregroundStyle(.black).frame(maxWidth: .infinity).padding(.horizontal, 24*s)
+            HStack(spacing: 130*s) {
+                VStack(spacing: 8*s) {
+                    MembershipHornText(text: localized("membership.cloudPrivate", locale), first: 25*s, last: 18*s)
+                    MembershipHornText(text: localized("membership.cloudPrivacy", locale), first: 25*s, last: 18*s).offset(x: -10*s)
+                }
+                VStack(spacing: 8*s) {
+                    MembershipHornText(text: localized("membership.cloudControl", locale), first: 18*s, last: 25*s)
+                    MembershipHornText(text: localized("membership.cloudSync", locale), first: 18*s, last: 25*s).offset(x: 10*s)
+                }
+            }.fixedSize(horizontal: false, vertical: true).padding(.horizontal, 50*s).offset(y: 4*s)
+        }.foregroundStyle(.black).frame(maxWidth: .infinity).frame(height: 80*s)
     }
+
     private func purchaseArea(_ s: CGFloat, bottom: CGFloat) -> some View {
         VStack(spacing: 0) {
             TabView(selection: $offerIndex) {
@@ -186,6 +198,7 @@ struct MembershipView: View {
                 Task { await store.purchase(offer); pauseOffers = false; if store.isPremium { close() } }
             } label: {
                 HStack(spacing: 12*s) {
+                    if !store.loadingProductIDs.isEmpty || store.busy { ProgressView().tint(.black) }
                     Text("info.continue").font(.custom("PingFangSC-Semibold", fixedSize: 18*s))
                     Image(systemName: "hand.tap").font(.custom("PingFangSC-Medium", fixedSize: 18*s)).scaleEffect(pulse ? 1.25 : 1)
                 }.foregroundStyle(.black).frame(maxWidth: .infinity).frame(height: 56*s)
@@ -197,12 +210,13 @@ struct MembershipView: View {
                     Text("membership.giveUp")
                         .font(.custom("PingFangSC-Regular", fixedSize: 12*s))
                         .foregroundStyle(Color(white: 0.25))
-                        .frame(maxWidth: .infinity).frame(minHeight: 44*s)
-                        .contentShape(Rectangle())
-                }.buttonStyle(.plain)
+                        .frame(maxWidth: .infinity).frame(height: 44*s)
+                        .contentShape(Rectangle()).frame(height: 16*s)
+                }.buttonStyle(.plain).padding(.top, 16*s)
                     .accessibilityIdentifier("membership.skip")
             }
         }.padding(.bottom, bottom)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { purchaseAreaHeight = $0 }
             .background {
                 LinearGradient(colors: [Color(hex: theme.hex), .white], startPoint: .top, endPoint: .bottom)
                     .overlay(LinearGradient(colors: [.black.opacity(0.5), .white.opacity(0.5)], startPoint: .top, endPoint: .bottom))
@@ -212,26 +226,38 @@ struct MembershipView: View {
     private func offerCard(_ offer: MembershipConfiguration.Offer, _ s: CGFloat) -> some View {
         let product = store.products[offer.id]
         let lifetime = offer.kind == "lifetime"
-        return VStack(spacing: 20*s) {
-            Group {
-                if offer.titleType == "timer" {
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        let end = Calendar.current.dateInterval(of: .day, for: context.date)?.end ?? context.date
-                        let remaining = max(0, Int(end.timeIntervalSince(context.date)))
-                        HStack(spacing: 8*s) {
-                            Text("membership.todayRemaining")
-                            Text(String(format: "%02d:%02d:%02d", remaining / 3600, remaining / 60 % 60, remaining % 60)).monospacedDigit()
+        return VStack(spacing: 0) {
+            if let error = store.productLoadError {
+                HStack(spacing: 8*s) {
+                    Text(LocalizedStringKey(error)).lineLimit(2)
+                        .accessibilityIdentifier("membership.productLoadError")
+                    Button { Task { await store.load(offers: configuration.offers, cache: false) } } label: {
+                        Text("action.retry").fixedSize().frame(minWidth: 44*s, minHeight: 44*s).contentShape(Rectangle())
+                    }.buttonStyle(.plain)
+                        .disabled(!store.loadingProductIDs.isEmpty || store.busy)
+                        .accessibilityIdentifier("membership.retry")
+                }.font(.system(size: 11*s)).padding(.horizontal, 24*s).frame(height: 55*s)
+            } else {
+                Group {
+                    if offer.titleType == "timer" {
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            let end = Calendar.current.dateInterval(of: .day, for: context.date)?.end ?? context.date
+                            let remaining = max(0, Int(end.timeIntervalSince(context.date)))
+                            HStack(spacing: 8*s) {
+                                Text("membership.todayRemaining")
+                                Text(String(format: "%02d:%02d:%02d", remaining / 3600, remaining / 60 % 60, remaining % 60)).monospacedDigit()
+                            }
                         }
+                    } else if offer.titleType == "desc" {
+                        Text(offer.description ?? "")
+                    } else if offer.titleType == "appstoreDesc" || !lifetime {
+                        Text(product?.description ?? localized("membership.priceUnavailable", locale))
+                    } else {
+                        Text("membership.lifetime")
                     }
-                } else if offer.titleType == "desc" {
-                    Text(offer.description ?? "")
-                } else if offer.titleType == "appstoreDesc" || !lifetime {
-                    Text(product?.description ?? localized("membership.priceUnavailable", locale))
-                } else {
-                    Text("membership.lifetime")
-                }
-            }.font(.custom("PingFangSC-Regular", fixedSize: 14*s)).lineLimit(1)
-                .frame(height: 20*s).padding(.top, 15*s)
+                }.font(.custom("PingFangSC-Regular", fixedSize: 14*s)).lineLimit(1)
+                    .frame(height: 20*s).padding(.top, 15*s).padding(.bottom, 20*s)
+            }
             HStack(spacing: 6*s) {
                 VStack(spacing: 0) { Circle().frame(width: 8*s,height: 8*s); Rectangle().frame(width: 2*s, height: 17*s); Circle().frame(width: 8*s,height: 8*s) }
                 VStack(alignment: .leading, spacing: 9*s) {

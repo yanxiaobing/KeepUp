@@ -108,6 +108,7 @@ final class MembershipStore {
     private(set) var isPremium = false
     private(set) var busy = false
     var message: String?
+    private(set) var productLoadError: String?
     var canShowAds: Bool { !isPremium }
     private var entitlementProductIDs: Set<String>
     @ObservationIgnored private let transactions: any MembershipTransactions
@@ -161,8 +162,14 @@ final class MembershipStore {
     }
 
     func load(offers: [MembershipConfiguration.Offer]? = nil, cache: Bool = true) async {
+        #if DEBUG
+        if isUITesting, ProcessInfo.processInfo.arguments.contains("-ui-testing-products-unavailable") {
+            productLoadError = "membership.unavailable"
+            return
+        }
+        #endif
         guard !isUITesting else { return }
-        message = nil
+        productLoadError = nil
         loadGeneration += 1
         let generation = loadGeneration
         let ids = (offers ?? configuration.offers).map(\.id)
@@ -172,9 +179,9 @@ final class MembershipStore {
         do {
             _ = try await productCatalog.load(Set(ids), cache: cache)
             guard generation == loadGeneration, !Task.isCancelled else { return }
-            if !productCatalog.isPrepared(Set(ids)) { message = "membership.unavailable" }
+            if !productCatalog.isPrepared(Set(ids)) { productLoadError = "membership.unavailable" }
             await refreshProductDetails(ids: ids, generation: generation)
-        } catch { if generation == loadGeneration && !Task.isCancelled { message = "membership.loadError" } }
+        } catch { if generation == loadGeneration && !Task.isCancelled { productLoadError = "membership.loadError" } }
     }
 
     func productDetails(for id: String) -> MembershipProductDetails? {
