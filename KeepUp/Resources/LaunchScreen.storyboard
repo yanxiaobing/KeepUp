@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="24500" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="launch-controller">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24500"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <scene sceneID="launch-scene">
+            <objects>
+                <viewController id="launch-controller" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="launch-view">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="18" translatesAutoresizingMaskIntoConstraints="NO" id="brand-stack">
+                                <rect key="frame" x="76.5" y="269" width="240" height="274"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="keepup_sport_icon" translatesAutoresizingMaskIntoConstraints="NO" id="brand-image">
+                                        <rect key="frame" x="32" y="0.0" width="176" height="176"/>
+                                        <accessibility key="accessibilityConfiguration" isElement="NO"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="176" id="image-width"/>
+                                            <constraint firstAttribute="height" constant="176" id="image-height"/>
+                                        </constraints>
+                                    </imageView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="KeepUp" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="brand-name">
+                                        <rect key="frame" x="57" y="194" width="126" height="38.5"/>
+                                        <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="32"/>
+                                        <color key="textColor" red="0.17255" green="0.17255" blue="0.17255" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="热爱生活，保持向上。" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="brand-slogan">
+                                        <rect key="frame" x="40" y="250.5" width="160" height="19.5"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                        <color key="textColor" red="0.43" green="0.43" blue="0.46" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    </label>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="launch-safe"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="brand-stack" firstAttribute="centerX" secondItem="launch-view" secondAttribute="centerX" id="brand-center-x"/>
+                            <constraint firstItem="brand-stack" firstAttribute="centerY" secondItem="launch-view" secondAttribute="centerY" constant="-20" id="brand-center-y"/>
+                            <constraint firstItem="brand-stack" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="launch-safe" secondAttribute="leading" constant="24" id="brand-leading"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="launch-responder" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+    </scenes>
+    <resources><image name="keepup_sport_icon" width="1024" height="1024"/></resources>
+</document>

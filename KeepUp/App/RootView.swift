@@ -25,7 +25,9 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if model.isReady && !privacyAccepted && model.snapshot.profile == nil && !skipOnboardingForTests {
+            if previewLaunchScreen {
+                BrandLaunchView().ignoresSafeArea()
+            } else if model.isReady && !privacyAccepted && model.snapshot.profile == nil && !skipOnboardingForTests {
                 StartupPrivacyView { privacyAccepted = true }
             } else if model.isReady && model.snapshot.profile == nil && !skipOnboardingForTests {
                 UserInfoFlowView { profile in
@@ -67,11 +69,11 @@ struct RootView: View {
                 } description: { Text(LocalizedStringKey(error)) } actions: {
                     Button("action.retry") { Task { await model.load() } }.buttonStyle(.borderedProminent)
                 }
-            } else { ProgressView("app.loading") }
+            } else { BrandLaunchView().ignoresSafeArea() }
         }
         .overlay {
             if model.isReady && !startupFinished {
-                ZStack { Color(uiColor: .systemBackground).ignoresSafeArea(); ProgressView("app.loading") }
+                BrandLaunchView().ignoresSafeArea()
             }
         }
         .fullScreenCover(isPresented: $showWelcomeMembership, onDismiss: {
@@ -100,6 +102,7 @@ struct RootView: View {
                                                  homeVisible: canRequestStepPermission)
         }
         .task {
+            guard !previewLaunchScreen else { return }
             await model.load()
             if model.snapshot.profile != nil { privacyAccepted = true }
             await handleColdStart()
@@ -184,6 +187,14 @@ struct RootView: View {
         #endif
     }
 
+    private var previewLaunchScreen: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-preview-launch-screen")
+        #else
+        false
+        #endif
+    }
+
     private func openRequestedReminder() {
         guard model.isReady, startupFinished, model.snapshot.profile != nil || skipOnboardingForTests,
               let cardID = ReminderRoute.shared.cardID else { return }
@@ -210,6 +221,15 @@ struct RootView: View {
         currentDay = today
         currentTimeZone = timeZone
     }
+}
+
+/// Reuse the system launch layout while startup work finishes, avoiding a visual jump.
+private struct BrandLaunchView: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        UIStoryboard(name: "LaunchScreen", bundle: .main).instantiateInitialViewController()!
+    }
+
+    func updateUIViewController(_ controller: UIViewController, context: Context) {}
 }
 
 private struct CatalogRequest: Identifiable {

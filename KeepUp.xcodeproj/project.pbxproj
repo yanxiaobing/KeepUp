@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BBAA00112233445566778801 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBAA00112233445566778802 /* LaunchScreen.storyboard */; };
 		01523B469E3D999069173224 /* Weight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BF1E4E9835870AE4028845 /* Weight.swift */; };
 		044D5C8B1729ACDD350CD208 /* AppAdvertising.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA0BAEBB73B671E4BF1A72D /* AppAdvertising.swift */; };
 		04AB07B5AA07567FDF964936 /* OriginalCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92CAFE240E4EFF0B9FAC33E /* OriginalCatalog.swift */; };
@@ -211,6 +212,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BBAA00112233445566778802 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		052C941A857ED7F0B1ACC31C /* ActivityEnergyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActivityEnergyTests.swift; sourceTree = "<group>"; };
 		06E14A9770B832A6995F1EAC /* EntryEncouragement.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EntryEncouragement.swift; sourceTree = "<group>"; };
 		086695A1F8B0B47176083711 /* CardTarget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CardTarget.swift; sourceTree = "<group>"; };
@@ -613,6 +615,7 @@
 		54492BA4BB8D7E8A97959A29 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				BBAA00112233445566778802 /* LaunchScreen.storyboard */,
 				321EFC2AD95B85C294C123BA /* Assets.xcassets */,
 				EA716784826F4898BE7A1739 /* DINCondensedC.ttf */,
 				4E08701FAD479F8EE3ED2867 /* Localizable.xcstrings */,
@@ -1022,6 +1025,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBAA00112233445566778801 /* LaunchScreen.storyboard in Resources */,
 				EA036B26D9857121D24F6200 /* Assets.xcassets in Resources */,
 				EA716784826F4898BE7A1738 /* DINCondensedC.ttf in Resources */,
 				6025DF26CB3BD1A4232D43BE /* Localizable.xcstrings in Resources */,
