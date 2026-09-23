@@ -356,14 +356,16 @@ struct RunningView: View {
                     .padding(.horizontal, 20).padding(.bottom, 10)
                 }
                 controls(session)
-                    .frame(height: 156)
+                    .frame(height: 116)
                     .frame(maxWidth: .infinity)
-                    .background { Color.white.ignoresSafeArea(edges: .bottom) }
+                Color.clear
+                    .frame(height: geometry.size.width * 272 / 750)
+                    .accessibilityHidden(true)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-            .background(alignment: .top) {
+            .background {
                 CardDetailThemeBackground()
-                    .frame(height: max(0, geometry.size.height - 156))
+                    .ignoresSafeArea(edges: .bottom)
             }
             .background { CalendarTheme.selected.color.ignoresSafeArea(edges: .top) }
         }
