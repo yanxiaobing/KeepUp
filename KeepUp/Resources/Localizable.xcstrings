@@ -3625,6 +3625,7 @@
       }
     },
     "info.camera" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3825,6 +3826,7 @@
       }
     },
     "info.library" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
