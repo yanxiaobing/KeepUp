@@ -103,10 +103,10 @@ struct CalendarHomeView: View {
                             .font(.system(size: 25, weight: .medium))
                             .foregroundStyle(Color(white: 0.15))
                             .frame(width: 60, height: 60)
-                            .background(.white, in: Circle())
-                            .shadow(color: .black.opacity(0.16), radius: 12, y: 4)
+                            .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: Circle())
                     .accessibilityLabel(Text("action.checkIn"))
                     .accessibilityIdentifier("tab.calendar")
                     .padding(.trailing, 24)
