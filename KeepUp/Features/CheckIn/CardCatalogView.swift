@@ -3,6 +3,7 @@ import SwiftUI
 struct CardCatalogView: View {
     let day: LocalDay
     var initialCardID: String? = nil
+    var onStepsAdded: () -> Void = {}
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
@@ -10,6 +11,8 @@ struct CardCatalogView: View {
     @State private var category = Category.recommended
     @State private var scheduledCard: HabitCard?
     @State private var showingSteps = false
+    @State private var addingSteps = false
+    @State private var stepsAdded = false
     @State private var runningRequest: RunningRequest?
     private struct RunningRequest: Identifiable {
         let kind: RunningKind
@@ -95,7 +98,10 @@ struct CardCatalogView: View {
                             .transition(.opacity).zIndex(1)
                     }
                 }
-                .fullScreenCover(isPresented: $showingSteps) { StepsView(day: day) }
+                .fullScreenCover(isPresented: $addingSteps, onDismiss: { if stepsAdded { onStepsAdded(); dismiss() } }) {
+                    StepTargetView(onSaved: { stepsAdded = true })
+                }
+                .fullScreenCover(isPresented: $showingSteps) { StepsView(day: min(day, LocalDay(date: .now))) }
                 .fullScreenCover(item: $runningRequest) { request in RunningView(kind: request.kind) }
                 .fullScreenCover(item: $scheduledCard) { card in
                     ScheduledCardView(card: card, day: day, existing: model.snapshot.schedules.first { $0.cardID == card.id && $0.day == day }, onSaved: { dismiss() })
@@ -159,7 +165,7 @@ struct CardCatalogView: View {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                     shortcut(image: "sport_ic_recent", title: "catalog.recentCheckIns", color: Color(red: 196/255, green: 198/255, blue: 203/255)) { category = .recent }
                     shortcut(image: "sport_ic_white_wake_up", title: "catalog.addWakeUp", color: Color(red: 61/255, green: 185/255, blue: 169/255)) { if let card = OriginalCatalog.card(63) { choose(card) } }
-                    ForEach([12,5,8,19,18,17,16,3], id: \.self) { number in
+                    ForEach([1,12,5,8,19,18,17,16,3], id: \.self) { number in
                         if let card = OriginalCatalog.card(number) {
                             shortcut(image: card.whiteImage, title: LocalizedStringKey(card.titleKey), color: Color(red: 71/255, green: 206/255, blue: 253/255)) { choose(card) }
                                 .accessibilityIdentifier("card.\(card.id)")
@@ -202,6 +208,13 @@ struct CardCatalogView: View {
         else { archiveError = true }
     }
     private func choose(_ card: HabitCard) {
+        if card.id == "punchcard.1" {
+            if StepsGoal.value(on: LocalDay(date: .now)) == nil ||
+                !model.isStepCardEnabled {
+                addingSteps = true
+            } else { showingSteps = true }
+            return
+        }
         if future {
             if model.snapshot.schedules.contains(where: { $0.cardID == card.id && $0.day == day }) { pendingFeature = "schedule.duplicate" }
             else { scheduledCard = card }
@@ -212,7 +225,6 @@ struct CardCatalogView: View {
             if model.entries(on: day).contains(where: { $0.cardID == card.id }) { pendingFeature = "wake.duplicate"; return }
             if !model.snapshot.targets.contains(where: { $0.cardID == card.id && $0.isPinned }) { wakeIntro = true; return }
         }
-        if card.id == "punchcard.1" { showingSteps = true; return }
         if ["punchcard.2", "punchcard.96"].contains(card.id) {
             guard day == LocalDay(date: .now) else { pendingFeature = "running.todayOnly"; return }
             runningRequest = RunningRequest(kind: card.id == "punchcard.96" ? .cycling : .outdoor)

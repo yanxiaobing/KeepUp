@@ -14,6 +14,7 @@ enum StepsGoal {
 
     static func updated(_ changes: [String: Int], value: Int, now: Date, timeZone: TimeZone) -> [String: Int] {
         guard choices.contains(value) else { return changes }
+        if let latest = changes.keys.max(), changes[latest] == value { return changes }
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         let date = changes.isEmpty ? now : calendar.date(byAdding: .day, value: 1, to: now)!

@@ -9,6 +9,11 @@ struct StepsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var controller: StepsController
     @State private var showingTarget = false
+    @State private var historyDay: HistoryDay?
+    private struct HistoryDay: Identifiable {
+        let day: LocalDay
+        var id: LocalDay { day }
+    }
     @State private var selectedStyle = StepsPosterStyle.details
     @State private var shareImage: StepsShareImage?
     @State private var shareFailed = false
@@ -81,6 +86,9 @@ struct StepsView: View {
                         } label: { Image(systemName: "square.and.arrow.up") }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("steps.share").disabled(count == nil)
                     }
+                }
+                .fullScreenCover(item: $historyDay, onDismiss: { refresh() }) { selection in
+                    StepsView(day: selection.day, followsToday: false)
                 }
                 .sheet(item: $shareImage) { EntrySharePreview(image: $0.image) }
                 .alert("error.title", isPresented: $shareFailed) {
@@ -157,12 +165,14 @@ struct StepsView: View {
             Text("steps.recent").font(.system(size: 15, weight: .medium)).padding(.bottom, 12)
             ForEach(StepsDateRange.recentDays(now: .now, timeZone: .current), id: \.self) { date in
                 let reading = controller.readings[date]?.steps ?? model.snapshot.steps[date.rawValue]?.steps
-                HStack {
-                    Text(date.rawValue).foregroundStyle(.secondary)
-                    Spacer()
-                    if let reading { Text(reading.formatted(.number.locale(locale)) + " " + localized("unit.steps", locale)) }
-                    else { Text("steps.noData").foregroundStyle(.secondary) }
-                }.font(.system(size: 14)).padding(.vertical, 12)
+                Button { historyDay = HistoryDay(day: date) } label: {
+                    HStack {
+                        Text(date.rawValue).foregroundStyle(.secondary)
+                        Spacer()
+                        if let reading { Text(reading.formatted(.number.locale(locale)) + " " + localized("unit.steps", locale)) }
+                        else { Text("steps.noData").foregroundStyle(.secondary) }
+                    }.font(.system(size: 14)).padding(.vertical, 12).contentShape(Rectangle())
+                }.buttonStyle(.plain)
                     .accessibilityIdentifier("steps.history.\(date.rawValue)")
                 Divider()
             }

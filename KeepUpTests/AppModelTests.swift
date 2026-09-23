@@ -10,10 +10,12 @@ private actor SuspendedRepository: CheckInRepository {
     private var activeRun: RunningSession?
     private var finishedRuns: [String: RunningSession] = [:]
     private var failRunningFinish = false
+    private var targets: [CardTarget] = []
+    private(set) var stepSaveCount = 0
 
     func open() { }
     func snapshot() async -> LocalSnapshot {
-        let result = LocalSnapshot(cards: HabitCard.starters, entries: entries, activeRun: activeRun)
+        let result = LocalSnapshot(cards: HabitCard.starters, entries: entries, targets: targets, activeRun: activeRun)
         if shouldSuspend {
             shouldSuspend = false
             await withCheckedContinuation { continuation in
@@ -50,8 +52,8 @@ private actor SuspendedRepository: CheckInRepository {
     func discardRunning(id: String) async throws { activeRun = nil }
     func setActiveRun(_ session: RunningSession?) { activeRun = session }
     func setRunningFinishFailure(_ value: Bool) { failRunningFinish = value }
-    func saveSteps(_ reading: StepReading, goal: Int?, now: Date) async throws {}
-    func saveTarget(_ target: CardTarget) async throws {}
+    func saveSteps(_ reading: StepReading, goal: Int?, now: Date) async throws { stepSaveCount += 1 }
+    func saveTarget(_ target: CardTarget) async throws { targets = [target] }
     func saveProfile(_ profile: UserProfile) async throws {}
     func updateProfile(_ change: ProfileChange, now: Date) async throws {}
 
@@ -123,4 +125,28 @@ func runningRepositoryFailureRetainsFinalSessionUntilSuccessfulRetry() async thr
     #expect(model.running.errorKey == nil)
     #expect(model.snapshot.entries.map(\.id) == [draft.id])
     #expect(try await model.runningSession(id: draft.id) == frozen)
+}
+
+@Test @MainActor
+func removedStepCardStopsSavingAndCanBeReactivated() async {
+    let repository = SuspendedRepository()
+    let model = AppModel(repository: repository)
+    await model.load()
+    let reading = StepReading(day: LocalDay(date: .now), timeZoneID: TimeZone.current.identifier,
+                              steps: 6_500, distance: nil, measuredAt: .now)
+    #expect(await model.saveSteps(reading))
+    #expect(await repository.stepSaveCount == 0)
+    var target = CardTarget(cardID: "punchcard.1")
+    target.isPinned = true
+    #expect(await model.saveTarget(target))
+    #expect(await model.saveSteps(reading))
+    #expect(await repository.stepSaveCount == 1)
+    target.isPinned = false
+    #expect(await model.saveTarget(target))
+    #expect(await model.saveSteps(reading))
+    #expect(await repository.stepSaveCount == 1)
+    target.isPinned = true
+    #expect(await model.saveTarget(target))
+    #expect(await model.saveSteps(reading))
+    #expect(await repository.stepSaveCount == 2)
 }

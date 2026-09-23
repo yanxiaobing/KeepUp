@@ -18,7 +18,73 @@ import XCTest
         app.buttons["catalog.life"].tap()
         XCTAssertTrue(app.buttons["card.punchcard.1"].waitForExistence(timeout: 5))
         app.buttons["card.punchcard.1"].tap()
+        if app.buttons["stepsTarget.save"].waitForExistence(timeout: 2) {
+            app.buttons["stepsTarget.save"].tap()
+            XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 5))
+            app.buttons["tab.calendar"].tap()
+            app.buttons["catalog.life"].tap()
+            app.buttons["card.punchcard.1"].tap()
+        }
         XCTAssertTrue(app.buttons["steps.close"].waitForExistence(timeout: 5))
+    }
+
+    func testCatalogAddsStepCardAndCancelDoesNotAdd() {
+        let app = launch(mode: "zero")
+        app.buttons["tab.calendar"].tap()
+        let card = app.buttons["card.punchcard.1"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        XCTAssertTrue(app.buttons["stepsTarget.save"].waitForExistence(timeout: 5))
+        app.buttons["stepsTarget.close"].tap()
+        app.buttons["catalog.close"].tap()
+        XCTAssertFalse(app.buttons["target.pending.punchcard.1"].exists)
+        app.buttons["tab.calendar"].tap()
+        app.buttons["card.punchcard.1"].tap()
+        app.buttons["stepsTarget.save"].tap()
+        let pending = app.buttons["target.pending.punchcard.1"]
+        XCTAssertTrue(pending.waitForExistence(timeout: 8))
+        let homeShot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        homeShot.name = "Steps-Added-Calendar"; homeShot.lifetime = .keepAlways; add(homeShot)
+        pending.tap()
+        XCTAssertTrue(app.buttons["steps.close"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["steps.count"].label, "0")
+        app.buttons["steps.close"].tap()
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
+        app.launch()
+        XCTAssertTrue(pending.waitForExistence(timeout: 20))
+        pending.press(forDuration: 0.7)
+        app.buttons["calendar.menu.delete"].tap()
+        app.buttons["calendar.confirmDelete"].tap()
+        XCTAssertTrue(pending.waitForNonExistence(timeout: 5))
+        let nextPage = app.buttons["calendar.nextMonth"].exists ? app.buttons["calendar.nextMonth"] : app.buttons["calendar.nextWeek"]
+        nextPage.tap()
+        app.buttons["tab.calendar"].tap()
+        app.buttons["catalog.life"].tap()
+        app.buttons["card.punchcard.1"].tap()
+        XCTAssertTrue(app.buttons["stepsTarget.save"].waitForExistence(timeout: 5))
+        app.buttons["stepsTarget.save"].tap()
+        XCTAssertTrue(pending.waitForExistence(timeout: 8))
+    }
+
+    func testRecentHistoryOpensSelectedDay() {
+        let app = launch(mode: "ready")
+        openSteps(app)
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let day = formatter.string(from: yesterday)
+        let row = app.buttons["steps.history.\(day)"]
+        for _ in 0..<6 {
+            if row.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(row.isHittable)
+        row.tap()
+        XCTAssertTrue(app.staticTexts[day].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["steps.count"].waitForExistence(timeout: 5))
     }
 
     func testIntradayChartAndMissingIntervals() {

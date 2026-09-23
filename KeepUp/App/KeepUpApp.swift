@@ -102,7 +102,7 @@ struct KeepUpApp: App {
                         await ReminderScheduler.shared.synchronize(model.snapshot, locale: (AppLanguage(rawValue: language) ?? .system).locale)
                     }
                 }
-                .task(id: "\(model.isReady)-\(model.snapshot.profile != nil)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
+                .task(id: "\(model.isReady)-\(model.snapshot.profile != nil)-\(model.isStepCardEnabled)-\(scenePhase)-\(stepGoalChanges.sorted { $0.key < $1.key })") {
                     refreshStepMonitoring()
                 }
                 .onChange(of: scenePhase) { _, phase in
@@ -142,6 +142,7 @@ struct KeepUpApp: App {
 
     private func refreshStepMonitoring() {
         guard scenePhase == .active, model.isReady, model.snapshot.profile != nil,
+              model.isStepCardEnabled,
               StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges) != nil else {
             stepMonitor.stop()
             return

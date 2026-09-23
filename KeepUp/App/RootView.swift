@@ -58,7 +58,7 @@ struct RootView: View {
                         }
                 }
                 .fullScreenCover(item: $catalogRequest) { request in
-                    CardCatalogView(day: request.day, initialCardID: request.initialCardID)
+                    CardCatalogView(day: request.day, initialCardID: request.initialCardID, onStepsAdded: { selectedDate = .now })
                         .environment(\.dynamicTypeSize, dynamicTypeSize)
                 }
             } else if let error = model.loadError {

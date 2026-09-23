@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StepTargetView: View {
+    var onSaved: (() -> Void)? = nil
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Default(.stepGoalChanges) private var changes
@@ -53,5 +54,6 @@ struct StepTargetView: View {
         guard await model.saveTarget(target) else { failed = true; return }
         changes = StepsGoal.updated(changes, value: selection, now: .now, timeZone: .current)
         dismiss()
+        onSaved?()
     }
 }

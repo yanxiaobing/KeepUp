@@ -108,7 +108,12 @@ final class AppModel {
         } while reloadRequested
     }
 
+    var isStepCardEnabled: Bool {
+        snapshot.targets.contains { $0.cardID == "punchcard.1" && $0.isPinned }
+    }
+
     func saveSteps(_ reading: StepReading) async -> Bool {
+        guard isStepCardEnabled else { return true }
         do {
             try await repository.saveSteps(reading, goal: StepsGoal.value(on: reading.day), now: .now)
             await load()

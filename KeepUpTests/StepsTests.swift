@@ -342,3 +342,11 @@ private final class BackgroundCallbackPedometer: CMPedometer {
     #expect(source.intradayQueryCount == 1)
     controller.stop()
 }
+
+@Test func savingUnchangedStepGoalDoesNotCreateAnotherEffectiveDate() {
+    let now = stepsDay("2026-03-08").date(in: stepsZone)
+    let initial = StepsGoal.updated([:], value: 5_000, now: now, timeZone: stepsZone)
+    #expect(StepsGoal.updated(initial, value: 5_000, now: now, timeZone: stepsZone) == initial)
+    let scheduled = StepsGoal.updated(initial, value: 8_000, now: now, timeZone: stepsZone)
+    #expect(StepsGoal.updated(scheduled, value: 8_000, now: now, timeZone: stepsZone) == scheduled)
+}

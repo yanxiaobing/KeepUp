@@ -40,9 +40,12 @@ struct CalendarTicketCard: View {
     var badge: String? = nil
     var reminder = false
     var progress: Int? = nil
+    var steps: StepRecord? = nil
+    var stepGoal: Int? = nil
     @Environment(\.locale) private var locale
-    private var tint: String { entry == nil ? CalendarCardPalette.pending : CalendarCardPalette.completed(card) }
+    private var tint: String { entry == nil && card.id != "punchcard.1" ? CalendarCardPalette.pending : CalendarCardPalette.completed(card) }
     private var ribbon: String? {
+        if card.id == "punchcard.1" { return nil }
         if let badge { return badge }
         if let wake { return wake.isEarly ? localized("wake.earlyBadge", locale) : nil }
         if let quantity = entry?.quantity, quantity > 0, let entry {
@@ -54,6 +57,7 @@ struct CalendarTicketCard: View {
     private var illustration: String {
         guard entry == nil else { return card.cardImage }
         switch card.id {
+        case "punchcard.1": return card.cardImage
         case "punchcard.50": return "home_heavy_pic_todo"
         case "punchcard.63": return "ic_early_card_undone"
         default: return "card_icon_todo"
@@ -62,7 +66,19 @@ struct CalendarTicketCard: View {
     var body: some View {
         ZStack {
             Color.white
-            if let wake {
+            if card.id == "punchcard.1" {
+                ZStack {
+                    Circle().stroke(Color(hex: 0xE6E6E6), lineWidth: 5 * scale)
+                    if let count = steps?.steps ?? entry?.quantity.map(Int.init), let goal = steps?.goal ?? stepGoal, goal > 0 {
+                        Circle().trim(from: 0, to: min(1, CGFloat(count) / CGFloat(goal)))
+                            .stroke(Color(hex: 0xDBD91E), style: StrokeStyle(lineWidth: 5 * scale, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }
+                    Text((steps?.steps ?? entry?.quantity.map(Int.init)).map { $0.formatted(.number.grouping(.never)) } ?? "—")
+                        .font(.system(size: 16 * scale)).foregroundStyle(Color(hex: 0x69696F))
+                        .minimumScaleFactor(0.6).lineLimit(1).padding(5)
+                }.frame(width: 63 * scale, height: 63 * scale).offset(y: -9 * scale)
+            } else if let wake {
                 WakeUpClock(time: wake.time, timeZoneID: wake.timeZoneID, compact: true)
                     .frame(width: 72*scale, height: 72*scale).offset(y: -9*scale)
             } else {
@@ -82,7 +98,7 @@ struct CalendarTicketCard: View {
                 if reminder && entry == nil { Image("card_detail_ic_clock").resizable().frame(width: 16, height: 16).padding(3) }
             }
             .overlay(alignment: .bottom) {
-                if let progress {
+                if let progress, card.id != "punchcard.1" {
                     HStack(spacing: 1) {
                         ForEach(0..<min(7, max(0, progress)), id: \.self) { _ in
                             Capsule().fill(CalendarCardPalette.color(CalendarCardPalette.completed(card)))

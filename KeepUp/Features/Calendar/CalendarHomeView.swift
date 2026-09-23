@@ -277,7 +277,7 @@ struct CalendarHomeView: View {
                         if let card = model.card(for: entry) {
                             CalendarInteractiveCard(identifier: "entry.\(entry.id)", label: entryLabel(entry, card: card),
                                 actions: menuActions(card: card, entry: entry), tap: { detail = entry }) {
-                                CalendarTicketCard(card: card, scale: scale, entry: entry, wake: model.snapshot.wakeUps[entry.id], progress: weeklyProgress(card))
+                                CalendarTicketCard(card: card, scale: scale, entry: entry, wake: model.snapshot.wakeUps[entry.id], progress: weeklyProgress(card), steps: model.snapshot.steps[entry.day.rawValue], stepGoal: StepsGoal.value(on: entry.day))
                             }
                         }
                     }
@@ -304,7 +304,7 @@ struct CalendarHomeView: View {
                             CalendarTicketCard(card: card, scale: scale,
                                 badge: card.id == "punchcard.63" ? nil : localized("reminder.todo", locale),
                                 reminder: model.snapshot.targets.first { $0.cardID == card.id }?.reminderEnabled ?? false,
-                                progress: weeklyProgress(card))
+                                progress: weeklyProgress(card), steps: model.snapshot.steps[selectedDay.rawValue], stepGoal: StepsGoal.value(on: selectedDay))
                         }
                     }
                     if showsAddCard {
