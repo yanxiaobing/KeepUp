@@ -6,6 +6,7 @@ struct RunningView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var confirmingFinish = false
     @State private var result: RunningSession?
     @State private var showingSettings = false
@@ -522,58 +523,83 @@ struct RunningView: View {
         }
     }
 
-    @ViewBuilder private func controls(_ session: RunningSession) -> some View {
-        if controlsLocked {
-            HStack(spacing: 0) {
-                Image("lockScreen_monkey").resizable().frame(width: 52, height: 58)
-                    .offset(x: -10)
-                Text("running.swipeToUnlock")
-                    .font(.system(size: 15)).foregroundStyle(Color(hex: 0x69696F))
-                    .frame(maxWidth: .infinity)
-                Image("lockScreen_banana").resizable().frame(width: 43, height: 43)
-                    .padding(.trailing, 4)
-            }.frame(width: 215, height: 50)
-                .background(Color(hex: 0xE6E6E6), in: Capsule())
-                .contentShape(Capsule())
-                .gesture(DragGesture(minimumDistance: 20).onEnded { value in
-                    if value.translation.width >= 100, abs(value.translation.height) < 80 {
-                        controlsLocked = false
-                    }
-                })
-                .onLongPressGesture(minimumDuration: 1) { controlsLocked = false }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("running.swipeToUnlock"))
-                .accessibilityAddTraits(.isButton)
-                .accessibilityAction(named: Text("runningSettings.unlock")) { controlsLocked = false }
-                .accessibilityIdentifier("running.unlock")
-        } else {
-            VStack(spacing: 4) {
-                if session.phase == .running {
-                    imageButton("running_puase", label: "running.pause", identifier: "running.pause") { await controller.pause() }
+    private var controlsTransition: AnyTransition {
+        reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92))
+    }
+
+    private func controls(_ session: RunningSession) -> some View {
+        ZStack {
+            if controlsLocked {
+                HStack(spacing: 0) {
+                    Image("lockScreen_monkey").resizable().frame(width: 52, height: 58)
+                        .offset(x: -10)
+                    Text("running.swipeToUnlock")
+                        .font(.system(size: 15)).foregroundStyle(Color(hex: 0x69696F))
+                        .frame(maxWidth: .infinity)
+                    Image("lockScreen_banana").resizable().frame(width: 43, height: 43)
+                        .padding(.trailing, 4)
+                }.frame(width: 215, height: 50)
+                    .background(Color(hex: 0xE6E6E6), in: Capsule())
+                    .contentShape(Capsule())
+                    .gesture(DragGesture(minimumDistance: 20).onEnded { value in
+                        if value.translation.width >= 100, abs(value.translation.height) < 80 {
+                            controlsLocked = false
+                        }
+                    })
+                    .onLongPressGesture(minimumDuration: 1) { controlsLocked = false }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text("running.swipeToUnlock"))
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction(named: Text("runningSettings.unlock")) { controlsLocked = false }
+                    .accessibilityIdentifier("running.unlock")
+                    .transition(controlsTransition)
+            } else {
+                ZStack {
+                    if session.phase == .running || session.phase == .paused {
+                        HStack(spacing: 50) {
+                            ZStack {
+                                if session.phase == .running {
+                                    imageButton("running_puase", label: "running.pause", identifier: "running.pause") { await controller.pause() }
+                                        .transition(.opacity)
+                                } else {
+                                    imageButton("running_start", label: "running.resume", identifier: "running.resume") { await controller.resume() }
+                                        .transition(.opacity)
+                                }
+                            }
+                            .frame(width: 107, height: 107)
+                            if session.phase == .paused {
+                                imageButton("running_stop", label: "running.finish", identifier: "running.finish") { confirmingFinish = true }
+                                    .transition(controlsTransition)
+                            }
+                        }
                         .frame(maxWidth: .infinity)
                         .overlay(alignment: .trailing) {
-                            Button { controlsLocked = true } label: {
-                                Image("running_lock").resizable().scaledToFit().frame(width: 22, height: 27)
-                                    .frame(width: 44, height: 44)
+                            if session.phase == .running {
+                                Button { controlsLocked = true } label: {
+                                    Image("running_lock").resizable().scaledToFit().frame(width: 22, height: 27)
+                                        .frame(width: 44, height: 44)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(Text("running.lock"))
+                                .accessibilityIdentifier("running.lock")
+                                .padding(.trailing, 46)
+                                .transition(.opacity)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(Text("running.lock"))
-                            .accessibilityIdentifier("running.lock")
-                            .padding(.trailing, 46)
                         }
-                } else if session.phase == .paused {
-                    HStack(spacing: 50) {
-                        imageButton("running_start", label: "running.resume", identifier: "running.resume") { await controller.resume() }
-                        imageButton("running_stop", label: "running.finish", identifier: "running.finish") { confirmingFinish = true }
+                    } else {
+                        Button("running.retrySave") { Task { await finish() } }.buttonStyle(.borderedProminent)
+                            .tint(Color(hex: 0xFFD838)).accessibilityIdentifier("running.retrySave")
+                            .transition(controlsTransition)
                     }
-                } else {
-                    Button("running.retrySave") { Task { await finish() } }.buttonStyle(.borderedProminent)
-                        .tint(Color(hex: 0xFFD838)).accessibilityIdentifier("running.retrySave")
                 }
-                if controller.isBusy { ProgressView() }
+                .transition(controlsTransition)
             }
-            .disabled(controller.isBusy)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 107)
+        .disabled(controller.isBusy)
+        .animation(reduceMotion ? .easeInOut(duration: 0.15) : .smooth(duration: 0.3), value: session.phase)
+        .animation(reduceMotion ? .easeInOut(duration: 0.15) : .smooth(duration: 0.3), value: controlsLocked)
     }
 
     private func imageButton(_ image: String, label: LocalizedStringKey, identifier: String, action: @escaping @MainActor () async -> Void) -> some View {
