@@ -59,6 +59,7 @@ struct CalendarHomeView: View {
     var body: some View {
         Group {
             GeometryReader { geometry in
+                let cityImageHeight = geometry.size.width * 272 / 750
                 VStack(spacing: 0) {
                     VStack(spacing: 0) {
                         VStack(spacing: 0) {
@@ -86,7 +87,7 @@ struct CalendarHomeView: View {
                         ], startPoint: .top, endPoint: .bottom)
                         Image(CalendarTheme.selected.transparentCityImage)
                             .resizable().scaledToFit()
-                            .frame(width: geometry.size.width)
+                            .frame(width: geometry.size.width, height: cityImageHeight)
                             .accessibilityHidden(true)
                     }
                     .ignoresSafeArea()
@@ -104,7 +105,8 @@ struct CalendarHomeView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(Text("action.checkIn"))
                     .accessibilityIdentifier("tab.calendar")
-                    .padding(.trailing, 24).padding(.bottom, 18)
+                    .padding(.trailing, 24)
+                    .padding(.bottom, cityImageHeight - geometry.safeAreaInsets.bottom + 10)
                 }
             }
             .navigationTitle("")
@@ -117,11 +119,6 @@ struct CalendarHomeView: View {
                     }
                     .accessibilityLabel(Text("nav.history"))
                     .accessibilityIdentifier("tab.history")
-                    if !calendar.isDateInToday(selectedDate) {
-                        Button { selectedDate = .now } label: { Image(systemName: "calendar.badge.clock") }
-                            .accessibilityLabel(Text("calendar.today"))
-                            .accessibilityIdentifier("calendar.today")
-                    }
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button { showingTheme = true } label: { Image(systemName: "paintpalette") }
@@ -169,6 +166,15 @@ struct CalendarHomeView: View {
             }
             .accessibilityLabel(Text(isMonthMode ? "calendar.previousMonth" : "calendar.previousWeek"))
             .accessibilityIdentifier(isMonthMode ? "calendar.previousMonth" : "calendar.previousWeek")
+            if !calendar.isDateInToday(selectedDate) {
+                Button { selectedDate = .now } label: {
+                    Image(systemName: "scope")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel(Text("calendar.today"))
+                .accessibilityIdentifier("calendar.today")
+            }
             Button { movePage(1) } label: {
                 Image(systemName: "chevron.right")
                     .frame(width: 44, height: 44)
