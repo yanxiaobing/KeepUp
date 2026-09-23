@@ -9,6 +9,8 @@ struct StepsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var controller: StepsController
     @State private var showingTarget = false
+    @State private var showingHistory = false
+    @State private var showingExplanation = false
     @State private var historyDay: HistoryDay?
     private struct HistoryDay: Identifiable {
         let day: LocalDay
@@ -30,66 +32,87 @@ struct StepsView: View {
                           saved: model.snapshot.steps[selectedDay.rawValue], goal: StepsGoal.value(on: selectedDay))
     }
     private var count: Int? { presentation.steps }
-    private var distance: Double? { presentation.distance }
-    private var goal: Int? { presentation.goal }
+    private var encouragement: String {
+        guard let card = OriginalCatalog.card(1),
+              let entry = model.entries(on: selectedDay).first(where: { $0.cardID == card.id }) else {
+            return localized("entry.encouragement.general", locale)
+        }
+        return EntryEncouragement.selected(entry: entry, card: card, entries: model.snapshot.entries,
+                                          weight: nil, today: LocalDay(date: .now)).text(card: card, locale: locale)
+    }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    Picker("steps.view", selection: $selectedStyle) {
-                        ForEach(StepsPosterStyle.allCases, id: \.self) { style in
-                            Text(LocalizedStringKey(style.titleKey)).tag(style)
+            GeometryReader { geometry in
+                TabView(selection: $selectedStyle) {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            StepsOriginalDetails(data: presentation, isMale: model.snapshot.profile?.isMale == true)
+                                .frame(height: max(460 * geometry.size.width / 375, geometry.size.height))
+                            if !controller.loadingIntraday && controller.state == .ready && presentation.intraday?.isComplete != true {
+                                Text("steps.intradayPartial").font(.caption).foregroundStyle(.secondary)
+                                    .accessibilityIdentifier("steps.intradayPartial")
+                                Button("steps.retry") { refresh() }.padding(12).accessibilityIdentifier("steps.retryIntraday")
+                            }
                         }
-                    }.pickerStyle(.segmented).padding(16).accessibilityIdentifier("steps.view")
-                    if selectedStyle == .details {
-                        summary
-                        status.padding(.horizontal, 24).padding(.vertical, 18)
-                        if let distance {
-                            VStack(spacing: 6) {
-                                Text((distance / 1_000).formatted(.number.precision(.fractionLength(2)).locale(locale)))
-                                    .font(.system(size: 28, weight: .light))
-                                Text("unit.kilometers").font(.system(size: 12)).foregroundStyle(.secondary)
-                            }.frame(maxWidth: .infinity).padding(.bottom, 20).accessibilityLabel(Text("steps.distance"))
+                    }.safeAreaInset(edge: .bottom, spacing: 0) {
+                        if controller.state != .ready && controller.state != .loading || controller.storageFailed {
+                            status.padding(16).frame(maxWidth: .infinity).background(.white.opacity(0.95))
                         }
-                        StepsEnergyView(kilocalories: presentation.estimatedKilocalories).padding(.horizontal, 24)
-                        StepsIntradayView(data: presentation).padding(24)
-                        if controller.loadingIntraday { ProgressView("steps.loading").padding(.bottom, 16) }
-                        if !controller.loadingIntraday && controller.state == .ready && presentation.intraday?.isComplete != true {
-                            Button("steps.retry") { refresh() }.padding(.bottom, 16).accessibilityIdentifier("steps.retryIntraday")
-                        }
-                        history
-                        Image(model.snapshot.profile?.isMale == true ? "card_details_walk_male" : "card_details_walk_female")
-                            .resizable().scaledToFit().opacity(0.2).accessibilityHidden(true)
-                    } else {
-                        StepsPoster(data: presentation, style: .card, locale: locale, isMale: model.snapshot.profile?.isMale == true)
-                        status.padding(24)
+                    }.tag(StepsPosterStyle.details)
+                    StepsOriginalCard(data: presentation, encouragement: encouragement)
+                        .tag(StepsPosterStyle.card)
+                }.tabViewStyle(.page(indexDisplayMode: .never))
+                    .overlay(alignment: .topTrailing) {
+                        HStack(spacing: 5.5) {
+                            ForEach(StepsPosterStyle.allCases, id: \.self) { style in
+                                Button { withAnimation { selectedStyle = style } } label: {
+                                    Circle().fill(selectedStyle == style ? Color(hex: 0x48484D) : Color(hex: 0xC1C1C1))
+                                        .frame(width: 6, height: 6).padding(.vertical, 10)
+                                }.buttonStyle(.plain).accessibilityLabel(Text(LocalizedStringKey(style.titleKey)))
+                                    .accessibilityIdentifier("steps.page." + style.rawValue)
+                                    .accessibilityAddTraits(selectedStyle == style ? .isSelected : [])
+                            }
+                        }.padding(.trailing, 15)
                     }
-                }
             }.background(.white)
-                .navigationTitle("steps.title").navigationBarTitleDisplayMode(.inline)
+                .navigationTitle(Text(verbatim: String(format: localized("entry.detailTitle %@", locale), localized("steps.title", locale))))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { dismiss() }.accessibilityIdentifier("steps.close")
+                        Button { dismiss() } label: { Image(systemName: "chevron.left") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("steps.close")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button { showingTarget = true } label: { Image("setting_ic_walk_target").resizable().frame(width: 22, height: 22) }
-                            .accessibilityLabel(Text("steps.targetSettings")).accessibilityIdentifier("steps.target")
+                        Menu {
+                            Button("steps.targetSettings") { showingTarget = true }.accessibilityIdentifier("steps.target")
+                            Button("steps.recent") { showingHistory = true }.accessibilityIdentifier("steps.history")
+                            Button("steps.measurementInfo") { showingExplanation = true }
+                        } label: { Image(systemName: "ellipsis") }
+                            .accessibilityLabel(Text("entry.actions")).accessibilityIdentifier("steps.actions")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             guard let image = StepsPosterRenderer.render(data: presentation, style: selectedStyle, locale: locale,
-                                                                        isMale: model.snapshot.profile?.isMale == true) else {
+                                                                        isMale: model.snapshot.profile?.isMale == true, encouragement: encouragement) else {
                                 shareFailed = true; return
                             }
                             shareImage = StepsShareImage(image: image)
-                        } label: { Image(systemName: "square.and.arrow.up") }
+                        } label: { Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24) }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("steps.share").disabled(count == nil)
                     }
                 }
-                .fullScreenCover(item: $historyDay, onDismiss: { refresh() }) { selection in
-                    StepsView(day: selection.day, followsToday: false)
+                .sheet(isPresented: $showingHistory, onDismiss: { refresh() }) {
+                    NavigationStack {
+                        ScrollView { history.padding(.top, 20) }.navigationTitle("steps.recent")
+                            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { showingHistory = false } } }
+                    }
+                    .fullScreenCover(item: $historyDay) { selection in StepsView(day: selection.day, followsToday: false) }
                 }
+                .alert("steps.measurementInfo", isPresented: $showingExplanation) {
+                    Button("action.ok", role: .cancel) {}
+                } message: { Text(localized("steps.energyExplanation", locale) + "\n\n" + localized("steps.activeExplanation", locale)) }
                 .sheet(item: $shareImage) { EntrySharePreview(image: $0.image) }
                 .alert("error.title", isPresented: $shareFailed) {
                     Button("action.ok", role: .cancel) {}
@@ -105,30 +128,6 @@ struct StepsView: View {
                         (!controller.loadingIntraday && selectedDay == LocalDay(date: .now) && Date.now.timeIntervalSince(controller.readings[selectedDay]?.intraday?.measuredThrough ?? .now) >= 300)) { refresh() }
                 }
         }
-    }
-
-    private var summary: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle().stroke(Color.black.opacity(0.1), lineWidth: 2)
-                if let count, let goal {
-                    Circle().trim(from: 0, to: min(1, CGFloat(count) / CGFloat(goal)))
-                        .stroke(.white, style: StrokeStyle(lineWidth: 2, lineCap: .round)).rotationEffect(.degrees(-90))
-                }
-                VStack(spacing: 8) {
-                    Text(selectedDay == LocalDay(date: .now) ? localized("steps.today", locale) : selectedDay.rawValue)
-                        .font(.system(size: 12))
-                    Text(count.map { $0.formatted(.number.locale(locale)) } ?? "—")
-                        .font(.system(size: 32, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
-                        .accessibilityIdentifier("steps.count")
-                    if let goal { Text(String(format: localized("steps.goal %lld", locale), Int64(goal))).font(.system(size: 11)) }
-                }.padding(10)
-            }.frame(width: 150, height: 150)
-            if let count, let goal, count >= goal {
-                Text("steps.goalReached").font(.system(size: 12)).accessibilityIdentifier("steps.goalReached")
-            }
-        }.foregroundStyle(.white).frame(maxWidth: .infinity).padding(.vertical, 18)
-            .background(LinearGradient(colors: [Color(hex: 0x66E8D6), Color(hex: 0x3EABD3)], startPoint: .top, endPoint: .bottom))
     }
 
     @ViewBuilder private var status: some View {

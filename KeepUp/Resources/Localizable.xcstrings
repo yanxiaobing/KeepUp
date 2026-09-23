@@ -6696,23 +6696,6 @@
         }
       }
     },
-    "running.gpsGood" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Great conditions for your workout"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "很适合运动"
-          }
-        }
-      }
-    },
     "running.gpsFair" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6726,6 +6709,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "建议绕开高楼"
+          }
+        }
+      }
+    },
+    "running.gpsGood" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Great conditions for your workout"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "很适合运动"
           }
         }
       }
@@ -6764,22 +6764,6 @@
         }
       }
     },
-    "running.gpsWeakHint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GPS signal is weak. Move to a more open area."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "信号不太好，跑去更开阔的地方吧"
-          }
-        }
-      }
-    },
     "running.gpsWaiting" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6793,6 +6777,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在等待 GPS 信号…"
+          }
+        }
+      }
+    },
+    "running.gpsWeakHint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPS signal is weak. Move to a more open area."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信号不太好，跑去更开阔的地方吧"
           }
         }
       }
@@ -9428,6 +9428,7 @@
       }
     },
     "steps.activeEstimate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9444,6 +9445,7 @@
       }
     },
     "steps.activeExplanation" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9455,6 +9457,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "累计超过 5 步的五分钟区间时长，为估算值，并非精确运动时长。"
+          }
+        }
+      }
+    },
+    "steps.activeTime" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active time"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活跃时间"
           }
         }
       }
@@ -9472,6 +9491,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允许读取步数"
+          }
+        }
+      }
+    },
+    "steps.chartTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计步"
+          }
+        }
+      }
+    },
+    "steps.checkInSuccess" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checked in"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打卡成功"
           }
         }
       }
@@ -9544,7 +9597,297 @@
         }
       }
     },
+    "steps.distanceComparison.0 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ football goal widths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@个足球门的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.1 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ IMAX screen widths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@个imax幕布的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.2 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ train carriage lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@节火车车厢连起来的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.3 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ football pitch lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@个足球场的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.4 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Titanic ship lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@艘泰坦尼克号的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.5 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ laps of Capital Stadium"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "绕了首都体育场跑道%@圈"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.6 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Oriental Pearl Tower heights"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@座东方明珠的高度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.7 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Taipei 101 heights"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@座台北101大楼的高度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.8 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Canton Tower heights"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@座广州小蛮腰的高度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.9 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Wuhan Yangtze Bridge lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@座武汉长江大桥的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.10 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ laps of Tiananmen Square"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "绕了天安门广场%@圈"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.11 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Mount Everest heights"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@座珠穆朗玛峰的高度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.12 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ marathons"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跑了%@个马拉松"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.13 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Qinghai Lake lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@个青海湖的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.14 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Starbucks cup lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@杯星巴克的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceComparison.15 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Apple computer lengths"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@台苹果电脑的长度"
+          }
+        }
+      }
+    },
+    "steps.distanceFallback" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Did your phone go for a swim?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手机掉水里了？"
+          }
+        }
+      }
+    },
     "steps.energyEstimate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9561,6 +9904,7 @@
       }
     },
     "steps.energyExplanation" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9679,6 +10023,7 @@
       }
     },
     "steps.hourly" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9726,6 +10071,23 @@
         }
       }
     },
+    "steps.kcal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kcal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大卡"
+          }
+        }
+      }
+    },
     "steps.loading" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9739,6 +10101,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在读取步数…"
+          }
+        }
+      }
+    },
+    "steps.measurementInfo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About these measurements"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于这些数据"
           }
         }
       }
@@ -9863,6 +10242,7 @@
       }
     },
     "steps.shareEncouragement" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -10027,6 +10407,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "详情"
+          }
+        }
+      }
+    },
+    "steps.walked %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walked %@ steps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "走路%@步"
           }
         }
       }
@@ -10694,6 +11091,7 @@
       }
     },
     "unit.kilometers" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

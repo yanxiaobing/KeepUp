@@ -86,7 +86,16 @@ private func posterRecord(steps: Int = 6_500, distance: Double? = 4_225, goal: I
     #expect(data.timeZoneID == posterZone.identifier)
     for language in ["en_US", "zh_Hans_CN"] {
         let image = try #require(StepsPosterRenderer.render(data: data, style: .details, locale: Locale(identifier: language)))
-        #expect(image.size.height > 850 && image.size.height < 1400)
+        #expect(image.size.height > 650 && image.size.height < 1_100)
         Attachment.record(Array(try #require(image.pngData())), named: "steps-intraday-\(language).png")
     }
+}
+
+@Test func restoredStepDistanceComparisonKeepsUnknownSeparateFromZero() {
+    let chinese = Locale(identifier: "zh-Hans")
+    #expect(StepsDistanceComparison.text(meters: nil, locale: chinese) == localized("steps.noData", chinese))
+    #expect(StepsDistanceComparison.text(meters: .nan, locale: chinese) == localized("steps.noData", chinese))
+    #expect(StepsDistanceComparison.text(meters: 0, locale: chinese) == "手机掉水里了？")
+    #expect(StepsDistanceComparison.text(meters: 4_225, locale: chinese) == "≈16艘泰坦尼克号的长度")
+    #expect(StepsDistanceComparison.text(meters: 4_225, locale: Locale(identifier: "en")) == "≈16 Titanic ship lengths")
 }

@@ -1,5 +1,4 @@
 import SwiftUI
-import Charts
 
 /// Resolve only the selected civil day. A sensor reading does not imply a successful save.
 struct StepsPresentation: Equatable {
@@ -54,166 +53,190 @@ enum StepsPosterStyle: String, CaseIterable {
     var titleKey: String { self == .details ? "steps.viewDetails" : "steps.viewCard" }
 }
 
-/// Intrinsically sized content shared by the card preview and the exported image.
+/// The exported image uses the same original layouts as the two on-screen pages.
 struct StepsPoster: View {
     let data: StepsPresentation
     let style: StepsPosterStyle
     let locale: Locale
     var isMale = false
+    var encouragement: String? = nil
 
-    private let tint = Color(hex: 0x158DA5)
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 20) {
-                HStack {
-                    Text("steps.title").font(.system(size: 22, weight: .semibold))
-                    Spacer()
-                    Image("feed_sport_ic_walk").resizable().scaledToFit().frame(width: 28, height: 28).accessibilityHidden(true)
-                }
-                Text(data.dateLabel(locale: locale)).font(.system(size: 15)).accessibilityIdentifier("steps.poster.date")
-                if style == .details {
-                    ZStack {
-                        Circle().stroke(.white.opacity(0.3), lineWidth: 5)
-                        if let steps = data.steps, let goal = data.goal, goal > 0 {
-                            Circle().trim(from: 0, to: min(1, CGFloat(steps) / CGFloat(goal)))
-                                .stroke(.white, style: StrokeStyle(lineWidth: 5, lineCap: .round)).rotationEffect(.degrees(-90))
-                        }
-                        count
-                    }.frame(width: 200, height: 200).padding(.vertical, 12)
-                } else { count.padding(.vertical, 8) }
-                if let steps = data.steps, let goal = data.goal, goal > 0, steps >= goal {
-                    Label("steps.goalReached", systemImage: "checkmark.circle.fill").font(.system(size: 14, weight: .medium))
-                }
-            }.padding(28).frame(maxWidth: .infinity).foregroundStyle(.white)
-                .background(LinearGradient(colors: [Color(hex: 0x4FCFBD), Color(hex: 0x3EABD3)], startPoint: .topLeading, endPoint: .bottomTrailing))
-            VStack(spacing: 18) {
-                if let distance = data.distance {
-                    metric("steps.distance", value: (distance / 1_000).formatted(.number.precision(.fractionLength(2)).locale(locale)) + " " + localized("unit.kilometers", locale))
-                }
-                StepsEnergyView(kilocalories: data.estimatedKilocalories)
-                if let goal = data.goal {
-                    metric("steps.dailyGoal", value: goal.formatted(.number.locale(locale)) + " " + localized("unit.steps", locale))
-                }
-                if style == .details { StepsIntradayView(data: data) }
-                if data.steps == nil { Text("steps.noData").font(.system(size: 15)).foregroundStyle(.secondary) }
-                Image(isMale ? "card_details_walk_male" : "card_details_walk_female")
-                    .resizable().scaledToFit().frame(height: style == .card ? 260 : 170).accessibilityHidden(true)
-                Text("steps.shareEncouragement").font(.system(size: 17, weight: .medium)).foregroundStyle(tint)
-                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-            }.padding(28)
+            Group {
+                if style == .details { StepsOriginalDetails(data: data, isMale: isMale) }
+                else { StepsOriginalCard(data: data, encouragement: encouragement) }
+            }.frame(height: 700)
             HStack {
-                Text("KeepUp").font(.system(size: 21, weight: .bold))
+                Text(verbatim: "KeepUp").font(.system(size: 21, weight: .bold))
                 Spacer()
-                Text(data.day.rawValue).font(.system(size: 12)).monospacedDigit()
-            }.foregroundStyle(tint).padding(24).background(tint.opacity(0.05))
-        }.background(.white).foregroundStyle(.black)
-            .environment(\.locale, locale).environment(\.colorScheme, .light)
+                Text(data.dateLabel(locale: locale)).font(.system(size: 12))
+            }.padding(24).background(.white)
+        }.environment(\.locale, locale).environment(\.colorScheme, .light)
     }
+}
 
-    private var count: some View {
-        VStack(spacing: 6) {
-            Text(data.steps.map { $0.formatted(.number.locale(locale)) } ?? "—")
-                .font(.system(size: 45, weight: .light)).lineLimit(1).minimumScaleFactor(0.6)
-                .accessibilityIdentifier("steps.poster.count")
-            Text("unit.steps").font(.system(size: 14))
-        }.padding(.horizontal, 14)
+/// Geometry follows BCWalkStepDetailView: 190pt header, 110pt metrics, 160pt chart.
+struct StepsOriginalDetails: View {
+    let data: StepsPresentation
+    var isMale = false
+    @Environment(\.locale) private var locale
+    private var reached: Bool { data.steps.map { $0 >= (data.goal ?? Int.max) } ?? false }
+
+    var body: some View {
+        GeometryReader { geometry in
+            let scale = geometry.size.width / 375
+            ZStack(alignment: .bottom) {
+                Color.white
+                Image(isMale ? "card_details_walk_male" : "card_details_walk_female")
+                    .resizable().scaledToFit().opacity(0.2).accessibilityHidden(true)
+                VStack(spacing: 0) {
+                    VStack(spacing: 16 * scale) {
+                        ZStack {
+                            Circle().stroke(Color(hex: 0x222222).opacity(0.1), lineWidth: 2)
+                            if let steps = data.steps, let goal = data.goal, goal > 0 {
+                                Circle().trim(from: 0, to: min(1, CGFloat(steps) / CGFloat(goal)))
+                                    .stroke(.white, style: StrokeStyle(lineWidth: 2, lineCap: .round)).rotationEffect(.degrees(-90))
+                            }
+                            VStack(spacing: 6 * scale) {
+                                Text(reached ? localized("steps.checkInSuccess", locale) : data.day == LocalDay(date: .now) ? localized("steps.today", locale) : data.day.rawValue)
+                                    .font(.system(size: (reached ? 15 : 13) * scale, weight: reached ? .bold : .regular))
+                                    .accessibilityIdentifier(reached ? "steps.goalReached" : "steps.date")
+                                Text(data.steps.map { $0.formatted(.number.locale(locale)) } ?? "—")
+                                    .font(.custom("DINCondensedC", size: 30 * scale)).frame(height: 24 * scale)
+                                    .accessibilityIdentifier("steps.count")
+                                Text(data.goal.map { String(format: localized("steps.goal %lld", locale), Int64($0)) } ?? localized("profile.noSteps", locale))
+                                    .font(.system(size: 12 * scale)).padding(.top, 8 * scale)
+                            }.lineLimit(1).minimumScaleFactor(0.6).padding(.horizontal, 8)
+                        }.frame(width: 130 * scale, height: 130 * scale)
+                        Text(StepsDistanceComparison.text(meters: data.distance, locale: locale))
+                            .font(.system(size: 12 * scale)).lineLimit(1).minimumScaleFactor(0.7)
+                    }.padding(.top, 16 * scale).frame(maxWidth: .infinity).frame(height: 190 * scale, alignment: .top)
+                        .foregroundStyle(.white)
+                        .background(LinearGradient(stops: [.init(color: Color(hex: 0x66E8D6), location: 0.2), .init(color: Color(hex: 0x3EABD3), location: 1)], startPoint: .top, endPoint: .bottom))
+                    HStack(alignment: .top, spacing: 0) {
+                        metric(data.distance.map { ($0 / 1000).formatted(.number.precision(.fractionLength(2)).locale(locale)) } ?? "—", label: "unit.kilometers", identifier: "steps.distance", scale: scale)
+                        metric(data.estimatedKilocalories.map(String.init) ?? "—", label: "steps.kcal", identifier: "steps.energy", scale: scale)
+                        metric(data.intraday?.estimatedActiveMinutes.map { "\($0 / 60)h \($0 % 60)m" } ?? "—", label: "steps.activeTime", identifier: "steps.activeMinutes", scale: scale)
+                    }.padding(.horizontal, 15 * scale).padding(.top, 26 * scale).frame(height: 110 * scale, alignment: .top)
+                    StepsOriginalChart(data: data).padding(.horizontal, 15 * scale).frame(height: 160 * scale)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
     }
+    private func metric(_ value: String, label: String, identifier: String, scale: CGFloat) -> some View {
+        VStack(spacing: 7 * scale) {
+            Text(value).font(.custom("DINCondensedC", size: 33 * scale)).frame(height: 35 * scale)
+                .foregroundStyle(Color(hex: 0x69696F)).accessibilityIdentifier(identifier)
+            Text(LocalizedStringKey(label)).font(.system(size: 12 * scale)).foregroundStyle(Color(hex: 0xB2B2B2))
+        }.lineLimit(1).minimumScaleFactor(0.6).frame(maxWidth: .infinity)
+    }
+}
 
-    private func metric(_ key: String, value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(LocalizedStringKey(key)).font(.system(size: 14)).foregroundStyle(.secondary)
-            Spacer(minLength: 12)
-            Text(value).font(.system(size: 18, weight: .medium)).multilineTextAlignment(.trailing)
+struct StepsOriginalChart: View {
+    let data: StepsPresentation
+    @Environment(\.locale) private var locale
+    private var hours: [StepIntraday.Hour] { data.intraday?.hours(timeZoneID: data.timeZoneID) ?? [] }
+    private var maximum: Int {
+        let value = hours.compactMap(\.steps).max() ?? 0
+        return value == 0 ? 100 : Int(Double(value) * (value < 100 ? 2.5 : 1.25)) / 10 * 10 + 10
+    }
+    var body: some View {
+        GeometryReader { geometry in
+            let scale = geometry.size.width / 345
+            let top = 32 * scale
+            let plotHeight = geometry.size.height - 52 * scale
+            let slot = (geometry.size.width - 40 * scale) / 24
+            ZStack(alignment: .topLeading) {
+                Text("steps.chartTitle").font(.system(size: 10 * scale)).offset(y: 10 * scale)
+                ForEach(0..<3) { index in
+                    Rectangle().fill(Color(hex: 0x48484D).opacity(index == 2 ? 0.2 : 0.1))
+                        .frame(height: 0.5).offset(y: top + plotHeight * CGFloat(index) / 2)
+                    if index < 2 {
+                        Text(String(maximum / (index + 1))).font(.system(size: 10 * scale))
+                            .offset(y: top + plotHeight * CGFloat(index) / 2 + 4)
+                    }
+                }
+                ForEach(hours) { hour in
+                    if let steps = hour.steps {
+                        let calendar = Calendar(identifier: .gregorian)
+                        let components = calendar.dateComponents(in: TimeZone(identifier: data.timeZoneID) ?? .current, from: hour.start)
+                        let index = CGFloat(components.hour ?? 0)
+                        let height = min(plotHeight, max(5 * scale, plotHeight * CGFloat(steps) / CGFloat(maximum)))
+                        UnevenRoundedRectangle(topLeadingRadius: 2, topTrailingRadius: 2)
+                            .fill(Color(hex: steps > 0 ? 0x56DDCA : 0xC1E8E3))
+                            .frame(width: 6 * scale, height: height)
+                            .offset(x: 25 * scale + index * slot, y: top + plotHeight - height)
+                            .accessibilityLabel(Text(verbatim: "\(Int(index)):00"))
+                            .accessibilityValue(Text(verbatim: String(steps)))
+                    }
+                }
+                ForEach([0, 6, 12, 18, 23], id: \.self) { hour in
+                    Text(verbatim: "\(hour):00").font(.system(size: 10 * scale))
+                        .offset(x: 15 * scale + CGFloat(hour) * slot, y: top + plotHeight + 5 * scale)
+                }
+                if hours.isEmpty {
+                    Text("steps.intradayMissing").font(.system(size: 14 * scale))
+                        .frame(maxWidth: .infinity).offset(y: top + plotHeight / 3)
+                        .accessibilityIdentifier("steps.intradayMissing")
+                }
+            }.foregroundStyle(Color(hex: 0xB2B2B2))
+        }.accessibilityIdentifier("steps.hourlyChart")
+    }
+}
+
+struct StepsOriginalCard: View {
+    let data: StepsPresentation
+    var encouragement: String? = nil
+    @Environment(\.locale) private var locale
+    var body: some View {
+        GeometryReader { geometry in
+            let scale = geometry.size.width / 375
+            ZStack(alignment: .top) {
+                CalendarTheme.selected.color.opacity(0.8)
+                Image("card_bg_banana").resizable().accessibilityHidden(true)
+                Circle().fill(Color(hex: 0x222222).opacity(0.05))
+                    .frame(width: 272 * scale, height: 272 * scale).offset(y: 98)
+                VStack(spacing: 5) {
+                    Text(String(format: localized("steps.walked %@", locale), data.steps.map { $0.formatted(.number.locale(locale)) } ?? "—"))
+                        .font(.system(size: 24, weight: .bold)).accessibilityIdentifier("steps.poster.count")
+                    Text(StepsDistanceComparison.text(meters: data.distance, locale: locale)).font(.system(size: 13))
+                }.lineLimit(1).minimumScaleFactor(0.6).padding(.horizontal, 15).padding(.top, 25)
+                Image("card_icon_walk_complete").resizable().scaledToFit()
+                    .frame(width: 330 * (scale > 1 ? 1.4 : scale < 1 ? 0.92 : 1.2), height: 390 * (scale > 1 ? 1.4 : scale < 1 ? 0.92 : 1.2))
+                    .position(x: geometry.size.width / 2, y: (geometry.size.height - 46) / 2 - 10).accessibilityHidden(true)
+                VStack {
+                    Spacer()
+                    Text(verbatim: encouragement ?? localized("entry.encouragement.general", locale)).font(.system(size: 17 * scale, weight: .bold))
+                        .multilineTextAlignment(.center).lineSpacing(5).padding(.horizontal, 30 * scale)
+                        .frame(height: 120 * scale)
+                }
+            }.foregroundStyle(.white).clipped()
         }
     }
 }
 
 @MainActor enum StepsPosterRenderer {
-    static func render(data: StepsPresentation, style: StepsPosterStyle, locale: Locale, isMale: Bool = false) -> UIImage? {
+    static func render(data: StepsPresentation, style: StepsPosterStyle, locale: Locale, isMale: Bool = false, encouragement: String? = nil) -> UIImage? {
         guard data.steps != nil else { return nil }
-        let renderer = ImageRenderer(content: StepsPoster(data: data, style: style, locale: locale, isMale: isMale).frame(width: 390))
+        let renderer = ImageRenderer(content: StepsPoster(data: data, style: style, locale: locale, isMale: isMale, encouragement: encouragement).frame(width: 390))
         renderer.scale = 3
         return renderer.uiImage
     }
 }
 
-struct StepsIntradayView: View {
-    let data: StepsPresentation
-    @Environment(\.locale) private var locale
-
-    private func hourLabel(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.timeZone = TimeZone(identifier: data.timeZoneID)
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
-    }
-
-    private var dayDomain: ClosedRange<Date> {
-        let zone = TimeZone(identifier: data.timeZoneID) ?? .current
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = zone
-        let start = calendar.startOfDay(for: data.day.date(in: zone))
-        return start...(calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(86400))
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("steps.hourly").font(.headline)
-            if let detail = data.intraday {
-                let hours = detail.hours(timeZoneID: data.timeZoneID)
-                Chart(hours) { hour in
-                    if let steps = hour.steps {
-                        RectangleMark(xStart: .value("Hour", hour.start.addingTimeInterval(120)),
-                                xEnd: .value("Hour", hour.start.addingTimeInterval(3480)),
-                                yStart: .value("Steps", 0), yEnd: .value("Steps", steps))
-                            .foregroundStyle(Color(hex: 0x49C8BA))
-                            .accessibilityLabel(hourLabel(hour.start))
-                            .accessibilityValue(String(steps) + " " + localized("unit.steps", locale))
-                    }
-                }
-                .chartXAxis {
-                    AxisMarks(values: .stride(by: .hour, count: 4)) { value in
-                        AxisGridLine()
-                        AxisValueLabel { if let date = value.as(Date.self) { Text(hourLabel(date)) } }
-                    }
-                }
-                .environment(\.timeZone, TimeZone(identifier: data.timeZoneID) ?? .current)
-                .chartXScale(domain: dayDomain)
-                .chartYScale(domain: 0...max(1, hours.compactMap(\.steps).max() ?? 1))
-                .frame(height: 150).accessibilityIdentifier("steps.hourlyChart")
-                HStack {
-                    Text("steps.activeEstimate")
-                    Spacer()
-                    Text(detail.estimatedActiveMinutes.map { String(format: localized("steps.minutes %lld", locale), Int64($0)) } ?? "—")
-                        .accessibilityIdentifier("steps.activeMinutes")
-                }.font(.subheadline)
-                if !detail.isComplete { Text("steps.intradayPartial").foregroundStyle(.secondary).accessibilityIdentifier("steps.intradayPartial") }
-                Text("steps.activeExplanation").foregroundStyle(.secondary)
-                Text(localized("steps.dataThrough", locale) + " " + hourLabel(detail.measuredThrough)).foregroundStyle(.secondary)
-            } else {
-                Text("steps.intradayMissing").foregroundStyle(.secondary).accessibilityIdentifier("steps.intradayMissing")
+/// Same comparison thresholds as PunchCard; stable selection avoids changing on sensor refresh.
+enum StepsDistanceComparison {
+    static let kilometers = [0.007, 0.02, 0.0255, 0.12, 0.26, 0.4, 0.468, 0.58, 0.6, 1.67, 2.76, 8.844, 40.26, 105, 0.0001, 0.0004]
+    static func text(meters: Double?, locale: Locale) -> String {
+        guard let meters, meters.isFinite, meters >= 0 else { return localized("steps.noData", locale) }
+        for (index, unit) in kilometers.enumerated() {
+            let count = meters / 1000 / unit
+            if (1...20).contains(count) {
+                return "≈" + String(format: localized("steps.distanceComparison.\(index) %@", locale), String(format: "%.0f", count))
             }
-        }.font(.caption).frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-/// Shared by on-screen details, card preview and both exported poster styles.
-struct StepsEnergyView: View {
-    let kilocalories: Int?
-    @Environment(\.locale) private var locale
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("steps.energyEstimate").font(.system(size: 14)).foregroundStyle(.secondary)
-                Spacer(minLength: 12)
-                Text(kilocalories.map { String(format: localized("steps.energyValue %@", locale), $0.formatted(.number.locale(locale))) } ?? "—")
-                    .font(.system(size: 18, weight: .medium))
-                    .accessibilityIdentifier("steps.energy")
-            }
-            Text("steps.energyExplanation").font(.caption).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
+        return localized("steps.distanceFallback", locale)
     }
 }
