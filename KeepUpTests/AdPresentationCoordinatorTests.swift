@@ -18,6 +18,30 @@ import Testing
         #expect(open.loads == 0 && insert.loads == 0)
     }
 
+    @Test func launchMembershipSurvivesBackgroundAndHotActivation() async throws {
+        let open = PresentationDriver(), insert = PresentationDriver()
+        var now = 0.0
+        let coordinator = AdPresentationCoordinator(appOpen: open, interstitial: insert, now: { now })
+        coordinator.synchronize(configuration: .disabled, canShowAds: true, privacyAllowsAds: false)
+        coordinator.coldStart(isExistingUser: true)
+        coordinator.requestLaunchMembership()
+        let id = try #require(coordinator.launchMembershipRequestID)
+        coordinator.synchronize(configuration: config(), canShowAds: true, privacyAllowsAds: true)
+
+        coordinator.didEnterBackground()
+        #expect(coordinator.launchMembershipRequestID == id)
+        now = 31
+        #expect(coordinator.hasHotStartOpportunity)
+        coordinator.didBecomeActive()
+        #expect(coordinator.launchMembershipRequestID == id)
+        #expect(open.loads == 0)
+
+        coordinator.launchMembershipDidDismiss(requestID: id)
+        await waitUntil { insert.presentationContinuation != nil }
+        #expect(coordinator.launchMembershipRequestID == nil)
+        insert.finish(.closed)
+    }
+
     @Test func disabledAndFirstInstallNeverRequestAds() async {
         for existing in [false, true] {
             let open = PresentationDriver(), insert = PresentationDriver()

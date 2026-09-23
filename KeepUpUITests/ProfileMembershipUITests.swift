@@ -77,6 +77,10 @@ final class ProfileMembershipUITests: XCTestCase {
         // Launch membership is independent of the bundled disabled advertising switches.
         XCTAssertTrue(app.buttons["membership.skip"].waitForExistence(timeout: 15))
         screenshot("KeepUp-Cold-Launch-Membership-Ads-Disabled")
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 5))
+        app.activate()
+        XCTAssertTrue(app.buttons["membership.skip"].waitForExistence(timeout: 10))
         app.buttons["membership.skip"].tap()
         XCTAssertTrue(app.buttons["membership.skip"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 15))

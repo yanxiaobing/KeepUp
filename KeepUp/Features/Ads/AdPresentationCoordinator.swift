@@ -88,7 +88,7 @@ import Observation
         isForeground = false
         backgroundTime = now()
         coldOpportunityValid = false
-        cancelFlow()
+        cancelFlow(preserveMembership: true)
     }
 
     /// Read before consuming foreground activation. This intentionally does not require
