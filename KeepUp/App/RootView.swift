@@ -16,6 +16,8 @@ struct RootView: View {
     @State private var homeIsVisible = false
     @State private var stepPermission = HomeStepPermission()
     @State private var selectedDate = Date.now
+    @State private var currentDay = LocalDay(date: .now)
+    @State private var currentTimeZone = TimeZone.current
     @State private var catalogRequest: CatalogRequest?
     @State private var startupFinished = false
     @State private var showLaunchMembership = false
@@ -42,7 +44,7 @@ struct RootView: View {
                     get: { selectedTab == .calendar ? [] : [selectedTab] },
                     set: { selectedTab = $0.last ?? .calendar }
                 )) {
-                    CalendarHomeView(selectedDate: $selectedDate,
+                    CalendarHomeView(selectedDate: $selectedDate, today: currentDay,
                                      openHistory: { selectedTab = .history },
                                      openProfile: { selectedTab = .profile },
                                      openCatalog: { openCatalog() })
@@ -113,7 +115,16 @@ struct RootView: View {
         .onChange(of: model.isReady) { _, ready in if ready { openRequestedReminder() } }
         .onChange(of: model.snapshot.profile != nil) { _, _ in openRequestedReminder() }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await model.load() } }
+            if phase == .active {
+                refreshCalendarDay()
+                Task { await model.load() }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            refreshCalendarDay()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            refreshCalendarDay()
         }
         .alert("error.title", isPresented: Binding(get: { model.actionError != nil }, set: { if !$0 { model.actionError = nil } })) {
             Button("action.ok") { model.actionError = nil }
@@ -186,6 +197,18 @@ struct RootView: View {
         // Capture the chosen civil day in the presentation item; a Boolean sheet
         // can reuse its earlier closure and incorrectly submit a backfill for today.
         catalogRequest = CatalogRequest(day: LocalDay(date: selectedDate))
+    }
+
+    private func refreshCalendarDay() {
+        let timeZone = TimeZone.current
+        let today = LocalDay(date: .now)
+        let zoneChanged = timeZone.identifier != currentTimeZone.identifier
+        guard today != currentDay || zoneChanged else { return }
+        let selectedDay = LocalDay(date: selectedDate, timeZone: currentTimeZone)
+        if selectedDay == currentDay { selectedDate = .now }
+        else if zoneChanged { selectedDate = selectedDay.date(in: timeZone) }
+        currentDay = today
+        currentTimeZone = timeZone
     }
 }
 

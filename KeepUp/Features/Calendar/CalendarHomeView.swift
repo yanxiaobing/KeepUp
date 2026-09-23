@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CalendarHomeView: View {
     @Binding var selectedDate: Date
+    let today: LocalDay
     let openHistory: () -> Void
     let openProfile: () -> Void
     let openCatalog: () -> Void
@@ -44,7 +45,7 @@ struct CalendarHomeView: View {
     private var dayEntries: [CheckInEntry] { model.entries(on: selectedDay) }
     private var daySchedules: [ScheduledCard] { model.snapshot.schedules.filter { $0.day == selectedDay } }
     private var pendingCards: [HabitCard] {
-        guard selectedDay == LocalDay(date: .now) else { return [] }
+        guard selectedDay == today else { return [] }
         let recorded = Set(dayEntries.map(\.cardID))
         let scheduled = Set(daySchedules.map(\.cardID))
         return model.snapshot.targets.filter { $0.isPinned }.compactMap { target in
@@ -54,7 +55,7 @@ struct CalendarHomeView: View {
         }
     }
     private var showsAddCard: Bool {
-        selectedDay > LocalDay(date: .now) || selectedDay < LocalDay(date: calendar.date(byAdding: .day, value: -1, to: .now)!)
+        selectedDay > today || selectedDay < LocalDay(date: calendar.date(byAdding: .day, value: -1, to: today.date(in: .current))!)
     }
     var body: some View {
         Group {
@@ -166,7 +167,7 @@ struct CalendarHomeView: View {
             }
             .accessibilityLabel(Text(isMonthMode ? "calendar.previousMonth" : "calendar.previousWeek"))
             .accessibilityIdentifier(isMonthMode ? "calendar.previousMonth" : "calendar.previousWeek")
-            if !calendar.isDateInToday(selectedDate) {
+            if selectedDay != today {
                 Button { selectedDate = .now } label: {
                     Image(systemName: "scope")
                         .frame(width: 44, height: 44)
@@ -199,7 +200,7 @@ struct CalendarHomeView: View {
             } else {
                 let start = calendar.date(byAdding: .day, value: -monthOffset, to: monthStart)!
                 let daysWithRecords = Set(model.snapshot.entries.map(\.day))
-                let plannedDays = Set(model.snapshot.schedules.filter { $0.day >= LocalDay(date: .now) }.map(\.day))
+                let plannedDays = Set(model.snapshot.schedules.filter { $0.day >= today }.map(\.day))
                 let weekdays = calendar.veryShortStandaloneWeekdaySymbols
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { index in
@@ -212,16 +213,16 @@ struct CalendarHomeView: View {
                     ForEach((0..<monthDayCount).map { calendar.date(byAdding: .day, value: $0, to: start)! }, id: \.self) { date in
                         let day = LocalDay(date: date)
                         let selected = day == selectedDay
-                        let today = calendar.isDateInToday(date)
+                        let isToday = day == today
                         let recorded = daysWithRecords.contains(day)
-                        let planned = plannedDays.contains(day) && !recorded && !today
-                        let selectionColor = today ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : (planned ? Color(hex: 0xBABDC2) : KeepUpStyle.day))
+                        let planned = plannedDays.contains(day) && !recorded && !isToday
+                        let selectionColor = isToday ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : (planned ? Color(hex: 0xBABDC2) : KeepUpStyle.day))
                         Button { selectedDate = date } label: {
                             Text(calendar.component(.day, from: date), format: .number)
                                 .font(.custom("HelveticaNeue-Light", size: 12))
-                                .foregroundStyle(recorded && !today ? Color.white : Color(white: 0.3))
+                                .foregroundStyle(recorded && !isToday ? Color.white : Color(white: 0.3))
                                 .frame(width: 26, height: 26)
-                                .background(today ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : .clear), in: Circle())
+                                .background(isToday ? KeepUpStyle.day : (recorded ? KeepUpStyle.card : .clear), in: Circle())
                                 .overlay(Circle().stroke(planned ? Color(hex: 0xBABDC2) : .clear, style: StrokeStyle(lineWidth: 1, dash: [2, 2])))
                                 .padding(3)
                                 .overlay(Circle().stroke(selected ? selectionColor : .clear, lineWidth: 1))
@@ -273,11 +274,11 @@ struct CalendarHomeView: View {
                         if let card = model.snapshot.cards.first(where: { $0.id == schedule.cardID }) {
                             CalendarInteractiveCard(identifier: "schedule.card.\(card.id)", label: localized(card.titleKey, locale) + ", " + schedule.note,
                                 actions: menuActions(card: card, schedule: schedule), tap: {
-                                    if schedule.day == LocalDay(date: .now), canCheckIn(card) { checkInToday(card) }
+                                    if schedule.day == today, canCheckIn(card) { checkInToday(card) }
                                     else { scheduleDetail = schedule }
                                 }) {
                                 CalendarTicketCard(card: card, scale: scale,
-                                    badge: localized(schedule.day < LocalDay(date: .now) ? "schedule.expiredBadge" : "reminder.todo", locale),
+                                    badge: localized(schedule.day < today ? "schedule.expiredBadge" : "reminder.todo", locale),
                                     reminder: model.snapshot.targets.first { $0.cardID == card.id }?.reminderEnabled ?? false,
                                     progress: weeklyProgress(card))
                             }
@@ -297,7 +298,7 @@ struct CalendarHomeView: View {
                     }
                     if showsAddCard {
                         Button(action: openCatalog) {
-                            CalendarAddCard(future: selectedDay > LocalDay(date: .now), scale: scale)
+                            CalendarAddCard(future: selectedDay > today, scale: scale)
                         }.buttonStyle(.plain).accessibilityIdentifier("calendar.add")
                     }
                 }.padding(.horizontal, spacing).padding(.top, 15).padding(.bottom, 110)
@@ -369,7 +370,7 @@ struct CalendarHomeView: View {
     }
 
     private func weeklyProgress(_ card: HabitCard) -> Int? {
-        guard selectedDay == LocalDay(date: .now),
+        guard selectedDay == today,
               let target = model.snapshot.targets.first(where: { $0.cardID == card.id && $0.showsProgress }) else { return nil }
         return target.completedDays(entries: model.snapshot.entries, day: selectedDay).count
     }
@@ -410,7 +411,7 @@ struct CalendarHomeView: View {
                     }
                 }
             }]
-        if canCheckIn(card), card.id != "punchcard.63" || (entry == nil && selectedDay == LocalDay(date: .now)) {
+        if canCheckIn(card), card.id != "punchcard.63" || (entry == nil && selectedDay == today) {
             actions.append(.init(kind: .checkIn) { checkInToday(card) })
         }
         if !model.snapshot.archivedCardIDs.contains(card.id), OriginalCatalog.item(card)?.number != 1 {
