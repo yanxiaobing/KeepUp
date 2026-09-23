@@ -6795,6 +6795,23 @@
         }
       }
     },
+    "running.lock" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock controls"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁定操作区"
+          }
+        }
+      }
+    },
     "running.loadFailed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6995,6 +7012,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成一公里后显示分段数据。"
+          }
+        }
+      }
+    },
+    "running.openMap" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open route map"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看运动地图"
           }
         }
       }
@@ -7420,6 +7454,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "步数"
+          }
+        }
+      }
+    },
+    "running.swipeToUnlock" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe right to unlock"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右滑解锁 >>"
           }
         }
       }

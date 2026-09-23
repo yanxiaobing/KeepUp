@@ -163,7 +163,7 @@ struct RunningRouteMap: View {
     var showsUser: Bool = false
 
     var body: some View {
-        Map {
+        Map(initialPosition: showsUser ? .userLocation(followsHeading: false, fallback: .automatic) : .automatic) {
             ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                 if segment.count > 1 {
                     MapPolyline(coordinates: segment.map { RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)) })
