@@ -16,6 +16,7 @@ struct RunningView: View {
     @State private var visible = false
     @State private var automaticStartAttempted = false
     @State private var controlsLocked = false
+    @GestureState(resetTransaction: Transaction(animation: .smooth(duration: 0.2))) private var unlockDrag: CGFloat = 0
     @State private var lockInitializedSessionID: String?
     @State private var screenAwake = RunningScreenAwake()
     @Default(.runningSettings) private var settings
@@ -524,7 +525,18 @@ struct RunningView: View {
     }
 
     private var controlsTransition: AnyTransition {
-        reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92))
+        let effect: AnyTransition = reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92))
+        return .asymmetric(
+            insertion: effect.animation(.easeInOut(duration: 0.3)),
+            removal: effect.animation(.easeOut(duration: 0.15))
+        )
+    }
+
+    private var controlsFadeTransition: AnyTransition {
+        .asymmetric(
+            insertion: .opacity.animation(.easeInOut(duration: 0.3)),
+            removal: .opacity.animation(.easeOut(duration: 0.15))
+        )
     }
 
     private func controls(_ session: RunningSession) -> some View {
@@ -532,20 +544,27 @@ struct RunningView: View {
             if controlsLocked {
                 HStack(spacing: 0) {
                     Image("lockScreen_monkey").resizable().frame(width: 52, height: 58)
-                        .offset(x: -10)
+                        .offset(x: -10 + unlockDrag)
+                        .zIndex(1)
                     Text("running.swipeToUnlock")
                         .font(.system(size: 15)).foregroundStyle(Color(hex: 0x69696F))
                         .frame(maxWidth: .infinity)
+                        .opacity(1 - min(unlockDrag / 100, 1))
                     Image("lockScreen_banana").resizable().frame(width: 43, height: 43)
                         .padding(.trailing, 4)
                 }.frame(width: 215, height: 50)
                     .background(Color(hex: 0xE6E6E6), in: Capsule())
                     .contentShape(Capsule())
-                    .gesture(DragGesture(minimumDistance: 20).onEnded { value in
-                        if value.translation.width >= 100, abs(value.translation.height) < 80 {
-                            controlsLocked = false
+                    .gesture(DragGesture(minimumDistance: 3)
+                        .updating($unlockDrag) { value, offset, transaction in
+                            transaction.animation = nil
+                            offset = min(173, max(0, value.translation.width))
                         }
-                    })
+                        .onEnded { value in
+                            if value.translation.width >= 100, abs(value.translation.height) < 80 {
+                                controlsLocked = false
+                            }
+                        })
                     .onLongPressGesture(minimumDuration: 1) { controlsLocked = false }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(Text("running.swipeToUnlock"))
@@ -560,10 +579,10 @@ struct RunningView: View {
                             ZStack {
                                 if session.phase == .running {
                                     imageButton("running_puase", label: "running.pause", identifier: "running.pause") { await controller.pause() }
-                                        .transition(.opacity)
+                                        .transition(controlsFadeTransition)
                                 } else {
                                     imageButton("running_start", label: "running.resume", identifier: "running.resume") { await controller.resume() }
-                                        .transition(.opacity)
+                                        .transition(controlsFadeTransition)
                                 }
                             }
                             .frame(width: 107, height: 107)
@@ -583,7 +602,7 @@ struct RunningView: View {
                                 .accessibilityLabel(Text("running.lock"))
                                 .accessibilityIdentifier("running.lock")
                                 .padding(.trailing, 46)
-                                .transition(.opacity)
+                                .transition(controlsFadeTransition)
                             }
                         }
                     } else {
