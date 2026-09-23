@@ -49,7 +49,11 @@ struct StartupPrivacyView: View {
             ZStack(alignment: .bottom) {
                 Color.white.ignoresSafeArea()
                 VStack(spacing: 8) {
-                    Image("app_icon").resizable().scaledToFit().frame(width: 120, height: 120)
+                    Image("keepup_sport_icon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
                     Text(verbatim: "KeepUp").font(.system(size: 24)).foregroundStyle(.black.opacity(0.85))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

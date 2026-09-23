@@ -130,7 +130,7 @@ end
   end
 end
 app.build_configurations.each do |config|
-  config.build_settings.delete('ASSETCATALOG_COMPILER_APPICON_NAME')
+  config.build_settings['ASSETCATALOG_COMPILER_APPICON_NAME'] = 'AppIcon'
   config.build_settings['INFOPLIST_FILE'] = 'Config/Info.plist'
   config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Config/KeepUp.entitlements'
   config.build_settings['ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME'] = 'AccentColor'
