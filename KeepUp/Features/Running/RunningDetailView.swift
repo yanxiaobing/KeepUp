@@ -183,9 +183,9 @@ struct RunningRouteMap: View {
                                 let point = MKMapPoint(coordinate)
                                 let worldWidth = MKMapRect.world.size.width
                                 let wrappedX = point.x + ((rect.midX - point.x) / worldWidth).rounded() * worldWidth
-                                Image("position").resizable().frame(width: 18, height: 18)
+                                RunningUserLocationPin()
                                     .position(x: (wrappedX - rect.minX) / rect.size.width * geometry.size.width,
-                                              y: (point.y - rect.minY) / rect.size.height * geometry.size.height)
+                                              y: (point.y - rect.minY) / rect.size.height * geometry.size.height - 27)
                                     .accessibilityLabel(Text("running.currentLocation"))
                             }
                         }
@@ -222,8 +222,8 @@ struct RunningRouteMap: View {
                 }
             }
             if !isPreparation, showsUser, let currentPoint {
-                Annotation(coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude)), anchor: .center) {
-                    Image("position").resizable().frame(width: 18, height: 18)
+                Annotation(coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude)), anchor: .bottom) {
+                    RunningUserLocationPin()
                         .accessibilityLabel(Text("running.currentLocation"))
                 } label: {
                     EmptyView()
@@ -273,6 +273,47 @@ struct RunningRouteMap: View {
             return
         }
         cameraPosition = .region(MKCoordinateRegion(center: coordinate, latitudinalMeters: zoomMeters, longitudinalMeters: zoomMeters))
+    }
+}
+
+private struct RunningUserLocationPin: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            RunningLocationPinShape()
+                .fill(.white)
+                .shadow(color: .black.opacity(0.22), radius: 4, y: 2)
+            avatar
+                .resizable()
+                .scaledToFill()
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
+                .padding(.top, 4)
+        }
+        .frame(width: 44, height: 54)
+        .accessibilityElement(children: .ignore)
+    }
+
+    private var avatar: Image {
+        if let data = model.snapshot.profile?.avatar, let image = UIImage(data: data) {
+            return Image(uiImage: image)
+        }
+        return Image("RunningLocationFallback")
+    }
+}
+
+private struct RunningLocationPinShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let scale = CGAffineTransform(scaleX: rect.width / 44, y: rect.height / 54)
+        path.move(to: CGPoint(x: 22, y: 54))
+        path.addCurve(to: CGPoint(x: 0, y: 22), control1: CGPoint(x: 18, y: 43), control2: CGPoint(x: 0, y: 38))
+        path.addCurve(to: CGPoint(x: 22, y: 0), control1: CGPoint(x: 0, y: 9.85), control2: CGPoint(x: 9.85, y: 0))
+        path.addCurve(to: CGPoint(x: 44, y: 22), control1: CGPoint(x: 34.15, y: 0), control2: CGPoint(x: 44, y: 9.85))
+        path.addCurve(to: CGPoint(x: 22, y: 54), control1: CGPoint(x: 44, y: 38), control2: CGPoint(x: 26, y: 43))
+        path.closeSubpath()
+        return path.applying(scale)
     }
 }
 
