@@ -3850,6 +3850,16 @@
     "sha256": "3a4e018a013ee501618fbe67e707a8cd018e0600d25c758c461b05b651ee9721"
   },
   {
+    "source": "Assets.xcassets/RunIcon/position.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/position.imageset/Contents.json",
+    "sha256": "105b2836f7123e3af0e3ad2d0ba1a79feef4e9ed50fa5e11c38b631414421146"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/position.imageset/position@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/position.imageset/position@2x.png",
+    "sha256": "a5b31f8539c9324291e3e6daabe28a27ee0ef16181f781c61d2fb3b87a92ea91"
+  },
+  {
     "source": "Assets.xcassets/RunIcon/running_pre_indoor_des.imageset/Contents.json",
     "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_pre_indoor_des.imageset/Contents.json",
     "sha256": "14a7c29fa072f7ce2be5cdcfe976a568e07fb0f8d29378b475fcd61a39cbfa24"
@@ -4303,5 +4313,50 @@
     "source": "Resource/audio2.bundle/zero.mp3",
     "destination": "KeepUp/Resources/audio2.bundle/zero.mp3",
     "sha256": "3f4ef5576e8ad1ded583f8cdb3ef29f0d767d5ab3cfb8656d09544dc9e0a25e1"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/map.imageset/map.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/map.imageset/map.png",
+    "sha256": "9e5d09d7156e6121981cbebedeca39c3a46c2160b16e9fc52c56027e9b105780"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/map.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/map.imageset/Contents.json",
+    "sha256": "97dd495c55f7fe27182818c1c2a929aeff4e4f9ecedad33ef1ab726337856ccb"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/lockScreen_monkey.imageset/lockScreen_monkey.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/lockScreen_monkey.imageset/lockScreen_monkey.png",
+    "sha256": "40b93e42db88ae1cdd728d9a3ace2ef83bfabf404ab75c0c7004d1bea971c64f"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/lockScreen_monkey.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/lockScreen_monkey.imageset/Contents.json",
+    "sha256": "5bd8addc417d26290e19d187ef48d89b64a4004f55126b2e6ea0e626c832bb1e"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/lockScreen_banana.imageset/lockScreen_banana.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/lockScreen_banana.imageset/lockScreen_banana.png",
+    "sha256": "26249cfc2448d8a1316141070e8f59bd9158fb5dd0a2493695ae0f842a38b278"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/lockScreen_banana.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/lockScreen_banana.imageset/Contents.json",
+    "sha256": "948701606fa1dfe705f7e7480824740567b3cab836e267bed5d654104fb20212"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/gps_2.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_2.imageset/Contents.json",
+    "sha256": "cf88d622961a09815d99db1d6e891795e96b69099727a977b2fa4ce40b31c379"
+  },
+  {
+    "source": "Assets.xcassets/RunIcon/gps_2.imageset/gps_2.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/gps_2.imageset/gps_2.png",
+    "sha256": "81ffbfed09ac898bba90c5f902885a6d3c09d8063de689f89ec78cbdda5de4a8"
+  },
+  {
+    "source": "Resource/DINCondensedC.ttf",
+    "destination": "KeepUp/Resources/DINCondensedC.ttf",
+    "sha256": "059f03f70d9eba4dd813e2d0db056217df4c541bab76255d3161528856d6b3da"
   }
 ]

@@ -96,6 +96,49 @@ private func runPoint(_ seconds: Double, latitude: Double = 31, accuracy: Double
     func stop() { started = false }
 }
 
+@Test func preparationGPSMatchesPunchCardAccuracyBoundaries() {
+    let cases: [(Double, RunningPreparationGPSQuality)] = [
+        (-1, .poor), (0, .poor), (5, .good), (9.99, .good),
+        (10, .fair), (50, .fair), (80, .fair), (100, .fair), (100.01, .poor), (.nan, .poor)
+    ]
+    for (accuracy, expected) in cases {
+        #expect(RunningPreparationGPSQuality(point: runPoint(0, accuracy: accuracy), now: runOrigin) == expected)
+    }
+    #expect(RunningPreparationGPSQuality(point: runPoint(-16), now: runOrigin) == .poor)
+    #expect(RunningPreparationGPSQuality(point: runPoint(3), now: runOrigin) == .poor)
+}
+
+@Test @MainActor func preparationGPSUpdatesBeforeTrackFilteringAndExpires() async {
+    let source = TestRunningSource()
+    var date = runOrigin
+    let controller = RunningController(source: source, now: { date })
+    controller.prepare()
+    defer { controller.stopPreparing() }
+    #expect(controller.preparationGPSQuality == .waiting)
+    source.onEvent?(.points([runPoint(0, accuracy: 80)]))
+    #expect(controller.preparationGPSQuality == .fair)
+    #expect(controller.locationReady)
+    #expect(controller.latestLocationPoint?.horizontalAccuracy == 80)
+    date = runOrigin.addingTimeInterval(1)
+    source.onEvent?(.points([runPoint(1, accuracy: 150)]))
+    #expect(controller.preparationGPSQuality == .poor)
+    #expect(!controller.locationReady)
+    #expect(controller.latestLocationPoint?.horizontalAccuracy == 80)
+    source.onEvent?(.points([runPoint(0, accuracy: 5)]))
+    #expect(controller.preparationGPSQuality == .poor)
+    date = runOrigin.addingTimeInterval(2)
+    source.onEvent?(.points([runPoint(2)]))
+    #expect(controller.preparationGPSQuality == .good)
+    date = runOrigin.addingTimeInterval(18)
+    await controller.tick()
+    #expect(controller.preparationGPSQuality == .poor)
+    #expect(!controller.locationReady)
+    source.onEvent?(.failed)
+    await controller.tick()
+    #expect(controller.preparationGPSQuality == .poor)
+    #expect(!controller.locationReady)
+}
+
 @Test @MainActor func runningStartPermissionAndShortFinishDoNotCreateRecord() async {
     let source = TestRunningSource()
     let controller = RunningController(source: source, now: { runOrigin })

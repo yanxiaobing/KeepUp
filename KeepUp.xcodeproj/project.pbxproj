@@ -174,6 +174,7 @@
 		E795C62690616CCC92ED609F /* AdMobRewardedAdProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DAE655C67CEDEB3929FFE9 /* AdMobRewardedAdProviderTests.swift */; };
 		E7DE7926A6442D86D4DA890D /* StepsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF720B2B829493865541F62 /* StepsTests.swift */; };
 		EA036B26D9857121D24F6200 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 321EFC2AD95B85C294C123BA /* Assets.xcassets */; };
+		EA716784826F4898BE7A1738 /* DINCondensedC.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EA716784826F4898BE7A1739 /* DINCondensedC.ttf */; };
 		EB7736E9D94A70BBE7CE6502 /* RunningController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B58BFA388B9A689B9EC523B /* RunningController.swift */; };
 		EFF815EAC7E102D3F7842456 /* StepsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C215AE0F1595AECE0752D4C9 /* StepsController.swift */; };
 		F04F4FC03A469483EC8BC43D /* RunningSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D403B1F1EE7F0C5CDF612EC7 /* RunningSettings.swift */; };
@@ -243,6 +244,7 @@
 		3043B2BD801C0D7EEA839F25 /* SportPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SportPersistenceTests.swift; sourceTree = "<group>"; };
 		31FC4CD246099128C51EA781 /* zh-Hans */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		321EFC2AD95B85C294C123BA /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EA716784826F4898BE7A1739 /* DINCondensedC.ttf */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file; path = DINCondensedC.ttf; sourceTree = "<group>"; };
 		33C5A15B7C6E97036AABA46C /* LocalStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LocalStoreTests.swift; sourceTree = "<group>"; };
 		398AD6249DABD999725929BA /* StepsPersistenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StepsPersistenceTests.swift; sourceTree = "<group>"; };
 		39C164A94231F8A42E0BE33A /* RunningShareView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RunningShareView.swift; sourceTree = "<group>"; };
@@ -612,6 +614,7 @@
 			isa = PBXGroup;
 			children = (
 				321EFC2AD95B85C294C123BA /* Assets.xcassets */,
+				EA716784826F4898BE7A1739 /* DINCondensedC.ttf */,
 				4E08701FAD479F8EE3ED2867 /* Localizable.xcstrings */,
 				724D445E500BA2C9D9F4BAA7 /* membership.json */,
 				E96C707D02E9B003D86C143D /* themes.json */,
@@ -1020,6 +1023,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EA036B26D9857121D24F6200 /* Assets.xcassets in Resources */,
+				EA716784826F4898BE7A1738 /* DINCondensedC.ttf in Resources */,
 				6025DF26CB3BD1A4232D43BE /* Localizable.xcstrings in Resources */,
 				DE8339CE4E113EBCF1180BB0 /* membership.json in Resources */,
 				A2D00AF663C888A42B8E2E63 /* themes.json in Resources */,

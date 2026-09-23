@@ -1,6 +1,33 @@
 import Foundation
 import Observation
 
+enum RunningPreparationGPSQuality: Equatable {
+    case waiting, good, fair, poor
+
+    init(point: RunningPoint, now: Date) {
+        guard point.latitude.isFinite, point.longitude.isFinite,
+              (-90...90).contains(point.latitude), (-180...180).contains(point.longitude),
+              point.timestamp.timeIntervalSince1970.isFinite,
+              (-2...15).contains(now.timeIntervalSince(point.timestamp)),
+              point.horizontalAccuracy.isFinite, point.horizontalAccuracy > 0 else {
+            self = .poor
+            return
+        }
+        self = point.horizontalAccuracy < 10 ? .good : point.horizontalAccuracy <= 100 ? .fair : .poor
+    }
+
+    var isUsable: Bool { self == .good || self == .fair }
+    var imageName: String { self == .good ? "gps_3" : self == .fair ? "gps_2" : "gps_1" }
+    var messageKey: String {
+        switch self {
+        case .waiting: "running.gpsWaiting"
+        case .good: "running.gpsGood"
+        case .fair: "running.gpsFair"
+        case .poor: "running.gpsPoor"
+        }
+    }
+}
+
 @MainActor @Observable final class RunningController {
     private(set) var session: RunningSession?
     private(set) var lastFinishedSession: RunningSession?
@@ -11,6 +38,9 @@ import Observation
     private(set) var isBusy = false
     private(set) var errorKey: String?
     private(set) var locationReady = false
+    private(set) var preparationGPSQuality: RunningPreparationGPSQuality = .waiting
+    private var preparationLocation: RunningPoint?
+    private(set) var latestLocationPoint: RunningPoint?
     private(set) var isRecovered = false
     private(set) var countdownRemaining: Int?
     private(set) var isAutoPaused = false
@@ -106,6 +136,7 @@ import Observation
         onEvent?(.restored(recovered))
         source.stop()
         motionSource.stop()
+        latestLocationPoint = recovered.segments.last?.last
         Task { [weak self] in await self?.tick() }
     }
 
@@ -139,6 +170,11 @@ import Observation
             timer = nil
             locationReady = false
             lastLocationAt = nil
+            if session == nil {
+                latestLocationPoint = nil
+                preparationLocation = nil
+                preparationGPSQuality = .waiting
+            }
         }
     }
     func requestPermission() {
@@ -252,6 +288,7 @@ import Observation
             lastFinishedSession = final
             onEvent?(.finished(final))
             session = nil
+            latestLocationPoint = nil
             isRecovered = false
             errorKey = nil
         } else { errorKey = "running.saveFailed" }
@@ -264,7 +301,7 @@ import Observation
         stopAndPause()
         let action = discardAction
         let succeeded = await enqueue { await action?(id) ?? false }.value
-        if succeeded { session = nil; isRecovered = false; errorKey = nil; onEvent?(.discarded) }
+        if succeeded { session = nil; latestLocationPoint = nil; isRecovered = false; errorKey = nil; onEvent?(.discarded) }
         else { errorKey = "running.saveFailed" }
     }
 
@@ -275,6 +312,7 @@ import Observation
             if access != authorization { receiveMotion(.authorization(access)) }
         }
         locationReady = lastLocationAt.map { now().timeIntervalSince($0) <= 15 } ?? false
+        refreshPreparationGPSQuality()
         guard !isBusy, session != nil, session?.phase != .finished else { return }
         if settings().autoPause, session?.phase == .running, let lastMovementAt,
            now().timeIntervalSince(lastMovementAt) >= 15 {
@@ -309,7 +347,10 @@ import Observation
                 do { try await Task.sleep(for: .seconds(5)) } catch { return }
                 guard let self else { return }
                 if self.session?.phase == .running || self.isAutoPaused { await self.tick() }
-                else { self.locationReady = self.lastLocationAt.map { self.now().timeIntervalSince($0) <= 15 } ?? false }
+                else {
+                    self.locationReady = self.lastLocationAt.map { self.now().timeIntervalSince($0) <= 15 } ?? false
+                    self.refreshPreparationGPSQuality()
+                }
             }
         }
     }
@@ -322,6 +363,10 @@ import Observation
             if access == .authorized, wantsLocation { source.start(background: session?.phase == .running || isAutoPaused); startTimer() }
             if access != .authorized {
                 locationReady = false
+                latestLocationPoint = nil
+                preparationLocation = nil
+                preparationGPSQuality = .waiting
+                lastLocationAt = nil
                 if session?.phase == .running || isAutoPaused {
                     stopAndPause()
                     if let session { onEvent?(.paused(session, automatic: false)) }
@@ -334,6 +379,15 @@ import Observation
             let date = now()
             var distanceChanged = false
             for point in points.sorted(by: { $0.timestamp < $1.timestamp }) {
+                if session == nil {
+                    guard point.timestamp.timeIntervalSince1970.isFinite,
+                          point.timestamp.timeIntervalSince(date) <= 2,
+                          preparationLocation == nil || point.timestamp >= preparationLocation!.timestamp else { continue }
+                    preparationLocation = point
+                    refreshPreparationGPSQuality()
+                    if preparationGPSQuality.isUsable { latestLocationPoint = point }
+                    continue
+                }
                 guard point.isUsable(at: date) else { continue }
                 if lastLocationAt == nil || point.timestamp > lastLocationAt! { lastLocationAt = point.timestamp }
                 locationReady = true
@@ -343,6 +397,7 @@ import Observation
                 }
                 let before = session?.distanceMeters ?? 0
                 if session?.append(point, now: date) == true {
+                    latestLocationPoint = point
                     if errorKey == "running.locationFailed" { errorKey = nil }
                     if let session, session.distanceMeters > before {
                         lastMovementAt = min(date, point.timestamp)
@@ -353,8 +408,21 @@ import Observation
             if distanceChanged, let session { onEvent?(.updated(session)) }
         case .failed:
             locationReady = false
+            if session == nil {
+                preparationLocation = nil
+                preparationGPSQuality = .poor
+                lastLocationAt = nil
+            }
             errorKey = "running.locationFailed"
         }
+    }
+
+    private func refreshPreparationGPSQuality() {
+        guard session == nil, kind.usesGPS, let preparationLocation else { return }
+        preparationGPSQuality = RunningPreparationGPSQuality(point: preparationLocation, now: now())
+        locationReady = authorization == .authorized && preparationGPSQuality.isUsable
+        lastLocationAt = locationReady ? preparationLocation.timestamp : nil
+        if locationReady, errorKey == "running.locationFailed" { errorKey = nil }
     }
 
     private func activateSources() {

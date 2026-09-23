@@ -7,7 +7,6 @@ struct RunningView: View {
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
     @State private var confirmingFinish = false
-    @State private var confirmingDiscard = false
     @State private var result: RunningSession?
     @State private var showingSettings = false
     @State private var showingShare = false
@@ -24,6 +23,9 @@ struct RunningView: View {
     private var readyToStart: Bool {
         controller.authorization == .authorized && (currentKind.usesGPS ? controller.locationReady : controller.motionReady)
     }
+    private var canStartManually: Bool {
+        controller.authorization == .authorized && (currentKind.usesGPS || controller.motionReady)
+    }
 
     var body: some View {
         NavigationStack {
@@ -36,19 +38,12 @@ struct RunningView: View {
             .accessibilityHidden(controller.countdownRemaining != nil)
             .navigationTitle(LocalizedStringKey(result == nil ? currentKind.titleKey : "running.result"))
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(result != nil ? .visible : .hidden, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("action.close") { controller.cancelCountdown(); dismiss() }.accessibilityIdentifier("running.close")
-                }
-                if result == nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            automaticStartAttempted = true
-                            controller.cancelCountdown()
-                            settingsKindAtOpen = settings.defaultRunningKind
-                            showingSettings = true
-                        } label: { Image("running_setting").resizable().scaledToFit().frame(width: 22, height: 22) }
-                            .accessibilityLabel(Text("runningSettings.title")).accessibilityIdentifier("running.openSettings")
+                if result != nil {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("action.close") { controller.cancelCountdown(); dismiss() }.accessibilityIdentifier("running.close")
                     }
                 }
                 if result != nil {
@@ -76,18 +71,12 @@ struct RunningView: View {
             }) { RunningSettingsView() }
             .overlay { countdownOverlay }
             .confirmationDialog("running.finishConfirmation", isPresented: $confirmingFinish, titleVisibility: .visible) {
-                Button("running.save") { Task { await finish() } }.accessibilityIdentifier("running.confirmFinish")
+                Button("running.finish") { Task { await finish() } }.accessibilityIdentifier("running.confirmFinish")
                 Button("action.cancel", role: .cancel) {}
-            } message: { Text("running.finishMessage") }
-            .confirmationDialog("running.discardConfirmation", isPresented: $confirmingDiscard, titleVisibility: .visible) {
-                Button("running.discard", role: .destructive) {
-                    Task {
-                        await controller.discard()
-                        if controller.session == nil { controller.prepare() }
-                    }
-                }
-                    .accessibilityIdentifier("running.confirmDiscard")
-                Button("action.cancel", role: .cancel) {}
+            } message: {
+                Text(LocalizedStringKey(sessionIsTooShort
+                    ? (currentKind == .cycling ? "running.cyclingTooShort" : "running.tooShort")
+                    : "running.finishMessage"))
             }
             .onAppear {
                 visible = true
@@ -145,9 +134,17 @@ struct RunningView: View {
             Group {
                 if currentKind.usesGPS {
                     ZStack(alignment: .top) {
-                        RunningRouteMap(segments: [], showsUser: controller.authorization == .authorized)
-                        permissionStatus.padding(18).frame(maxWidth: .infinity)
-                            .background(.regularMaterial).padding(16)
+                        RunningRouteMap(segments: [], showsUser: controller.authorization == .authorized,
+                                        currentPoint: controller.latestLocationPoint,
+                                        followsUser: controller.authorization == .authorized,
+                                        isPreparation: true)
+                            .ignoresSafeArea(edges: .top)
+                        if controller.authorization == .authorized {
+                            gpsStatus.padding(.top, 80)
+                        } else {
+                            permissionStatus.padding(18).frame(maxWidth: .infinity)
+                                .background(.regularMaterial).padding(.horizontal, 16).padding(.top, 80)
+                        }
                     }
                 } else {
                     ScrollView {
@@ -158,7 +155,7 @@ struct RunningView: View {
                                 .multilineTextAlignment(.center)
                             Text("running.indoorCarryPhone").font(.system(size: 13)).foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
-                        }.padding(24).frame(maxWidth: .infinity)
+                        }.padding(24).padding(.top, 64).frame(maxWidth: .infinity)
                     }.background(Color(hex: 0xF6F6F6))
                 }
             }.frame(maxHeight: .infinity)
@@ -170,15 +167,59 @@ struct RunningView: View {
                         .background(Color(hex: 0xFFD838), in: Circle())
                         .background(Image("run_prepare_oval_shadow").resizable().frame(width: 100, height: 100))
                 }.buttonStyle(.plain).accessibilityIdentifier("running.start")
-                    .disabled(!readyToStart || controller.isBusy || controller.countdownRemaining != nil)
-                    .opacity(readyToStart ? 1 : 0.45)
+                    .disabled(!canStartManually || controller.isBusy || controller.countdownRemaining != nil)
+                    .opacity(canStartManually ? 1 : 0.45)
                 modeSelector
                 Text(LocalizedStringKey(currentKind.usesGPS ? "running.prepareHint" : "running.indoorDistanceHint")).font(.system(size: 12)).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }.padding(24).frame(maxWidth: .infinity)
-                .background(.white, in: UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12))
+                .background {
+                    UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12)
+                        .fill(.white)
+                        .ignoresSafeArea(edges: .bottom)
+                }
                 .shadow(color: .black.opacity(0.08), radius: 8, y: -4)
         }
+        .overlay(alignment: .top) {
+            preparationTopBar.padding(.horizontal, 16).padding(.top, 8)
+        }
+    }
+
+    private var preparationTopBar: some View {
+        ZStack {
+            Text(LocalizedStringKey(currentKind.titleKey))
+                .font(.system(size: 18, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 92)
+            HStack {
+                Button { controller.cancelCountdown(); dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20, weight: .medium))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: Circle())
+                .accessibilityLabel(Text("action.close"))
+                .accessibilityIdentifier("running.close")
+                Spacer()
+                Button {
+                    automaticStartAttempted = true
+                    controller.cancelCountdown()
+                    settingsKindAtOpen = settings.defaultRunningKind
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 22, weight: .medium))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: Circle())
+                .accessibilityLabel(Text("runningSettings.title"))
+                .accessibilityIdentifier("running.openSettings")
+            }
+        }
+        .frame(height: 48)
     }
 
     private var indoorArtwork: some View {
@@ -238,74 +279,202 @@ struct RunningView: View {
 
     private var gpsStatus: some View {
         HStack(spacing: 8) {
-            Image(controller.locationReady ? "gps_3" : "gps_1").resizable().scaledToFit().frame(width: 16, height: 16)
-            Text(LocalizedStringKey(controller.locationReady ? "running.gpsReady" : "running.gpsWaiting"))
+            Image(controller.preparationGPSQuality.imageName).resizable().scaledToFit().frame(width: 16, height: 16)
+            Text(LocalizedStringKey(controller.preparationGPSQuality.messageKey))
                 .accessibilityIdentifier(controller.locationReady ? "running.gpsReady" : "running.gpsWaiting")
         }.font(.system(size: 13))
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .glassEffect(.regular, in: Capsule())
+    }
+
+    private var showsWeakGPSTip: Bool {
+        currentKind.usesGPS && controller.authorization == .authorized && !controller.locationReady
+            && (controller.session?.phase == .running || controller.isAutoPaused)
+    }
+
+    private var weakGPSTip: some View {
+        VStack(spacing: 0) {
+            Image(systemName: "arrowtriangle.up.fill")
+                .resizable().frame(width: 11, height: 7)
+                .foregroundStyle(.white.opacity(0.8))
+            Text("running.gpsWeakHint")
+                .font(.system(size: 15))
+                .foregroundStyle(Color(hex: 0x222222).opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .background(.white.opacity(0.8), in: RoundedRectangle(cornerRadius: 4))
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityIdentifier("running.gpsWeakHint")
+        .allowsHitTesting(false)
     }
 
     private func activeSession(_ session: RunningSession) -> some View {
-        ScrollView {
-            VStack(spacing: 22) {
+        GeometryReader { geometry in
+            let scale = min(geometry.size.width / 375, 1.15)
+            VStack(spacing: 0) {
+                activeTopBar(session)
+                    .frame(height: 44)
+                    .padding(.horizontal, 15 * scale)
+                    .overlay(alignment: .top) {
+                        if showsWeakGPSTip {
+                            weakGPSTip.padding(.horizontal, 16).padding(.top, 44)
+                        }
+                    }
+                    .zIndex(1)
                 if controller.isRecovered {
-                    Text("running.recovered").font(.system(size: 14)).multilineTextAlignment(.center)
-                        .padding(14).frame(maxWidth: .infinity).background(Color(hex: 0xFFD838).opacity(0.22))
+                    Text("running.recovered")
+                        .font(.system(size: 13)).padding(.horizontal, 16).padding(.vertical, 8)
+                        .background(.white.opacity(0.75), in: Capsule())
                         .accessibilityIdentifier("running.recovered")
                 }
-                if session.kind.usesGPS {
-                    HStack {
-                        Button { showingLiveMap = true } label: {
-                            Image(systemName: "map.fill")
-                                .font(.system(size: 19, weight: .medium))
-                                .frame(width: 44, height: 44)
-                                .background(Color(hex: 0xFFD838), in: Circle())
-                        }
-                        .accessibilityLabel(Text("running.openMap"))
-                        .accessibilityIdentifier("running.openMap")
-                        Spacer()
-                        gpsStatus
-                        Spacer()
-                        Color.clear.frame(width: 44, height: 44)
-                    }
-                }
-                if controller.authorization != .authorized { permissionStatus }
-                Text(LocalizedStringKey(session.phase == .running ? "running.inProgress" : session.phase == .paused ? (controller.isAutoPaused ? "runningSettings.autoPaused" : "running.paused") : "running.pendingSave"))
-                    .font(.system(size: 14)).foregroundStyle(.secondary)
-                    .accessibilityIdentifier("running.state")
                 TimelineView(.periodic(from: .now, by: 1)) { context in
-                    VStack(spacing: 25) {
-                        VStack(spacing: 8) {
-                            Text(RunningDisplay.duration(session.elapsed(at: context.date)))
-                                .font(.system(size: 58, weight: .light, design: .rounded)).monospacedDigit()
-                                .minimumScaleFactor(0.5).lineLimit(1).accessibilityIdentifier("running.duration")
-                            Text("running.duration").font(.system(size: 13)).foregroundStyle(.secondary)
-                        }
-                        HStack {
-                            metric(RunningDisplay.distance(session.distanceMeters, locale: locale), label: "running.kilometers", identifier: "running.distance")
-                            Rectangle().fill(.black.opacity(0.15)).frame(width: 1, height: 42)
-                            if session.kind == .cycling {
-                                metric(RunningDisplay.speed(distance: session.distanceMeters, seconds: session.elapsed(at: context.date), locale: locale), label: "running.speedUnit", identifier: "running.speed")
-                            } else {
-                                metric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: context.date)), label: "running.paceUnit")
-                            }
-                        }
+                    activeMetrics(session, date: context.date, scale: scale)
+                }
+                .padding(.top, controller.isRecovered ? 42 * scale : 70 * scale)
+                Spacer(minLength: 12)
+                if controller.authorization != .authorized || controller.errorKey != nil {
+                    VStack(spacing: 8) {
+                        if controller.authorization != .authorized { permissionStatus }
+                        errorStatus
                     }
+                    .padding(12).frame(maxWidth: .infinity)
+                    .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 20).padding(.bottom, 10)
                 }
-                if !session.kind.usesGPS {
-                    metric(session.steps.formatted(.number.locale(locale)), label: "running.steps", identifier: "running.steps")
-                        .padding(.vertical, 20)
-                    Text("running.indoorDistanceHint").font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                }
-                errorStatus
                 controls(session)
-                Text("running.closeHint").font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-            }.padding(24)
+                    .frame(height: 156)
+                    .frame(maxWidth: .infinity)
+                    .background { Color.white.ignoresSafeArea(edges: .bottom) }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .background(alignment: .top) {
+                CardDetailThemeBackground()
+                    .frame(height: max(0, geometry.size.height - 156))
+            }
+            .background { CalendarTheme.selected.color.ignoresSafeArea(edges: .top) }
         }
+    }
+
+    private func activeTopBar(_ session: RunningSession) -> some View {
+        HStack {
+            if session.kind.usesGPS {
+                Button { showingLiveMap = true } label: {
+                    Image("map").resizable().scaledToFit().frame(width: 26, height: 26)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: Circle())
+                .accessibilityLabel(Text("running.openMap"))
+                .accessibilityIdentifier("running.openMap")
+            } else {
+                Text(LocalizedStringKey(session.phase == .running ? "running.sensorRecording" : "running.paused"))
+                    .font(.system(size: 13)).padding(.horizontal, 15).frame(height: 28)
+                    .background(.white.opacity(0.4), in: Capsule())
+            }
+            Spacer()
+            if session.kind.usesGPS {
+                HStack(spacing: 5) {
+                    Text("GPS").font(.system(size: 12, weight: .bold))
+                    Image(controller.locationReady ? "gps_3" : "gps_1")
+                        .resizable().frame(width: 12, height: 11)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            Spacer()
+            Button {
+                settingsKindAtOpen = settings.defaultRunningKind
+                showingSettings = true
+            } label: {
+                Image("running_setting").resizable().scaledToFit().frame(width: 20, height: 20)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: Circle())
+            .accessibilityLabel(Text("runningSettings.title"))
+            .accessibilityIdentifier("running.openSettings")
+        }
+        .foregroundStyle(Color(hex: 0x222222))
+    }
+
+    private func activeMetrics(_ session: RunningSession, date: Date, scale: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            activeDuration(session.elapsed(at: date), scale: scale)
+            Text("running.time")
+                .font(.system(size: 16 * scale))
+                .foregroundStyle(Color(hex: 0x222222).opacity(0.6))
+                .padding(.top, 4)
+            HStack(spacing: 0) {
+                activeMetric(RunningDisplay.distance(session.distanceMeters, locale: locale), label: "running.kilometers", identifier: "running.distance", scale: scale)
+                Rectangle().fill(Color(hex: 0x222222).opacity(0.8)).frame(width: 2, height: 19)
+                if session.kind == .cycling {
+                    activeMetric(RunningDisplay.speed(distance: session.distanceMeters, seconds: session.elapsed(at: date), locale: locale), label: "running.speedUnit", identifier: "running.speed", scale: scale)
+                } else {
+                    activeMetric(RunningDisplay.pace(distance: session.distanceMeters, seconds: session.elapsed(at: date)), label: "running.paceUnit", identifier: "running.pace", scale: scale)
+                }
+            }
+            .padding(.top, 51 * scale)
+            if !session.kind.usesGPS {
+                Text(session.steps.formatted(.number.locale(locale)))
+                    .font(.system(size: 16, weight: .medium)).accessibilityIdentifier("running.steps")
+                    .padding(.top, 28)
+            }
+            if session.phase != .running {
+                Text(LocalizedStringKey(session.phase == .paused ? (controller.isAutoPaused ? "runningSettings.autoPaused" : "running.paused") : "running.pendingSave"))
+                    .font(.system(size: 13)).accessibilityIdentifier("running.state")
+                    .padding(.top, 16)
+            }
+        }
+        .foregroundStyle(Color(hex: 0x222222).opacity(0.8))
+    }
+
+    private func activeDuration(_ seconds: TimeInterval, scale: CGFloat) -> some View {
+        let value = max(0, Int(seconds))
+        return HStack(spacing: 0) {
+            durationNumber(value / 3_600, scale: scale)
+            durationSeparator(scale: scale)
+            durationNumber(value / 60 % 60, scale: scale)
+            durationSeparator(scale: scale)
+            durationNumber(value % 60, scale: scale)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: RunningDisplay.duration(seconds)))
+        .accessibilityIdentifier("running.duration")
+    }
+
+    private func durationNumber(_ value: Int, scale: CGFloat) -> some View {
+        Text(String(format: "%02d", value))
+            .font(.custom("DINCondensedC", size: 70 * scale))
+            .frame(width: 80 * scale, height: 70 * scale)
+            .minimumScaleFactor(0.7)
+    }
+
+    private func durationSeparator(scale: CGFloat) -> some View {
+        VStack(spacing: 11 * scale) {
+            Rectangle().frame(width: 8 * scale, height: 8 * scale)
+            Rectangle().frame(width: 8 * scale, height: 8 * scale)
+        }
+        .frame(width: 8 * scale, height: 70 * scale)
+    }
+
+    private func activeMetric(_ value: String, label: LocalizedStringKey, identifier: String, scale: CGFloat) -> some View {
+        VStack(spacing: 9) {
+            Text(verbatim: value)
+                .font(.custom("DINCondensedC", size: 35 * scale))
+                .monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+                .accessibilityIdentifier(identifier)
+            Text(label).font(.system(size: 11 * scale))
+                .foregroundStyle(Color(hex: 0x222222).opacity(0.6))
+                .lineLimit(1).minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private func liveMap(_ session: RunningSession) -> some View {
         ZStack(alignment: .bottom) {
-            RunningRouteMap(segments: session.segments, showsUser: controller.authorization == .authorized)
+            RunningRouteMap(segments: session.segments, showsUser: controller.authorization == .authorized,
+                            currentPoint: controller.latestLocationPoint,
+                            followsUser: controller.authorization == .authorized)
                 .ignoresSafeArea()
             Button { showingLiveMap = false } label: {
                 Image(systemName: "xmark")
@@ -319,26 +488,33 @@ struct RunningView: View {
             .padding(.bottom, 35)
         }
         .overlay(alignment: .top) {
-            HStack(spacing: 5) {
-                Text("GPS")
-                Image(controller.locationReady ? "gps_3" : "gps_1")
-                    .resizable().scaledToFit().frame(width: 14, height: 14)
+            VStack(spacing: 4) {
+                HStack(spacing: 5) {
+                    Text("GPS")
+                    Image(controller.locationReady ? "gps_3" : "gps_1")
+                        .resizable().scaledToFit().frame(width: 14, height: 14)
+                }
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12).frame(height: 25)
+                .background(Color(hex: 0xFEC254).opacity(0.9), in: Capsule())
+                if showsWeakGPSTip { weakGPSTip.padding(.horizontal, 16) }
             }
-            .font(.system(size: 14, weight: .medium))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12).frame(height: 25)
-            .background(Color(hex: 0xFEC254).opacity(0.9), in: Capsule())
             .padding(.top, 12)
         }
     }
 
     @ViewBuilder private func controls(_ session: RunningSession) -> some View {
         if controlsLocked {
-            HStack(spacing: 14) {
-                Image("running_lock").resizable().scaledToFit().frame(width: 26, height: 30)
-                Text("running.swipeToUnlock").font(.system(size: 14, weight: .medium))
-                Image(systemName: "chevron.right.2").font(.system(size: 14, weight: .semibold))
-            }.frame(height: 72).frame(maxWidth: .infinity)
+            HStack(spacing: 0) {
+                Image("lockScreen_monkey").resizable().frame(width: 52, height: 58)
+                    .offset(x: -10)
+                Text("running.swipeToUnlock")
+                    .font(.system(size: 15)).foregroundStyle(Color(hex: 0x69696F))
+                    .frame(maxWidth: .infinity)
+                Image("lockScreen_banana").resizable().frame(width: 43, height: 43)
+                    .padding(.trailing, 4)
+            }.frame(width: 215, height: 50)
                 .background(Color(hex: 0xE6E6E6), in: Capsule())
                 .contentShape(Capsule())
                 .gesture(DragGesture(minimumDistance: 20).onEnded { value in
@@ -353,7 +529,7 @@ struct RunningView: View {
                 .accessibilityAction(named: Text("runningSettings.unlock")) { controlsLocked = false }
                 .accessibilityIdentifier("running.unlock")
         } else {
-            VStack(spacing: 16) {
+            VStack(spacing: 4) {
                 if session.phase == .running {
                     imageButton("running_puase", label: "running.pause", identifier: "running.pause") { await controller.pause() }
                         .frame(maxWidth: .infinity)
@@ -365,20 +541,16 @@ struct RunningView: View {
                             .buttonStyle(.plain)
                             .accessibilityLabel(Text("running.lock"))
                             .accessibilityIdentifier("running.lock")
-                            .padding(.trailing, 12)
+                            .padding(.trailing, 46)
                         }
                 } else if session.phase == .paused {
-                    HStack(spacing: 42) {
+                    HStack(spacing: 50) {
                         imageButton("running_start", label: "running.resume", identifier: "running.resume") { await controller.resume() }
                         imageButton("running_stop", label: "running.finish", identifier: "running.finish") { confirmingFinish = true }
                     }
                 } else {
                     Button("running.retrySave") { Task { await finish() } }.buttonStyle(.borderedProminent)
                         .tint(Color(hex: 0xFFD838)).accessibilityIdentifier("running.retrySave")
-                }
-                if session.phase != .running {
-                    Button("running.discard", role: .destructive) { confirmingDiscard = true }
-                        .font(.system(size: 13)).accessibilityIdentifier("running.discard")
                 }
                 if controller.isBusy { ProgressView() }
             }
@@ -388,18 +560,8 @@ struct RunningView: View {
 
     private func imageButton(_ image: String, label: LocalizedStringKey, identifier: String, action: @escaping @MainActor () async -> Void) -> some View {
         Button { Task { await action() } } label: {
-            VStack(spacing: 8) {
-                Image(image).resizable().scaledToFit().frame(width: 90, height: 90)
-                Text(label).font(.system(size: 13))
-            }
+            Image(image).resizable().scaledToFit().frame(width: 107, height: 107)
         }.buttonStyle(.plain).accessibilityLabel(Text(label)).accessibilityIdentifier(identifier)
-    }
-
-    private func metric(_ value: String, label: LocalizedStringKey, identifier: String = "running.pace") -> some View {
-        VStack(spacing: 8) {
-            Text(verbatim: value).font(.system(size: 32, weight: .light)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5).accessibilityIdentifier(identifier)
-            Text(label).font(.system(size: 12)).foregroundStyle(.secondary)
-        }.frame(maxWidth: .infinity)
     }
 
     @ViewBuilder private var errorStatus: some View {
@@ -451,7 +613,17 @@ struct RunningView: View {
                            && controller.session?.phase == .running && settings.keepScreenOn)
     }
 
+    private var sessionIsTooShort: Bool {
+        guard let session = controller.session else { return false }
+        return session.distanceMeters < session.kind.minimumDistanceMeters
+    }
+
     private func finish() async {
+        if sessionIsTooShort {
+            await controller.discard()
+            if controller.session == nil { dismiss() }
+            return
+        }
         await controller.finish()
         if controller.session == nil, controller.errorKey == nil { result = controller.lastFinishedSession }
     }

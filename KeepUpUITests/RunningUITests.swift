@@ -18,7 +18,7 @@ import XCTest
         app.buttons["catalog.fitness"].tap()
         XCTAssertTrue(app.buttons["card.punchcard.2"].waitForExistence(timeout: 5))
         app.buttons["card.punchcard.2"].tap()
-        XCTAssertTrue(app.buttons["running.close"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["running.openSettings"].waitForExistence(timeout: 5))
     }
 
     private func start(_ app: XCUIApplication) {
@@ -58,9 +58,11 @@ import XCTest
     func testStartPauseResumeFinishCreatesOneRecord() {
         let app = launch(mode: "route")
         openRunning(app)
+        capture("KeepUp-Outdoor-Prepare-English")
         start(app)
         app.buttons["running.openMap"].tap()
         XCTAssertTrue(app.maps.firstMatch.waitForExistence(timeout: 5))
+        capture("KeepUp-Outdoor-Map-English")
         app.buttons["running.closeMap"].tap()
         XCTAssertTrue(app.buttons["running.pause"].waitForExistence(timeout: 5))
         app.buttons["running.lock"].tap()
@@ -73,6 +75,7 @@ import XCTest
         XCTAssertTrue(app.buttons["running.pause"].waitForExistence(timeout: 5))
         // The explicit DEBUG route fixture supplies >100 m after the session starts.
         XCTAssertTrue(waitFor(app.staticTexts["running.distance"], predicate: "label != '0.00'"))
+        capture("KeepUp-Outdoor-Active-English")
         app.buttons["running.pause"].tap()
         XCTAssertTrue(app.buttons["running.resume"].waitForExistence(timeout: 5))
         capture("KeepUp-Running-Paused-English")
@@ -94,13 +97,14 @@ import XCTest
         XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
     }
 
-    func testClosingKeepsSessionAndRelaunchRecoversPaused() {
+    func testBackgroundKeepsSessionAndRelaunchRecoversPaused() {
         let app = launch(mode: "route")
         openRunning(app)
         start(app)
         XCTAssertTrue(waitFor(app.staticTexts["running.distance"], predicate: "label != '0.00'"))
-        leaveRunning(app)
-        openRunning(app)
+        XCTAssertFalse(app.buttons["running.close"].exists)
+        XCUIDevice.shared.press(.home)
+        app.activate()
         XCTAssertTrue(app.buttons["running.pause"].waitForExistence(timeout: 5))
         app.terminate()
         app.launchArguments.removeAll { $0 == "-reset-test-data" }
@@ -190,6 +194,7 @@ import XCTest
         XCTAssertFalse(app.staticTexts["running.pace"].exists)
         app.buttons["running.openMap"].tap()
         XCTAssertTrue(app.maps.firstMatch.waitForExistence(timeout: 5))
+        capture("KeepUp-Cycling-Map-English")
         app.buttons["running.closeMap"].tap()
         XCTAssertTrue(app.staticTexts["running.speed"].waitForExistence(timeout: 5))
         XCTAssertTrue(waitFor(app.staticTexts["running.distance"], predicate: "label != '0.00'"))

@@ -159,30 +159,78 @@ struct RunningSessionSummary: View {
 
 struct RunningRouteMap: View {
     @Default(.runningSettings) private var settings
+    @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var preparationSpan: MKCoordinateSpan?
     let segments: [[RunningPoint]]
     var showsUser: Bool = false
+    var currentPoint: RunningPoint? = nil
+    var followsUser: Bool = false
+    var isPreparation: Bool = false
+
+    private var usesSatellite: Bool { !isPreparation && settings.satelliteMap }
 
     var body: some View {
-        Map(initialPosition: showsUser ? .userLocation(followsHeading: false, fallback: .automatic) : .automatic) {
+        Map(position: $cameraPosition, interactionModes: isPreparation ? [.pan, .zoom] : .all) {
             ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                 if segment.count > 1 {
                     MapPolyline(coordinates: segment.map { RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)) })
                         .stroke(Color(hex: 0xFF6440), lineWidth: 5)
                 }
             }
-            if let first = segments.first(where: { !$0.isEmpty })?.first {
+            if !showsUser, let first = segments.first(where: { !$0.isEmpty })?.first {
                 Annotation(LocalizedStringKey("running.routeStart"), coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: first.latitude, longitude: first.longitude))) {
                     Circle().fill(.green).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2))
                 }
             }
-            if let last = segments.last(where: { !$0.isEmpty })?.last {
+            if !showsUser, let last = segments.last(where: { !$0.isEmpty })?.last {
                 Annotation(LocalizedStringKey("running.routeEnd"), coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: last.latitude, longitude: last.longitude))) {
                     Circle().fill(Color(hex: 0xFF6440)).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2))
                 }
             }
-            if showsUser { UserAnnotation() }
-        }.mapStyle(settings.satelliteMap ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
-            .accessibilityValue(Text(LocalizedStringKey(settings.satelliteMap ? "runningSettings.satellite" : "runningSettings.standard")))
+            if showsUser, let currentPoint {
+                Annotation(coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude)), anchor: .center) {
+                    Image("position").resizable().frame(width: 18, height: 18)
+                        .accessibilityLabel(Text("running.currentLocation"))
+                } label: {
+                    EmptyView()
+                }
+            }
+        }.mapStyle(usesSatellite ? .imagery(elevation: .flat) : .standard(
+            elevation: .flat,
+            emphasis: isPreparation ? .muted : .automatic,
+            pointsOfInterest: isPreparation ? .all : .excludingAll
+        ))
+            .mapControlVisibility(isPreparation ? .hidden : .automatic)
+            .accessibilityValue(Text(LocalizedStringKey(usesSatellite ? "runningSettings.satellite" : "runningSettings.standard")))
+            .onMapCameraChange(frequency: .onEnd) { context in
+                if isPreparation, currentPoint != nil { preparationSpan = context.region.span }
+            }
+            .onAppear { updateCamera() }
+            .onChange(of: currentPoint?.timestamp) { _, _ in updateCamera() }
+    }
+
+    private func updateCamera() {
+        guard followsUser else { return }
+        guard let currentPoint else {
+            cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+            return
+        }
+        let recentDistance = segments.last?.suffix(20).map { $0.distance(to: currentPoint) }.max() ?? 0
+        let zoomMeters = min(2_500, max(400, recentDistance * 2.4))
+        let coordinate = RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude))
+        if isPreparation {
+            if let preparationSpan {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    cameraPosition = .region(MKCoordinateRegion(center: coordinate, span: preparationSpan))
+                }
+            } else {
+                let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 400, longitudinalMeters: 400)
+                preparationSpan = region.span
+                cameraPosition = .region(region)
+            }
+            return
+        }
+        cameraPosition = .region(MKCoordinateRegion(center: coordinate, latitudinalMeters: zoomMeters, longitudinalMeters: zoomMeters))
     }
 }
 

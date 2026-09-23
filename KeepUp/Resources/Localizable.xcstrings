@@ -3472,6 +3472,9 @@
         }
       }
     },
+    "GPS" : {
+      "shouldTranslate" : false
+    },
     "history.collapse" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4128,6 +4131,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跟随系统"
+          }
+        }
+      }
+    },
+    "legal.privacyPolicy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私政策"
+          }
+        }
+      }
+    },
+    "legal.userAgreement" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "User Agreement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户协议"
           }
         }
       }
@@ -6489,6 +6526,23 @@
         }
       }
     },
+    "running.currentLocation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current location"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前位置"
+          }
+        }
+      }
+    },
     "running.cycling" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6512,13 +6566,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ride at least 500 meters before saving. You can continue or discard this activity."
+            "value" : "This ride is under 500 meters. Ending it will not save a record."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "骑行至少 500 米后才能保存。可以继续运动或丢弃本次记录。"
+            "value" : "本次骑行不足 500 米，结束后不会保存记录。"
           }
         }
       }
@@ -6642,6 +6696,57 @@
         }
       }
     },
+    "running.gpsGood" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Great conditions for your workout"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "很适合运动"
+          }
+        }
+      }
+    },
+    "running.gpsFair" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try to avoid tall buildings"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "建议绕开高楼"
+          }
+        }
+      }
+    },
+    "running.gpsPoor" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your route may not be recorded"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可能无法记录轨迹"
+          }
+        }
+      }
+    },
     "running.gpsReady" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6655,6 +6760,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPS 信号正常"
+          }
+        }
+      }
+    },
+    "running.gpsWeakHint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPS signal is weak. Move to a more open area."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信号不太好，跑去更开阔的地方吧"
           }
         }
       }
@@ -6795,23 +6916,6 @@
         }
       }
     },
-    "running.lock" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lock controls"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "锁定操作区"
-          }
-        }
-      }
-    },
     "running.loadFailed" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6859,6 +6963,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂时无法获取定位，请到开阔处重试。"
+          }
+        }
+      }
+    },
+    "running.lock" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lock controls"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁定操作区"
           }
         }
       }
@@ -7373,6 +7494,23 @@
         }
       }
     },
+    "running.sensorRecording" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensor recording"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器记录中"
+          }
+        }
+      }
+    },
     "running.settings" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7475,6 +7613,23 @@
         }
       }
     },
+    "running.time" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时间"
+          }
+        }
+      }
+    },
     "running.todayOnly" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7498,13 +7653,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Run at least 100 meters before saving. You can continue or discard this run."
+            "value" : "This run is under 100 meters. Ending it will not save a record."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "满 100 米才能保存，你可以继续跑步或丢弃本次记录。"
+            "value" : "本次跑步不足 100 米，结束后不会保存记录。"
           }
         }
       }
@@ -9166,40 +9321,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "偏好设置"
-          }
-        }
-      }
-    },
-    "legal.privacyPolicy" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Privacy Policy"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "隐私政策"
-          }
-        }
-      }
-    },
-    "legal.userAgreement" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "User Agreement"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用户协议"
           }
         }
       }
