@@ -137,7 +137,7 @@ struct RunningView: View {
                         RunningRouteMap(segments: [], showsUser: controller.authorization == .authorized,
                                         currentPoint: controller.latestLocationPoint,
                                         followsUser: controller.authorization == .authorized,
-                                        isPreparation: true)
+                                        isPreparation: true, avatarData: model.snapshot.profile?.avatar)
                             .ignoresSafeArea(edges: .top)
                         if controller.authorization == .authorized {
                             gpsStatus.padding(.top, 80)
@@ -278,13 +278,26 @@ struct RunningView: View {
     }
 
     private var gpsStatus: some View {
-        HStack(spacing: 8) {
-            Image(controller.preparationGPSQuality.imageName).resizable().scaledToFit().frame(width: 16, height: 16)
+        HStack(spacing: 0) {
+            HStack(spacing: 5) {
+                Text("GPS").font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color(hex: 0x222222).opacity(0.8))
+                Image(controller.preparationGPSQuality.imageName)
+                    .resizable().scaledToFit().frame(width: 12, height: 12)
+            }
+            .frame(width: 60, height: 21)
+            .background(Color(hex: 0xFFD838), in: Capsule())
+            .padding(.leading, 3)
             Text(LocalizedStringKey(controller.preparationGPSQuality.messageKey))
+                .font(.system(size: 12))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .frame(minWidth: 107)
                 .accessibilityIdentifier(controller.locationReady ? "running.gpsReady" : "running.gpsWaiting")
-        }.font(.system(size: 13))
-            .padding(.horizontal, 16).padding(.vertical, 10)
-            .glassEffect(.regular, in: Capsule())
+        }
+        .frame(height: 27)
+        .fixedSize(horizontal: true, vertical: false)
+        .background(Color(hex: 0x222222).opacity(0.4), in: Capsule())
     }
 
     private var showsWeakGPSTip: Bool {
@@ -360,7 +373,8 @@ struct RunningView: View {
         HStack {
             if session.kind.usesGPS {
                 Button { showingLiveMap = true } label: {
-                    Image("map").resizable().scaledToFit().frame(width: 26, height: 26)
+                    Image(systemName: "map")
+                        .font(.system(size: 22, weight: .medium))
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
@@ -386,7 +400,8 @@ struct RunningView: View {
                 settingsKindAtOpen = settings.defaultRunningKind
                 showingSettings = true
             } label: {
-                Image("running_setting").resizable().scaledToFit().frame(width: 20, height: 20)
+                Image(systemName: "gearshape")
+                    .font(.system(size: 22, weight: .medium))
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
@@ -474,7 +489,8 @@ struct RunningView: View {
         ZStack(alignment: .bottom) {
             RunningRouteMap(segments: session.segments, showsUser: controller.authorization == .authorized,
                             currentPoint: controller.latestLocationPoint,
-                            followsUser: controller.authorization == .authorized)
+                            followsUser: controller.authorization == .authorized,
+                            avatarData: model.snapshot.profile?.avatar)
                 .ignoresSafeArea()
             Button { showingLiveMap = false } label: {
                 Image(systemName: "xmark")

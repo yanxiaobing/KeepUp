@@ -167,6 +167,7 @@ struct RunningRouteMap: View {
     var currentPoint: RunningPoint? = nil
     var followsUser: Bool = false
     var isPreparation: Bool = false
+    var avatarData: Data? = nil
 
     private var usesSatellite: Bool { !isPreparation && settings.satelliteMap }
 
@@ -183,7 +184,7 @@ struct RunningRouteMap: View {
                                 let point = MKMapPoint(coordinate)
                                 let worldWidth = MKMapRect.world.size.width
                                 let wrappedX = point.x + ((rect.midX - point.x) / worldWidth).rounded() * worldWidth
-                                RunningUserLocationPin()
+                                RunningUserLocationPin(avatarData: avatarData)
                                     .position(x: (wrappedX - rect.minX) / rect.size.width * geometry.size.width,
                                               y: (point.y - rect.minY) / rect.size.height * geometry.size.height - 27)
                                     .accessibilityLabel(Text("running.currentLocation"))
@@ -223,7 +224,7 @@ struct RunningRouteMap: View {
             }
             if !isPreparation, showsUser, let currentPoint {
                 Annotation(coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude)), anchor: .bottom) {
-                    RunningUserLocationPin()
+                    RunningUserLocationPin(avatarData: avatarData)
                         .accessibilityLabel(Text("running.currentLocation"))
                 } label: {
                     EmptyView()
@@ -277,7 +278,7 @@ struct RunningRouteMap: View {
 }
 
 private struct RunningUserLocationPin: View {
-    @Environment(AppModel.self) private var model
+    let avatarData: Data?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -296,7 +297,7 @@ private struct RunningUserLocationPin: View {
     }
 
     private var avatar: Image {
-        if let data = model.snapshot.profile?.avatar, let image = UIImage(data: data) {
+        if let data = avatarData, let image = UIImage(data: data) {
             return Image(uiImage: image)
         }
         return Image("RunningLocationFallback")
