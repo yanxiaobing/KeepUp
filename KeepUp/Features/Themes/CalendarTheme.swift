@@ -9,6 +9,17 @@ struct CalendarTheme: Decodable, Identifiable, Equatable {
     var transparentCityImage: String { id == 0 ? city_image : city_image + "_transparent" }
     var color: Color { Color(hex: UInt32(calendar_background_color, radix: 16) ?? 0x006db7) }
     var dayColor: Color { Color(hex: UInt32(day_color, radix: 16) ?? 0x5abcff) }
+    var detailTextColor: Color {
+        let value = UInt32(calendar_background_color, radix: 16) ?? 0x006db7
+        func linear(_ component: UInt32) -> Double {
+            let color = Double(component) / 255
+            return color <= 0.04045 ? color / 12.92 : pow((color + 0.055) / 1.055, 2.4)
+        }
+        let luminance = 0.2126 * linear((value >> 16) & 0xff)
+            + 0.7152 * linear((value >> 8) & 0xff)
+            + 0.0722 * linear(value & 0xff)
+        return luminance >= 0.18 ? .black : .white
+    }
     static let all = BundledJSON.required([CalendarTheme].self, named: "themes") { items in
         func validColor(_ value: String) -> Bool { value.count == 6 && UInt32(value, radix: 16) != nil }
         guard !items.isEmpty, Set(items.map(\.id)).count == items.count,
@@ -19,6 +30,26 @@ struct CalendarTheme: Decodable, Identifiable, Equatable {
     }
     static var selected: CalendarTheme {
         all.first { $0.id == Defaults[.themeID] } ?? all[0]
+    }
+}
+
+struct CardDetailThemeBackground: View {
+    private var theme: CalendarTheme { CalendarTheme.selected }
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                LinearGradient(stops: [
+                    .init(color: theme.color, location: 0),
+                    .init(color: .white, location: 0.72)
+                ], startPoint: .top, endPoint: .bottom)
+                Image(theme.transparentCityImage)
+                    .resizable().scaledToFit()
+                    .frame(width: geometry.size.width, height: geometry.size.width * 272 / 750)
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+        .accessibilityHidden(true)
     }
 }
 

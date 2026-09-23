@@ -75,19 +75,24 @@ struct WakeUpPoster: View {
     var body: some View {
         GeometryReader { geometry in
             let s = geometry.size.width / 375
+            let cityHeight = geometry.size.width * 272 / 750
             ZStack(alignment: .top) {
-                Color.white
-                KeepUpStyle.theme.opacity(0.8)
-                Text(timeText).font(.system(size: 15*s)).frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 15*s).padding(.top, 20*s)
+                CardDetailThemeBackground()
+                Text(timeText).font(.system(size: 15*s)).foregroundStyle(CalendarTheme.selected.detailTextColor)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 15*s).padding(.top, 20*s)
                 WakeUpClock(time: record.time, timeZoneID: record.timeZoneID).frame(width: 200*s, height: 200*s).padding(.top, 54*s)
                 VStack(spacing: 12*s) {
                     if record.isEarly { Text(verbatim: String(format: localized("wake.streak %lld", locale), Int64(streak))).font(.system(size: 24*s)) }
                     else { Text("wake.missed").font(.system(size: 24*s)) }
                     if record.isEarly { Text("wake.encouragement").font(.system(size: 14*s)) }
                     else { Text(String(format: localized("wake.actualTime %@", locale), actualTimeText)).font(.system(size: 14*s)) }
-                }.padding(.top, 274*s).padding(.horizontal, 20*s).multilineTextAlignment(.center)
-                VStack { Spacer(); Image("card_details_eary").resizable().scaledToFit().padding(.bottom, 34*s) }
-            }.foregroundStyle(.white).clipped()
+                }.foregroundStyle(Color(white: 0.16)).padding(.top, 274*s).padding(.horizontal, 20*s).multilineTextAlignment(.center)
+                VStack {
+                    Spacer()
+                    Image("card_details_eary").resizable().scaledToFit()
+                        .frame(maxWidth: 280*s).padding(.bottom, cityHeight)
+                }
+            }.clipped()
         }
     }
 }

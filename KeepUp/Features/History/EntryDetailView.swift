@@ -96,31 +96,30 @@ struct EntryPoster: View {
         if let wake = wakes[entry.id] { WakeUpPoster(entry: entry, record: wake, entries: entries, wakes: wakes, locale: locale) } else {
         GeometryReader { geometry in
             let s = geometry.size.width/375
+            let cityHeight = geometry.size.width * 272 / 750
             let small = [16,49,51,55,57].contains(OriginalCatalog.item(card)?.number ?? 0)
-            let artworkScale = (small ? 0.8 : 1) * (s > 1 ? 1.4 : s < 1 ? 0.92 : 1.2)
+            let artworkScale = (small ? 0.8 : 1) * (s > 1 ? 1.2 : s < 1 ? 0.9 : 1.05)
             ZStack(alignment: .top) {
-                Color.white
-                KeepUpStyle.theme.opacity(0.8)
-                Image("card_bg_banana").resizable().frame(width: geometry.size.width, height: geometry.size.height)
-                Circle().fill(Color(white: 34/255).opacity(0.05)).frame(width: 272*s, height: 272*s).offset(y: 98)
-                Text(title).font(.system(size: 24, weight: .bold)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+                CardDetailThemeBackground()
+                Circle().fill(CalendarTheme.selected.color.opacity(0.10)).frame(width: 272*s, height: 272*s).offset(y: 98)
+                Text(title).font(.system(size: 24, weight: .bold)).foregroundStyle(CalendarTheme.selected.detailTextColor).lineLimit(1).minimumScaleFactor(0.6)
                     .frame(width: max(0, geometry.size.width-20), height: 25).offset(y: 25)
                 if let calories = ActivityEnergy.calories(entry: entry, card: card) {
                     Text(ActivityEnergy.description(calories: calories, locale: locale))
-                        .font(.system(size: 13*s)).foregroundStyle(.white).multilineTextAlignment(.center)
+                        .font(.system(size: 13*s)).foregroundStyle(CalendarTheme.selected.detailTextColor).multilineTextAlignment(.center)
                         .frame(width: max(0, geometry.size.width-30*s)).offset(y: 60)
                         .accessibilityIdentifier("energy.poster")
                 }
                 if card.id == "punchcard.50", let quantity = entry.quantity {
                     WeightBMILabel(weight: quantity, height: weights[entry.id]?.height ?? profileHeight, locale: locale, highlight: false)
-                        .font(.system(size: 13)).foregroundStyle(.white).offset(y: 55)
+                        .font(.system(size: 13)).foregroundStyle(CalendarTheme.selected.detailTextColor).offset(y: 55)
                 }
                 Image(card.cardImage).resizable().frame(width: 330*artworkScale, height: 390*artworkScale)
-                    .position(x: geometry.size.width/2, y: (geometry.size.height-46)/2-10).accessibilityHidden(true)
+                    .position(x: geometry.size.width/2, y: (geometry.size.height-cityHeight)/2-10).accessibilityHidden(true)
             }.overlay(alignment: .bottom) {
-                Text(encouragement).font(.system(size: 17*s, weight: .bold)).foregroundStyle(.white).multilineTextAlignment(.center).lineSpacing(5)
+                Text(encouragement).font(.system(size: 17*s, weight: .bold)).foregroundStyle(Color(white: 0.16)).multilineTextAlignment(.center).lineSpacing(5)
                     .fixedSize(horizontal: false, vertical: true)
-                    .frame(width: max(0, geometry.size.width-60*s)).padding(.bottom, 30*s)
+                    .frame(width: max(0, geometry.size.width-60*s)).padding(.bottom, cityHeight + 16*s)
             }.clipped()
         }
         }
