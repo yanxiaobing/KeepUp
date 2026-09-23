@@ -160,7 +160,8 @@ struct RunningSessionSummary: View {
 struct RunningRouteMap: View {
     @Default(.runningSettings) private var settings
     @State private var cameraPosition: MapCameraPosition = .automatic
-    @State private var preparationSpan: MKCoordinateSpan?
+    @State private var preparationVisibleRect: MKMapRect?
+    @State private var preparationHasCentered = false
     let segments: [[RunningPoint]]
     var showsUser: Bool = false
     var currentPoint: RunningPoint? = nil
@@ -170,6 +171,39 @@ struct RunningRouteMap: View {
     private var usesSatellite: Bool { !isPreparation && settings.satelliteMap }
 
     var body: some View {
+        if isPreparation {
+            GeometryReader { geometry in
+                mapSurface
+                    .overlay {
+                        ZStack(alignment: .topLeading) {
+                            Color.white.opacity(0.40)
+                            if showsUser, let currentPoint, let rect = preparationVisibleRect,
+                               rect.size.width > 0, rect.size.height > 0 {
+                                let coordinate = RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude))
+                                let point = MKMapPoint(coordinate)
+                                let worldWidth = MKMapRect.world.size.width
+                                let wrappedX = point.x + ((rect.midX - point.x) / worldWidth).rounded() * worldWidth
+                                Image("position").resizable().frame(width: 18, height: 18)
+                                    .position(x: (wrappedX - rect.minX) / rect.size.width * geometry.size.width,
+                                              y: (point.y - rect.minY) / rect.size.height * geometry.size.height)
+                                    .accessibilityLabel(Text("running.currentLocation"))
+                            }
+                        }
+                        .clipped()
+                        .allowsHitTesting(false)
+                    }
+                    .onAppear { updateCamera(viewport: geometry.size) }
+                    .onChange(of: currentPoint?.timestamp) { _, _ in updateCamera(viewport: geometry.size) }
+                    .onChange(of: geometry.size) { _, size in updateCamera(viewport: size) }
+            }
+        } else {
+            mapSurface
+                .onAppear { updateCamera() }
+                .onChange(of: currentPoint?.timestamp) { _, _ in updateCamera() }
+        }
+    }
+
+    private var mapSurface: some View {
         Map(position: $cameraPosition, interactionModes: isPreparation ? [.pan, .zoom] : .all) {
             ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
                 if segment.count > 1 {
@@ -187,7 +221,7 @@ struct RunningRouteMap: View {
                     Circle().fill(Color(hex: 0xFF6440)).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2))
                 }
             }
-            if showsUser, let currentPoint {
+            if !isPreparation, showsUser, let currentPoint {
                 Annotation(coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude)), anchor: .center) {
                     Image("position").resizable().frame(width: 18, height: 18)
                         .accessibilityLabel(Text("running.currentLocation"))
@@ -202,14 +236,12 @@ struct RunningRouteMap: View {
         ))
             .mapControlVisibility(isPreparation ? .hidden : .automatic)
             .accessibilityValue(Text(LocalizedStringKey(usesSatellite ? "runningSettings.satellite" : "runningSettings.standard")))
-            .onMapCameraChange(frequency: .onEnd) { context in
-                if isPreparation, currentPoint != nil { preparationSpan = context.region.span }
+            .onMapCameraChange(frequency: .continuous) { context in
+                if isPreparation { preparationVisibleRect = context.rect }
             }
-            .onAppear { updateCamera() }
-            .onChange(of: currentPoint?.timestamp) { _, _ in updateCamera() }
     }
 
-    private func updateCamera() {
+    private func updateCamera(viewport: CGSize = .zero) {
         guard followsUser else { return }
         guard let currentPoint else {
             cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
@@ -219,14 +251,24 @@ struct RunningRouteMap: View {
         let zoomMeters = min(2_500, max(400, recentDistance * 2.4))
         let coordinate = RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: currentPoint.latitude, longitude: currentPoint.longitude))
         if isPreparation {
-            if let preparationSpan {
+            guard viewport.width > 0, viewport.height > 0 else { return }
+            let point = MKMapPoint(coordinate)
+            // Derive the scale from meters, not camera callbacks, which may include
+            // MapKit fitting adjustments or an intermediate animated camera position.
+            let unitsPerPoint = 200 * MKMapPointsPerMeterAtLatitude(coordinate.latitude) / min(viewport.width, viewport.height)
+            let width = viewport.width * unitsPerPoint
+            let height = viewport.height * unitsPerPoint
+            // Move the camera north so the actual location appears 80 pt below the viewport center.
+            let rect = MKMapRect(x: point.x - width / 2,
+                                 y: point.y - height / 2 - 80 * unitsPerPoint,
+                                 width: width, height: height)
+            if preparationHasCentered {
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    cameraPosition = .region(MKCoordinateRegion(center: coordinate, span: preparationSpan))
+                    cameraPosition = .rect(rect)
                 }
             } else {
-                let region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 400, longitudinalMeters: 400)
-                preparationSpan = region.span
-                cameraPosition = .region(region)
+                preparationHasCentered = true
+                cameraPosition = .rect(rect)
             }
             return
         }
