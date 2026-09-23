@@ -9119,6 +9119,40 @@
         }
       }
     },
+    "legal.privacyPolicy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私政策"
+          }
+        }
+      }
+    },
+    "legal.userAgreement" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "User Agreement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户协议"
+          }
+        }
+      }
+    },
     "startup.agree" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9142,13 +9176,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "By tapping “Agree and Continue”, you agree to the Privacy Policy and User Agreement."
+            "value" : "By tapping “Agree and Continue”, you agree to the [Privacy Policy](https://assets.xbingo.top/keep-up/pro/pages/privacy.html) and [User Agreement](https://assets.xbingo.top/keep-up/pro/pages/agreement.html)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "点击“同意并继续”，即表示您同意隐私政策和用户协议"
+            "value" : "点击“同意并继续”，即表示您同意[隐私政策](https://assets.xbingo.top/keep-up/pro/pages/privacy.html)和[用户协议](https://assets.xbingo.top/keep-up/pro/pages/agreement.html)"
           }
         }
       }

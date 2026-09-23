@@ -23,6 +23,7 @@ struct MembershipView: View {
     @State private var pulse = false
     @State private var pauseOffers = false
     @State private var purchaseAreaHeight: CGFloat = 0
+    @State private var selectedLegalDocument: LegalDocument?
     private var canPurchaseSelection: Bool {
         guard configuration.offers.indices.contains(offerIndex) else { return false }
         return !store.busy && store.products[configuration.offers[offerIndex].id] != nil
@@ -115,6 +116,9 @@ struct MembershipView: View {
                 Button("action.ok") { store.message = nil }
             } message: { Text(LocalizedStringKey(store.message ?? "error.storage")) }
         }.preferredColorScheme(.light)
+            .sheet(item: $selectedLegalDocument) { document in
+                LegalDocumentSafariView(document: document, locale: locale)
+            }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active, !store.busy {
                     Task { await store.load(offers: configuration.offers, cache: false) }
@@ -205,6 +209,14 @@ struct MembershipView: View {
                     .background(.white, in: Capsule()).scaleEffect(pulse ? 1.07 : 1)
             }.buttonStyle(.plain).padding(.horizontal, 24*s).padding(.top, 20*s).disabled(!canPurchaseSelection)
                 .accessibilityIdentifier("membership.purchase")
+            HStack(spacing: 24*s) {
+                Button("legal.privacyPolicy") { selectedLegalDocument = .privacy }
+                    .accessibilityIdentifier("membership.privacyPolicy")
+                Button("legal.userAgreement") { selectedLegalDocument = .agreement }
+                    .accessibilityIdentifier("membership.userAgreement")
+            }
+            .font(.system(size: 12*s)).foregroundStyle(.black.opacity(0.7))
+            .frame(minHeight: 44*s).padding(.top, 4*s)
             if page?.hideFuncBtn != true && page?.showGiveUp != false {
                 Button { close() } label: {
                     Text("membership.giveUp")

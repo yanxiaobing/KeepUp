@@ -231,7 +231,9 @@ struct ProfileView: View {
 
 struct ProfileSettingsView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.locale) private var locale
     @State private var editProfile = false
+    @State private var selectedLegalDocument: LegalDocument?
     @Default(.appLanguage) private var language
     var body: some View {
         List {
@@ -247,8 +249,16 @@ struct ProfileSettingsView: View {
                     Text(LocalizedStringKey((AppLanguage(rawValue: language) ?? .system).titleKey)).foregroundStyle(.secondary)
                 }
             }.accessibilityIdentifier("settings.language")
+            Section {
+                Button("legal.privacyPolicy") { selectedLegalDocument = .privacy }
+                    .accessibilityIdentifier("settings.privacyPolicy")
+                Button("legal.userAgreement") { selectedLegalDocument = .agreement }
+                    .accessibilityIdentifier("settings.userAgreement")
+            }
         }.fullScreenCover(isPresented: $editProfile) {
             ProfileInfoView()
+        }.sheet(item: $selectedLegalDocument) { document in
+            LegalDocumentSafariView(document: document, locale: locale)
         }.navigationTitle("profile.settings").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
     }
 }
