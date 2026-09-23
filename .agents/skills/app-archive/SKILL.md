@@ -28,7 +28,7 @@ description: 归档 KeepUp iOS 工程并导出签名 IPA。用户要求打包、
 - 工程仅使用 Swift Package 依赖，沿用 `KeepUp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`，包缓存为 `.build/SourcePackages`；不引入 PunchCard 的 Pods、Realm 或 NavigationBarKit 前置检查，不因打包升级依赖。
 - 配置的自动签名允许 Xcode 更新描述文件。遇到账户、证书、设备或导出错误，保留日志并报告具体错误；不自动改团队、关闭签名、反复重试或把未签名构建当作 IPA 成功。
 
-先按项目 AGENTS.md 的渠道规则理解请求：未指定渠道的“打包”先给出 fir／fir + Store 选项；明确只要本地包时只归档导出。选择渠道后，依次使用本 skill 产出的准确 IPA／archive 路径调用 [fir-publish](../fir-publish/SKILL.md) 或 [store-publish](../store-publish/SKILL.md)，不重复询问已授权步骤。归档脚本本身只负责本地输出，不提交代码、推送、上传或通知；保留工作区现有改动，不自动切分支或清理。
+先按项目 AGENTS.md 的渠道规则理解请求：未指定渠道的“打包”先提供 `1. fir`、`2. fir + Store` 两个选项并等待选择。可用时使用交互式选项工具，让用户直接点选；发出选项后保持当前任务进行中，等待选择回复，不要立刻发送 final 结束本轮而使选项消失。没有交互式选项工具时，显示编号选项并等待用户回复。明确只要本地包时只归档导出。选择渠道后，依次使用本 skill 产出的准确 IPA／archive 路径调用 [fir-publish](../fir-publish/SKILL.md) 或 [store-publish](../store-publish/SKILL.md)，不重复询问已授权步骤。归档脚本本身只负责本地输出，不提交代码、推送、上传或通知；保留工作区现有改动，不自动切分支或清理。
 
 归档、导出或校验失败就停止。成功后报告脚本输出的 bundle identifier、实际版本／构建号、archive、IPA 和日志路径；`--archive-only` 明确说明未导出 IPA。脚本会核对 archive 与 IPA 的身份和版本，并验证 ZIP 完整性；未运行真实签名导出时，不能把预演或替身测试结果写成真机安装验收通过。
 
