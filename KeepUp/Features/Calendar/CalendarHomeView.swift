@@ -73,7 +73,10 @@ struct CalendarHomeView: View {
                                 Label("running.resumeActivity", systemImage: model.running.session?.kind == .cycling ? "bicycle" : "figure.run")
                                     .font(.system(size: 14, weight: .medium))
                                     .frame(maxWidth: .infinity).padding(.vertical, 12)
-                            }.buttonStyle(.plain).background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
+                                    .background(.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 8))
+                                    .contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                                .frame(width: recordGridLayout(width: geometry.size.width).contentWidth)
                                 .padding(.top, 10).accessibilityIdentifier("running.resumeActivity")
                         }
                         recordGrid(width: geometry.size.width)
@@ -252,10 +255,18 @@ struct CalendarHomeView: View {
 
     }
 
-    private func recordGrid(width: CGFloat) -> some View {
+    private func recordGridLayout(width: CGFloat) -> (itemWidth: CGFloat, spacing: CGFloat, contentWidth: CGFloat) {
         let scale = width / 375
         let itemWidth = 88 * scale
         let spacing = (width - itemWidth * 3 - 34) / 4
+        return (itemWidth, spacing, itemWidth * 3 + spacing * 2)
+    }
+
+    private func recordGrid(width: CGFloat) -> some View {
+        let scale = width / 375
+        let layout = recordGridLayout(width: width)
+        let itemWidth = layout.itemWidth
+        let spacing = layout.spacing
         return ZStack(alignment: .bottom) {
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.fixed(itemWidth), spacing: spacing), count: 3), spacing: 20) {
