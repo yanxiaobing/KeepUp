@@ -115,6 +115,7 @@ struct EntryPoster: View {
                         .font(.system(size: 13)).foregroundStyle(CalendarTheme.selected.detailTextColor).offset(y: 55)
                 }
                 Image(card.cardImage).resizable().frame(width: 330*artworkScale, height: 390*artworkScale)
+                    .scaleEffect(0.8)
                     .position(x: geometry.size.width/2, y: (geometry.size.height-cityHeight)/2-10).accessibilityHidden(true)
             }.overlay(alignment: .bottom) {
                 Text(encouragement).font(.system(size: 17*s, weight: .bold)).foregroundStyle(Color(white: 0.16)).multilineTextAlignment(.center).lineSpacing(5)

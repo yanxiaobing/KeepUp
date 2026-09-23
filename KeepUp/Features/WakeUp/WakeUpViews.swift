@@ -90,7 +90,7 @@ struct WakeUpPoster: View {
                 VStack {
                     Spacer()
                     Image("card_details_eary").resizable().scaledToFit()
-                        .frame(maxWidth: 280*s).padding(.bottom, cityHeight)
+                        .frame(maxWidth: 280*s).scaleEffect(0.8).padding(.bottom, cityHeight)
                 }
             }.clipped()
         }
