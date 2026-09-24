@@ -37,16 +37,20 @@ struct ProfileView: View {
                             if advertising.consent.privacyOptionsRequired {
                                 Button("ads.privacyOptions", action: presentPrivacyOptions)
                                     .font(.system(size: 14 * scale)).frame(maxWidth: .infinity, minHeight: 50 * scale)
-                                    .background(.white).disabled(advertising.consent.isBusy || preparingFeature)
+                                    .disabled(advertising.consent.isBusy || preparingFeature)
                                     .accessibilityIdentifier("ads.privacyOptions")
                             }
                         }
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
+                        .padding(.horizontal, 15 * scale)
                         VStack(spacing: 0) {
                             row("profile.weightTarget", subtitle: model.snapshot.weightTarget.map { String(format: "%.1fkg", $0.target) } ?? "profile.noTarget", image: "setting_ic_weight_target", scale: scale)
                             row("profile.stepTarget", subtitle: StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges).map { String(format: localized("steps.goal %lld", locale), Int64($0)) } ?? "profile.noSteps", image: "setting_ic_walk_target", scale: scale)
                             row("profile.alarms", subtitle: nil, image: "setting_ic_manageclock", scale: scale)
                             row("runningStats.title", subtitle: nil, image: "figure.run", scale: scale, systemImage: true)
                         }
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
+                        .padding(.horizontal, 15 * scale)
                         VStack(spacing: 0) {
                             row("profile.review", subtitle: "profile.reviewSubtitle", image: "setting_ic_review", scale: scale)
                             row("profile.contact", subtitle: "profile.contactSubtitle", image: "setting_ic_contact", scale: scale)
@@ -56,21 +60,35 @@ struct ProfileView: View {
                                 Spacer()
                                 Text("V" + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"))
                                     .font(.system(size: 13 * scale)).foregroundStyle(Color(white: 0.6)).padding(.trailing, 20 * scale)
-                            }.padding(.horizontal, 15 * scale).frame(height: 50 * scale).background(.white)
+                            }.padding(.horizontal, 15 * scale).frame(height: 50 * scale)
                         }
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
+                        .padding(.horizontal, 15 * scale)
                     }
-                }.background(Color(white: 246/255), ignoresSafeAreaEdges: [])
-                    .overlay(alignment: .topTrailing) {
-                        NavigationLink { ProfileSettingsView() } label: {
-                            Image("gps_exercise_confirm_ic_set").resizable().frame(width: 24 * scale, height: 24 * scale)
-                        }.disabled(preparingFeature).padding(.trailing, 15 * scale).padding(.top, 10).accessibilityLabel(Text("settings.title"))
-                            .accessibilityIdentifier("profile.settings")
-                    }
-            }.background(alignment: .top) { KeepUpStyle.theme.ignoresSafeArea(edges: .top) }
+                    .padding(.bottom, 16 * scale)
+                }
+                .scrollIndicators(.hidden)
+                .scrollEdgeEffectHidden(true, for: .all)
+            }
+                .background {
+                    LinearGradient(colors: [KeepUpStyle.theme, .white], startPoint: .top, endPoint: .bottom)
+                        .ignoresSafeArea()
+                }
                 .navigationTitle("nav.profile")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(KeepUpStyle.theme, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarBackground(.clear, for: .navigationBar)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink { ProfileSettingsView() } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .tint(Color(white: 0.2))
+                        .disabled(preparingFeature)
+                        .accessibilityLabel(Text("settings.title"))
+                        .accessibilityIdentifier("profile.settings")
+                    }
+                }
                 .fullScreenCover(item: $rewardGate, onDismiss: finishRewardGate) { request in
                     RewardedFeatureAccessView(feature: request.feature) { decision in
                         rewardDecision = (request.feature, decision)
@@ -183,11 +201,9 @@ struct ProfileView: View {
     }
     private func header(scale: CGFloat) -> some View {
         VStack(spacing: 0) {
-            GeometryReader { geometry in
-                Image("me_bg_title").resizable().scaledToFill().frame(width: geometry.size.width, height: geometry.size.height).clipped()
-            }.frame(height: 100 * scale).background(KeepUpStyle.theme)
+            Color.clear.frame(height: 100 * scale)
             ZStack(alignment: .topLeading) {
-                Color.white
+                Color.clear
                 Button { showPersonalInfo = true } label: {
                     profileAvatar.frame(width: 70 * scale, height: 70 * scale)
                         .clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2.5 * scale))
@@ -223,7 +239,8 @@ struct ProfileView: View {
                     if let subtitle { Text(LocalizedStringKey(subtitle)).font(.system(size: 13 * scale)).foregroundStyle(Color(white: 0.6)).lineLimit(1).minimumScaleFactor(0.7) }
                     Image("me_arrow_ic").resizable().frame(width: 14 * scale, height: 14 * scale)
                 }
-            }.padding(.horizontal, 15 * scale).frame(height: 50 * scale).background(.white)
+            }.padding(.horizontal, 15 * scale).frame(height: 50 * scale)
+                .contentShape(Rectangle())
                 .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3).padding(.leading, 15 * scale) }
         }.buttonStyle(.plain).disabled(preparingFeature).accessibilityIdentifier(title)
     }
