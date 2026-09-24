@@ -95,9 +95,9 @@ enum ActivityEnergy {
         return count > 0 ? FoodMatch(index: selected, count: count) : FoodMatch(index: smallIndex, count: 1)
     }
 
-    static func description(calories: Int, locale: Locale) -> String {
+    static func description(calories: Int, locale: Locale, energyKey: String = "energy.burned") -> String {
         let amount = calories.formatted(.number.locale(locale))
-        let energy = String(format: localized("energy.burned", locale), amount)
+        let energy = String(format: localized(energyKey, locale), amount)
         guard let food = food(for: calories) else { return energy }
         let key = "\(configuration.foods[food.index].localizationKey).\(food.count == 1 ? "one" : "many")"
         let serving = String(format: localized(key, locale), food.count.formatted(.number.locale(locale)))

@@ -71,39 +71,49 @@ struct EntryRowView: View {
     // so explicit newlines and different scripts fold at the same visual boundary.
     private var foldedHeight: CGFloat { 108 * scale }
     private var canExpand: Bool { !content.text.isEmpty && textHeight > foldedHeight + 0.5 }
+    private var avatarScale: CGFloat { 0.3 * scale }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: action) {
-                HStack(alignment: .top, spacing: 10 * scale) {
-                    Image(card.whiteImage).resizable().frame(width: 40 * scale, height: 40 * scale)
-                        .background(KeepUpStyle.theme.opacity(0.7), in: RoundedRectangle(cornerRadius: 4 * scale))
+                HStack(alignment: .top, spacing: 12 * scale) {
+                    CalendarTicketCard(card: card, scale: 1, entry: entry)
+                        .transformEffect(CGAffineTransform(scaleX: avatarScale, y: avatarScale))
+                        .frame(width: 88 * avatarScale, height: 116 * avatarScale, alignment: .topLeading)
+                        .offset(y: 2 * scale)
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 3) {
-                            Text(LocalizedStringKey(card.titleKey))
-                            if let quantity = entry.quantity {
-                                Text(quantity, format: .number.precision(.fractionLength(0...2)))
-                                    .foregroundStyle(Color(red: 245/255, green: 127/255, blue: 23/255))
-                                Text(LocalizedStringKey(entry.unit.titleKey))
+                    VStack(alignment: .leading, spacing: 7 * scale) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8 * scale) {
+                            HStack(spacing: 3) {
+                                Text(LocalizedStringKey(card.titleKey))
+                                if let quantity = entry.quantity {
+                                    Text(quantity, format: .number.precision(.fractionLength(0...2)))
+                                        .foregroundStyle(KeepUpStyle.accent)
+                                    Text(LocalizedStringKey(entry.unit.titleKey))
+                                }
                             }
-                        }.font(.system(size: 13 * scale, weight: .bold)).frame(height: 40 * scale, alignment: .top)
+                            .font(.system(size: 15 * scale, weight: .semibold))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(entry.createdAt, format: .dateTime.hour().minute())
+                                .font(.system(size: 11 * scale))
+                                .foregroundStyle(.secondary)
+                        }
                         if let calories = ActivityEnergy.calories(entry: entry, card: card) {
-                            Text(ActivityEnergy.description(calories: calories, locale: locale))
-                                .font(.system(size: 12*scale)).foregroundStyle(Color(white: 0.43))
+                            Text(ActivityEnergy.description(calories: calories, locale: locale, energyKey: "energy.burnedShort"))
+                                .font(.system(size: 12 * scale)).foregroundStyle(.secondary)
                                 .accessibilityIdentifier("energy.row")
                         }
-                        if hasDraft { Text("content.draft").font(.system(size: 12*scale)).foregroundStyle(KeepUpStyle.accent).padding(.top, 8*scale) }
+                        if hasDraft { Text("content.draft").font(.system(size: 12 * scale)).foregroundStyle(KeepUpStyle.accent) }
                         if !content.text.isEmpty {
                             Text(content.text)
-                                .font(.system(size: 15 * scale))
-                                .foregroundStyle(Color(white: 34/255).opacity(0.8))
+                                .font(.system(size: 14 * scale))
+                                .foregroundStyle(Color(white: 0.22))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { textHeight = $0 }
                                 .frame(maxHeight: isExpanded ? nil : foldedHeight, alignment: .top)
                                 .clipped()
-                                .padding(.top, 15 * scale)
+                                .padding(.top, 4 * scale)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.contentShape(Rectangle())
@@ -115,7 +125,7 @@ struct EntryRowView: View {
                         isExpanded.toggle()
                     } label: {
                         Text(isExpanded ? "history.collapse" : "history.expand")
-                            .font(.system(size: 14 * scale))
+                            .font(.system(size: 13 * scale, weight: .medium))
                             .foregroundStyle(KeepUpStyle.theme)
                             .frame(minWidth: 44, minHeight: 44, alignment: .leading)
                             .contentShape(Rectangle())
@@ -126,15 +136,16 @@ struct EntryRowView: View {
                 Button(action: action) {
                     VStack(alignment: .leading, spacing: 0) {
                         if let data = content.photo, let image = UIImage(data: data) {
-                            Image(uiImage: image).resizable().scaledToFill().frame(width: 100*scale, height: 100*scale).clipped().padding(.top, 15*scale)
+                            Image(uiImage: image).resizable().scaledToFill()
+                                .frame(width: 112 * scale, height: 112 * scale)
+                                .clipShape(RoundedRectangle(cornerRadius: 10 * scale))
+                                .padding(.top, 10 * scale)
                                 .accessibilityLabel(Text("content.photo")).accessibilityIdentifier("content.savedPhoto")
                         }
-                        Text(entry.createdAt, format: .dateTime.hour().minute()).font(.system(size: 10 * scale))
-                            .foregroundStyle(Color(white: 34/255).opacity(0.3)).padding(.top, 20 * scale)
                     }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("history.footer.\(entry.id)")
-            }.padding(.leading, 50 * scale)
-        }.padding(15 * scale).frame(maxWidth: .infinity, alignment: .leading).background(.white)
+            }.padding(.leading, 38.4 * scale)
+        }.padding(15 * scale).frame(maxWidth: .infinity, alignment: .leading)
             .onChange(of: content) { isExpanded = false }
             .onChange(of: entry.id) { isExpanded = false }
     }

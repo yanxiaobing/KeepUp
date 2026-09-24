@@ -126,7 +126,7 @@ import XCTest
         let records = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "entry.steps."))
         XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(records.count, 1)
-        XCTAssertEqual(app.staticTexts["energy.dailyTotal"].label, "Est. 195 kcal burned today")
+        XCTAssertEqual(app.staticTexts["energy.dailyTotal"].label, "195 kcal burned")
         app.buttons["BackButton"].tap()
         XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
         records.firstMatch.tap()

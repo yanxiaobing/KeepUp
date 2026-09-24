@@ -46,14 +46,15 @@ final class EntryContentUITests: XCTestCase {
             app.buttons["tab.history"].tap()
             XCTAssertTrue(app.staticTexts["energy.dailyTotal"].waitForExistence(timeout: 5))
             XCTAssertTrue(app.staticTexts["energy.dailyTotal"].label.contains("175"))
-            XCTAssertTrue(record(app).label.contains(expected))
+            let timelineExpected = language == "en" ? "175 kcal burned · ≈ 4 chicken nuggets" : "消耗175大卡 · 约等于4个上校鸡块"
+            XCTAssertTrue(record(app).label.contains(timelineExpected))
             shot("KeepUp-Energy-History-" + language)
             app.terminate()
             app.launchArguments.removeAll { $0 == "-reset-test-data" }
             app.launch()
             app.buttons["tab.history"].tap()
             XCTAssertTrue(app.staticTexts["energy.dailyTotal"].waitForExistence(timeout: 5))
-            XCTAssertTrue(record(app).label.contains(expected))
+            XCTAssertTrue(record(app).label.contains(timelineExpected))
             app.terminate()
         }
     }

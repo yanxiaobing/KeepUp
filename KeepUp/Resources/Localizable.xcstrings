@@ -1491,19 +1491,19 @@
         }
       }
     },
-    "energy.daily" : {
+    "energy.burnedShort" : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Est. %@ kcal burned today"
+            "value" : "%@ kcal burned"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "当日预计消耗%@大卡"
+            "value" : "消耗%@大卡"
           }
         }
       }

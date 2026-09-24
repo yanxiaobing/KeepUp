@@ -8,7 +8,13 @@ struct HistoryView: View {
     private var days: [LocalDay] { Array(Set(model.snapshot.entries.map(\.day))).sorted(by: >) }
 
     var body: some View {
-        Group {
+        ZStack {
+            LinearGradient(stops: [
+                .init(color: KeepUpStyle.theme, location: 0),
+                .init(color: .white, location: 0.55)
+            ], startPoint: .top, endPoint: .bottom)
+            .ignoresSafeArea()
+
             Group {
                 if days.isEmpty {
                     VStack(spacing: 15) {
@@ -34,34 +40,39 @@ struct HistoryView: View {
                                                     Button("entry.viewCard") { detail = entry }.accessibilityIdentifier("entry.viewCard")
                                                     Button("content.edit") { editing = entry }.accessibilityIdentifier("entry.editContent")
                                                 }
-                                            Divider().padding(.leading, 73)
+                                                .padding(.horizontal, 15)
+                                                .padding(.bottom, 10)
                                         }
                                     }
                                 } header: {
                                     VStack(alignment: .leading, spacing: 6) {
                                     HStack {
-                                        Text(day.date(), format: .dateTime.year().month().day()).font(.subheadline.weight(.medium))
+                                        Text(day.date(), format: .dateTime.year().month().day())
+                                            .font(.system(size: 15, weight: .semibold))
                                         Spacer()
                                         ForEach(Array(Set(model.entries(on: day).map(\.cardID))).sorted().prefix(5), id: \.self) { id in
-                                            if let card = model.snapshot.cards.first(where: { $0.id == id }) { CardSymbol(card: card, size: 24) }
+                                            if let card = model.snapshot.cards.first(where: { $0.id == id }) {
+                                                CardSymbol(card: card, size: 24)
+                                            }
                                         }
                                     }
                                     let calories = model.entries(on: day).reduce(0) { total, entry in
                                         total + (model.card(for: entry).flatMap { ActivityEnergy.calories(entry: entry, card: $0) } ?? 0)
                                     }
                                     if calories > 0 {
-                                        Text(String(format: localized("energy.daily", locale), calories.formatted(.number.locale(locale))))
-                                            .font(.system(size: 12)).foregroundStyle(.secondary)
+                                        Text(String(format: localized("energy.burnedShort", locale), calories.formatted(.number.locale(locale))))
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(.secondary)
                                             .accessibilityIdentifier("energy.dailyTotal")
                                     }
-                                    }.padding(.horizontal, 15).padding(.vertical, 12).background(Color(white: 246/255))
+                                    }.padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
                         }
                     }
                 }
             }
-            .background(Color(white: 246/255))
             .fullScreenCover(item: $detail) { entry in
                 if entry.cardID == "punchcard.1" { StepsView(day: entry.day, followsToday: false) }
                 else if let card = model.card(for: entry) {
@@ -72,8 +83,9 @@ struct HistoryView: View {
             .fullScreenCover(item: $editing) { entry in
                 if let card = model.card(for: entry) { EntryContentEditor(entry: entry, card: card) }
             }
-            .navigationTitle("nav.history").navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
         }
+        .navigationTitle("nav.history")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 }
