@@ -102,7 +102,7 @@ struct ProfileView: View {
                 .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
                 .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
                 .fullScreenCover(isPresented: $showRunningStatistics) { RunningStatisticsView() }
-                .fullScreenCover(isPresented: $showPersonalInfo) { ProfileInfoView() }
+                .navigationDestination(isPresented: $showPersonalInfo) { ProfileInfoView() }
                 .fullScreenCover(isPresented: $showMembership) { MembershipView(onClose: { showMembership = false }) }
                 .alert(Text(LocalizedStringKey(pendingFeature ?? "error.title")), isPresented: Binding(get: { pendingFeature != nil }, set: { if !$0 { pendingFeature = nil } })) {
                     Button("action.ok") { pendingFeature = nil }
@@ -249,14 +249,13 @@ struct ProfileView: View {
 struct ProfileSettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
-    @State private var editProfile = false
     @State private var selectedLegalDocument: LegalDocument?
     @Default(.appLanguage) private var language
     var body: some View {
         List {
             Section {
-                Button { editProfile = true } label: {
-                    HStack { Text("info.title"); Spacer(); Text(model.snapshot.profile?.nickname ?? "").foregroundStyle(.secondary); Image(systemName: "chevron.right").foregroundStyle(.secondary) }
+                NavigationLink { ProfileInfoView() } label: {
+                    HStack { Text("info.title"); Spacer(); Text(model.snapshot.profile?.nickname ?? "").foregroundStyle(.secondary) }
                 }.accessibilityIdentifier("profile.edit")
             }
             NavigationLink { LanguageSettingsView() } label: {
@@ -272,9 +271,10 @@ struct ProfileSettingsView: View {
                 Button("legal.userAgreement") { selectedLegalDocument = .agreement }
                     .accessibilityIdentifier("settings.userAgreement")
             }
-        }.fullScreenCover(isPresented: $editProfile) {
-            ProfileInfoView()
-        }.sheet(item: $selectedLegalDocument) { document in
+        }.listStyle(.insetGrouped)
+        .toolbarBackground(Color(.systemGroupedBackground), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .sheet(item: $selectedLegalDocument) { document in
             LegalDocumentSafariView(document: document, locale: locale)
         }.navigationTitle("profile.settings").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
     }

@@ -25,10 +25,11 @@ struct ProfileNicknameField: UIViewRepresentable {
         context.coordinator.parent = self
         view.font = settingsStyle ? .systemFont(ofSize: 16*scale) : UIFont(name: "PingFangSC-Medium", size: 13*scale)
         view.textAlignment = settingsStyle ? .right : .left
-        view.textColor = settingsStyle ? UIColor(white: 34/255, alpha: 0.3) : .black
+        view.textColor = settingsStyle ? .secondaryLabel : .black
+        if settingsStyle { view.tintColor = UIColor(KeepUpStyle.accent) }
         view.clearButtonMode = settingsStyle ? .never : .whileEditing
         if view.text != text, view.markedTextRange == nil { view.text = text }
-        view.attributedPlaceholder = NSAttributedString(string: placeholder, attributes: [.foregroundColor: settingsStyle ? UIColor(white: 34/255, alpha: 0.3) : UIColor(white: 0.6, alpha: 1)])
+        view.attributedPlaceholder = NSAttributedString(string: placeholder, attributes: [.foregroundColor: settingsStyle ? UIColor.placeholderText : UIColor(white: 0.6, alpha: 1)])
         view.wantsFocus = focused
         if focused, view.window != nil, !view.isFirstResponder { view.becomeFirstResponder() }
         if !focused, view.isFirstResponder { view.resignFirstResponder() }
