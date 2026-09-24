@@ -29,19 +29,8 @@ struct RunningDetailView: View {
                 .toolbarBackground(.visible, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { dismiss() }.accessibilityIdentifier("running.result.close")
-                    }
-                    if currentEntry != nil, card != nil {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Menu {
-                                Button("content.edit", systemImage: "square.and.pencil") { editing = true }
-                                    .accessibilityIdentifier("running.detail.edit")
-                                Button("action.delete", systemImage: "trash", role: .destructive) { confirmingDelete = true }
-                                    .accessibilityIdentifier("running.detail.delete")
-                            } label: { Image(systemName: "ellipsis") }
-                                .accessibilityLabel(Text("entry.actions")).accessibilityIdentifier("running.detail.actions")
-                                .disabled(deleting)
-                        }
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.result.close")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { sharing = true } label: {

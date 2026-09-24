@@ -48,7 +48,8 @@ struct RunningView: View {
             .toolbar {
                 if result != nil {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { controller.cancelCountdown(); dismiss() }.accessibilityIdentifier("running.close")
+                        Button { controller.cancelCountdown(); dismiss() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.close")
                     }
                 }
                 if result != nil {

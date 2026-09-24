@@ -53,7 +53,8 @@ struct RunningShareView: View {
                 .navigationTitle("entry.share").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { dismiss() }.accessibilityIdentifier("running.share.close")
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.share.close")
                     }
                 }
                 .safeAreaInset(edge: .bottom) {

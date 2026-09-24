@@ -2852,6 +2852,7 @@
       }
     },
     "entry.actions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -31,13 +31,6 @@ struct EntryDetailView: View {
                         Button { dismiss() } label: { Image(systemName: "xmark") }.accessibilityLabel(Text("action.close")).accessibilityIdentifier("entry.close")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            if !model.snapshot.archivedCardIDs.contains(card.id) { Button("reminder.title", systemImage: "alarm") { showingReminder = true }.accessibilityIdentifier("entry.reminder") }
-                            Button("content.edit", systemImage: "square.and.pencil") { editing = true }.accessibilityIdentifier("entry.editContent")
-                            Button("action.delete", systemImage: "trash", role: .destructive) { showingDelete = true }.accessibilityIdentifier("entry.delete")
-                        } label: { Image(systemName: "ellipsis") }.accessibilityLabel(Text("entry.actions")).accessibilityIdentifier("entry.actions")
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
                         Button { renderShare() } label: { Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24) }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("entry.share").disabled(busy)
                     }
@@ -139,7 +132,8 @@ struct EntrySharePreview: View {
                 .background(Color(white: 0.94)).navigationTitle("entry.share").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { dismiss() }.accessibilityIdentifier("entry.shareClose")
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("entry.shareClose")
                     }
                 }
                 .safeAreaInset(edge: .bottom) {

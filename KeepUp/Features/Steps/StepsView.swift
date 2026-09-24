@@ -89,16 +89,8 @@ struct StepsView: View {
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button { dismiss() } label: { Image(systemName: "chevron.left") }
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
                             .accessibilityLabel(Text("action.close")).accessibilityIdentifier("steps.close")
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button("steps.targetSettings") { showingTarget = true }.accessibilityIdentifier("steps.target")
-                            Button("steps.recent") { showingHistory = true }.accessibilityIdentifier("steps.history")
-                            Button("steps.measurementInfo") { showingExplanation = true }
-                        } label: { Image(systemName: "ellipsis") }
-                            .accessibilityLabel(Text("entry.actions")).accessibilityIdentifier("steps.actions")
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
