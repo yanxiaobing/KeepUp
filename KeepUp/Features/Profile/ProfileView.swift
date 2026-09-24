@@ -209,19 +209,36 @@ struct ProfileView: View {
                         .clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2.5 * scale))
                         .overlay(alignment: .bottomTrailing) { Image(model.snapshot.profile?.isMale == true ? "personal_ic_boy" : "personal_ic_girl").resizable().frame(width: 20 * scale, height: 20 * scale) }
                 }.disabled(preparingFeature).offset(x: 20 * scale, y: -35 * scale)
+                Button { showPersonalInfo = true } label: {
+                    let nickname = model.snapshot.profile?.nickname ?? ""
+                    Text(nickname.isEmpty ? localized("profile.nickname", locale) : nickname)
+                        .font(.system(size: 20 * scale, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(preparingFeature)
+                .padding(.leading, 100 * scale)
+                .padding(.trailing, 20 * scale)
+                .offset(y: -27 * scale)
+                .accessibilityIdentifier("profile.nickname")
                 Text(verbatim: String(format: localized("profile.streakFormat %lld", locale), Int64(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))))
                     .font(.system(size: 13 * scale, weight: .bold)).foregroundStyle(.white).padding(.horizontal, 3 * scale)
                     .frame(height: 18 * scale).background(KeepUpStyle.accent, in: RoundedRectangle(cornerRadius: 2 * scale))
-                    .offset(x: 100 * scale, y: 17 * scale)
+                    .offset(x: 20 * scale, y: 50 * scale)
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     let profile = model.snapshot.profile
-                    let nickname = profile?.nickname ?? ""
-                    let name = nickname.isEmpty ? localized("profile.nickname", locale) : nickname
                     let days = ProfileDuration.dayCount(since: profile?.createdAt ?? context.date, now: context.date)
-                    Text(String(format: localized("profile.journey %@ %lld", locale), name, Int64(days)))
+                    Text(String(format: localized("profile.journey %lld", locale), Int64(days)))
                         .font(.system(size: 16 * scale)).lineLimit(1).minimumScaleFactor(0.7)
                         .accessibilityIdentifier("profile.journey")
-                }.padding(.horizontal, 20 * scale).frame(maxWidth: .infinity, alignment: .leading).offset(y: 50 * scale)
+                }
+                .padding(.leading, 100 * scale)
+                .padding(.trailing, 20 * scale)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .offset(y: 9 * scale)
             }.frame(height: 90 * scale)
         }.frame(height: 190 * scale)
     }

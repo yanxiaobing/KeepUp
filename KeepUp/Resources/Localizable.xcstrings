@@ -5821,19 +5821,19 @@
         }
       }
     },
-    "profile.journey %@ %lld" : {
+    "profile.journey %lld" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ · Day %2$lld together"
+            "value" : "Day %lld together"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ - 与你相遇的第%2$lld天"
+            "value" : "与你相遇的第%lld天"
           }
         }
       }

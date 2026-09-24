@@ -126,7 +126,7 @@ final class ProfileMembershipUITests: XCTestCase {
         XCTAssertFalse(app.textFields["info.nickname"].exists)
         app.buttons["tab.profile"].tap()
         XCTAssertTrue(app.staticTexts["profile.journey"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["profile.journey"].label.contains("KeepUp"))
+        XCTAssertEqual(app.buttons["profile.nickname"].label, "KeepUp")
         app.buttons["profile.premium"].tap()
         XCTAssertTrue(app.buttons["membership.restore"].waitForExistence(timeout: 5))
         screenshot("KeepUp-Membership-Chinese")
