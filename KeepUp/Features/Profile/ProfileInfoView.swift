@@ -81,14 +81,15 @@ struct ProfileInfoView: View {
                     }.id(metric).ignoresSafeArea()
                 }
             }.background {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+                LinearGradient(colors: [KeepUpStyle.theme, .white], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
             }
         }
         .navigationTitle("profile.personalInfo")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
-        .toolbarBackground(Color(.systemGroupedBackground), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.clear, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: closeAfterSaving) {

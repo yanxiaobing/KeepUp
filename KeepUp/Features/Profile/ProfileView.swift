@@ -33,7 +33,7 @@ struct ProfileView: View {
                         header(scale: scale)
                         VStack(spacing: 0) {
                             row("profile.premium", subtitle: membership.isPremium ? "membership.active" : "profile.premiumSubtitle", image: "setting_ic_suggestion", scale: scale)
-                            row("profile.ad", subtitle: "profile.adSubtitle", image: "setting_ic_week_pre", scale: scale)
+                            row("profile.ad", subtitle: "profile.adSubtitle", image: "setting_ic_week_pre", scale: scale, showsSeparator: advertising.consent.privacyOptionsRequired)
                             if advertising.consent.privacyOptionsRequired {
                                 Button("ads.privacyOptions", action: presentPrivacyOptions)
                                     .font(.system(size: 14 * scale)).frame(maxWidth: .infinity, minHeight: 50 * scale)
@@ -47,7 +47,7 @@ struct ProfileView: View {
                             row("profile.weightTarget", subtitle: model.snapshot.weightTarget.map { String(format: "%.1fkg", $0.target) } ?? "profile.noTarget", image: "setting_ic_weight_target", scale: scale)
                             row("profile.stepTarget", subtitle: StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges).map { String(format: localized("steps.goal %lld", locale), Int64($0)) } ?? "profile.noSteps", image: "setting_ic_walk_target", scale: scale)
                             row("profile.alarms", subtitle: nil, image: "setting_ic_manageclock", scale: scale)
-                            row("runningStats.title", subtitle: nil, image: "figure.run", scale: scale, systemImage: true)
+                            row("runningStats.title", subtitle: nil, image: "figure.run", scale: scale, systemImage: true, showsSeparator: false)
                         }
                         .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
                         .padding(.horizontal, 15 * scale)
@@ -224,9 +224,8 @@ struct ProfileView: View {
                 }.padding(.horizontal, 20 * scale).frame(maxWidth: .infinity, alignment: .leading).offset(y: 50 * scale)
             }.frame(height: 90 * scale)
         }.frame(height: 190 * scale)
-            .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3) }
     }
-    private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat, systemImage: Bool = false) -> some View {
+    private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat, systemImage: Bool = false, showsSeparator: Bool = true) -> some View {
         Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { requestFeature(.stepGoal) } else if title == "profile.weightTarget" { requestFeature(.weightTarget) } else if title == "profile.alarms" { requestFeature(.reminders) } else if title == "runningStats.title" { showRunningStatistics = true } else { pendingFeature = title } } label: {
             HStack(spacing: 15 * scale) {
                 Group {
@@ -241,7 +240,9 @@ struct ProfileView: View {
                 }
             }.padding(.horizontal, 15 * scale).frame(height: 50 * scale)
                 .contentShape(Rectangle())
-                .overlay(alignment: .bottom) { Color.black.opacity(0.15).frame(height: 1/3).padding(.leading, 15 * scale) }
+                .overlay(alignment: .bottom) {
+                    if showsSeparator { Color.black.opacity(0.15).frame(height: 1/3).padding(.horizontal, 15 * scale) }
+                }
         }.buttonStyle(.plain).disabled(preparingFeature).accessibilityIdentifier(title)
     }
 }
@@ -272,8 +273,15 @@ struct ProfileSettingsView: View {
                     .accessibilityIdentifier("settings.userAgreement")
             }
         }.listStyle(.insetGrouped)
-        .toolbarBackground(Color(.systemGroupedBackground), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .scrollContentBackground(.hidden)
+        .scrollIndicators(.hidden)
+        .scrollEdgeEffectHidden(true, for: .all)
+        .background {
+            LinearGradient(colors: [KeepUpStyle.theme, .white], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        }
+        .toolbarBackground(.clear, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .sheet(item: $selectedLegalDocument) { document in
             LegalDocumentSafariView(document: document, locale: locale)
         }.navigationTitle("profile.settings").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
@@ -292,7 +300,18 @@ struct LanguageSettingsView: View {
                     }
                 }.accessibilityIdentifier("language.\(item.rawValue)")
             }
-        }.navigationTitle("settings.language").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .scrollIndicators(.hidden)
+        .scrollEdgeEffectHidden(true, for: .all)
+        .background {
+            LinearGradient(colors: [KeepUpStyle.theme, .white], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        }
+        .toolbarBackground(.clear, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .navigationTitle("settings.language").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
     }
 }
 
