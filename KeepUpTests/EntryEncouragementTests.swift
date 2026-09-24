@@ -168,3 +168,28 @@ private func encouragementTarget(initial: Double = 70, target: Double = 65, star
         }
     }
 }
+
+@Test @MainActor func wakePosterRendersEarlyAndMissedLayoutsInBothLanguages() throws {
+    let day = LocalDay(rawValue: "2026-09-20")!
+    let card = OriginalCatalog.card(63)!
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = .gmt
+    for language in ["zh_Hans_CN", "en_US"] {
+        for early in [true, false] {
+            let time = calendar.startOfDay(for: day.date(in: .gmt)).addingTimeInterval((early ? 7 : 10) * 3600)
+            let entry = CheckInEntry(id: "wake-preview", cardID: card.id, day: day, timeZoneID: "GMT",
+                                     createdAt: time, quantity: nil, unit: card.unit, note: "")
+            let record = WakeUpRecord(time: time, recordedAt: time, timeZoneID: "GMT")
+            #expect(record.isEarly == early)
+            let locale = Locale(identifier: language)
+            let poster = WakeUpPoster(entry: entry, record: record, entries: [entry], wakes: [entry.id: record], locale: locale)
+                .frame(width: 375, height: 700)
+                .environment(\.locale, locale).environment(\.colorScheme, .light)
+            let renderer = ImageRenderer(content: poster)
+            renderer.scale = 2
+            let image = try #require(renderer.uiImage)
+            #expect(image.size.width == 375 && image.size.height == 700)
+            Attachment.record(Array(try #require(image.pngData())), named: "wake-\(early ? "early" : "missed")-\(language).png")
+        }
+    }
+}

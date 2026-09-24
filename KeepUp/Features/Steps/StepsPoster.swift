@@ -80,23 +80,22 @@ struct StepsPoster: View {
 struct StepsOriginalDetails: View {
     let data: StepsPresentation
     var isMale = false
+    var showsBackground = true
     @Environment(\.locale) private var locale
     private var reached: Bool { data.steps.map { $0 >= (data.goal ?? Int.max) } ?? false }
 
     var body: some View {
         GeometryReader { geometry in
-            let scale = geometry.size.width / 375
+            let scale = min(geometry.size.width / 375, geometry.size.height / 460)
             ZStack(alignment: .bottom) {
-                Color.white
-                Image(isMale ? "card_details_walk_male" : "card_details_walk_female")
-                    .resizable().scaledToFit().opacity(0.2).accessibilityHidden(true)
+                if showsBackground { CardDetailThemeBackground() }
                 VStack(spacing: 0) {
                     VStack(spacing: 16 * scale) {
                         ZStack {
-                            Circle().stroke(Color(hex: 0x222222).opacity(0.1), lineWidth: 2)
+                            Circle().stroke(CalendarTheme.selected.detailTextColor.opacity(0.2), lineWidth: 2)
                             if let steps = data.steps, let goal = data.goal, goal > 0 {
                                 Circle().trim(from: 0, to: min(1, CGFloat(steps) / CGFloat(goal)))
-                                    .stroke(.white, style: StrokeStyle(lineWidth: 2, lineCap: .round)).rotationEffect(.degrees(-90))
+                                    .stroke(CalendarTheme.selected.detailTextColor, style: StrokeStyle(lineWidth: 2, lineCap: .round)).rotationEffect(.degrees(-90))
                             }
                             VStack(spacing: 6 * scale) {
                                 Text(reached ? localized("steps.checkInSuccess", locale) : data.day == LocalDay(date: .now) ? localized("steps.today", locale) : data.day.rawValue)
@@ -112,8 +111,7 @@ struct StepsOriginalDetails: View {
                         Text(StepsDistanceComparison.text(meters: data.distance, locale: locale))
                             .font(.system(size: 12 * scale)).lineLimit(1).minimumScaleFactor(0.7)
                     }.padding(.top, 16 * scale).frame(maxWidth: .infinity).frame(height: 190 * scale, alignment: .top)
-                        .foregroundStyle(.white)
-                        .background(LinearGradient(stops: [.init(color: Color(hex: 0x66E8D6), location: 0.2), .init(color: Color(hex: 0x3EABD3), location: 1)], startPoint: .top, endPoint: .bottom))
+                        .foregroundStyle(CalendarTheme.selected.detailTextColor)
                     HStack(alignment: .top, spacing: 0) {
                         metric(data.distance.map { ($0 / 1000).formatted(.number.precision(.fractionLength(2)).locale(locale)) } ?? "—", label: "unit.kilometers", identifier: "steps.distance", scale: scale)
                         metric(data.estimatedKilocalories.map(String.init) ?? "—", label: "steps.kcal", identifier: "steps.energy", scale: scale)
@@ -121,15 +119,15 @@ struct StepsOriginalDetails: View {
                     }.padding(.horizontal, 15 * scale).padding(.top, 26 * scale).frame(height: 110 * scale, alignment: .top)
                     StepsOriginalChart(data: data).padding(.horizontal, 15 * scale).frame(height: 160 * scale)
                     Spacer(minLength: 0)
-                }
-            }
+                }.frame(width: 375 * scale)
+            }.frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
     private func metric(_ value: String, label: String, identifier: String, scale: CGFloat) -> some View {
         VStack(spacing: 7 * scale) {
             Text(value).font(.custom("DINCondensedC", size: 33 * scale)).frame(height: 35 * scale)
-                .foregroundStyle(Color(hex: 0x69696F)).accessibilityIdentifier(identifier)
-            Text(LocalizedStringKey(label)).font(.system(size: 12 * scale)).foregroundStyle(Color(hex: 0xB2B2B2))
+                .foregroundStyle(Color(white: 0.16)).accessibilityIdentifier(identifier)
+            Text(LocalizedStringKey(label)).font(.system(size: 12 * scale)).foregroundStyle(Color(white: 0.3))
         }.lineLimit(1).minimumScaleFactor(0.6).frame(maxWidth: .infinity)
     }
 }
@@ -181,7 +179,7 @@ struct StepsOriginalChart: View {
                         .frame(maxWidth: .infinity).offset(y: top + plotHeight / 3)
                         .accessibilityIdentifier("steps.intradayMissing")
                 }
-            }.foregroundStyle(Color(hex: 0xB2B2B2))
+            }.foregroundStyle(Color(white: 0.3))
         }.accessibilityIdentifier("steps.hourlyChart")
     }
 }
@@ -193,26 +191,30 @@ struct StepsOriginalCard: View {
     var body: some View {
         GeometryReader { geometry in
             let scale = geometry.size.width / 375
+            let cityHeight = geometry.size.width * 272 / 750
+            let artworkScale = scale > 1 ? 1.2 : scale < 1 ? 0.9 : 1.05
             ZStack(alignment: .top) {
-                CalendarTheme.selected.color.opacity(0.8)
-                Image("card_bg_banana").resizable().accessibilityHidden(true)
-                Circle().fill(Color(hex: 0x222222).opacity(0.05))
+                CardDetailThemeBackground()
+                Circle().fill(CalendarTheme.selected.color.opacity(0.10))
                     .frame(width: 272 * scale, height: 272 * scale).offset(y: 98)
                 VStack(spacing: 5) {
                     Text(String(format: localized("steps.walked %@", locale), data.steps.map { $0.formatted(.number.locale(locale)) } ?? "—"))
                         .font(.system(size: 24, weight: .bold)).accessibilityIdentifier("steps.poster.count")
                     Text(StepsDistanceComparison.text(meters: data.distance, locale: locale)).font(.system(size: 13))
-                }.lineLimit(1).minimumScaleFactor(0.6).padding(.horizontal, 15).padding(.top, 25)
+                }.foregroundStyle(CalendarTheme.selected.detailTextColor)
+                    .lineLimit(1).minimumScaleFactor(0.6).padding(.horizontal, 15).padding(.top, 25)
                 Image("card_icon_walk_complete").resizable().scaledToFit()
-                    .frame(width: 330 * (scale > 1 ? 1.4 : scale < 1 ? 0.92 : 1.2), height: 390 * (scale > 1 ? 1.4 : scale < 1 ? 0.92 : 1.2))
-                    .position(x: geometry.size.width / 2, y: (geometry.size.height - 46) / 2 - 10).accessibilityHidden(true)
-                VStack {
-                    Spacer()
-                    Text(verbatim: encouragement ?? localized("entry.encouragement.general", locale)).font(.system(size: 17 * scale, weight: .bold))
-                        .multilineTextAlignment(.center).lineSpacing(5).padding(.horizontal, 30 * scale)
-                        .frame(height: 120 * scale)
-                }
-            }.foregroundStyle(.white).clipped()
+                    .frame(width: 330 * artworkScale, height: 390 * artworkScale)
+                    .scaleEffect(0.8)
+                    .position(x: geometry.size.width / 2, y: (geometry.size.height - cityHeight) / 2 - 10).accessibilityHidden(true)
+            }.overlay(alignment: .bottom) {
+                Text(verbatim: encouragement ?? localized("entry.encouragement.general", locale))
+                    .font(.system(size: 17 * scale, weight: .bold)).foregroundStyle(Color(white: 0.16))
+                    .multilineTextAlignment(.center).lineSpacing(5)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: max(0, geometry.size.width - 60 * scale))
+                    .padding(.bottom, cityHeight + 16 * scale)
+            }.clipped()
         }
     }
 }

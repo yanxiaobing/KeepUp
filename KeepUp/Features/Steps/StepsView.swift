@@ -45,19 +45,22 @@ struct StepsView: View {
         NavigationStack {
             GeometryReader { geometry in
                 TabView(selection: $selectedStyle) {
-                    ScrollView {
+                    ZStack {
+                        CardDetailThemeBackground().ignoresSafeArea(edges: .bottom)
                         VStack(spacing: 0) {
-                            StepsOriginalDetails(data: presentation, isMale: model.snapshot.profile?.isMale == true)
-                                .frame(height: max(460 * geometry.size.width / 375, geometry.size.height))
+                            StepsOriginalDetails(data: presentation, isMale: model.snapshot.profile?.isMale == true, showsBackground: false)
+                                .frame(maxHeight: 460 * geometry.size.width / 375).layoutPriority(1)
                             if !controller.loadingIntraday && controller.state == .ready && presentation.intraday?.isComplete != true {
                                 Text("steps.intradayPartial").font(.caption).foregroundStyle(.secondary)
                                     .accessibilityIdentifier("steps.intradayPartial")
                                 Button("steps.retry") { refresh() }.padding(12).accessibilityIdentifier("steps.retryIntraday")
                             }
-                        }
-                    }.safeAreaInset(edge: .bottom, spacing: 0) {
-                        if controller.state != .ready && controller.state != .loading || controller.storageFailed {
-                            status.padding(16).frame(maxWidth: .infinity).background(.white.opacity(0.95))
+                            if controller.state != .ready && controller.state != .loading || controller.storageFailed {
+                                status.padding(16).frame(maxWidth: .infinity).background(.white.opacity(0.95))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Spacer(minLength: 0)
+                            Color.clear.frame(height: geometry.size.width * 272 / 750 + 16)
                         }
                     }.tag(StepsPosterStyle.details)
                     StepsOriginalCard(data: presentation, encouragement: encouragement)
@@ -76,6 +79,7 @@ struct StepsView: View {
                         }.padding(.trailing, 15)
                     }
             }.background(.white)
+                .ignoresSafeArea(edges: .bottom)
                 .navigationTitle(Text(verbatim: String(format: localized("entry.detailTitle %@", locale), localized("steps.title", locale))))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
