@@ -7,6 +7,8 @@ struct RunningDetailView: View {
     var card: HabitCard? = nil
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @State private var page = 0
+    @State private var showingMap = false
     @State private var editing = false
     @State private var sharing = false
     @State private var confirmingDelete = false
@@ -19,9 +21,12 @@ struct RunningDetailView: View {
 
     var body: some View {
         NavigationStack {
-            RunningSessionSummary(session: session, content: currentEntry.map { model.snapshot.publishedContent(for: $0) })
-                .navigationTitle("running.result")
+            RunningResultPages(session: session, content: currentEntry.map { model.snapshot.publishedContent(for: $0) },
+                               profile: model.snapshot.profile, page: $page, showingMap: $showingMap)
+                .navigationTitle(session.kind == .cycling ? "runningDetail.cyclingTitle" : "runningDetail.runningTitle")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(CalendarTheme.selected.color, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("action.close") { dismiss() }.accessibilityIdentifier("running.result.close")
@@ -47,7 +52,8 @@ struct RunningDetailView: View {
                 .fullScreenCover(isPresented: $editing) {
                     if let currentEntry, let card { EntryContentEditor(entry: currentEntry, card: card) }
                 }
-                .sheet(isPresented: $sharing) { RunningShareView(session: session) }
+                .sheet(isPresented: $sharing) { RunningShareView(session: session, style: RunningShareStyle(page: page), profile: model.snapshot.profile) }
+                .fullScreenCover(isPresented: $showingMap) { RunningDetailMapView(session: session) }
                 .confirmationDialog("entry.deleteConfirmation", isPresented: $confirmingDelete, titleVisibility: .visible) {
                     Button("action.delete", role: .destructive) { Task { await deleteRecord() } }
                         .accessibilityIdentifier("running.detail.confirmDelete")
@@ -70,6 +76,40 @@ struct RunningDetailView: View {
     }
 }
 
+struct RunningResultPages: View {
+    let session: RunningSession
+    var content: EntryContent? = nil
+    var profile: UserProfile? = nil
+    @Binding var page: Int
+    @Binding var showingMap: Bool
+
+    var body: some View {
+        TabView(selection: $page) {
+            RunningResultOverview(session: session, showingMap: $showingMap).tag(0)
+            RunningSessionSummary(session: session, content: content).tag(1)
+            if session.kind != .cycling {
+                RunningResultCard(session: session, profile: profile).tag(2)
+            }
+        }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .ignoresSafeArea(.container, edges: .bottom)
+            .overlay(alignment: .topTrailing) {
+                HStack(spacing: 0) {
+                    ForEach(0..<(session.kind == .cycling ? 2 : 3), id: \.self) { index in
+                        Button { withAnimation { page = index } } label: {
+                            Circle().fill(page == index ? Color(hex: 0x222222) : Color(hex: 0x98989E))
+                                .frame(width: 6, height: 6).frame(width: 24, height: 30)
+                        }
+                        .accessibilityLabel(Text(LocalizedStringKey(index == 0 ? (session.kind.usesGPS ? "runningDetail.routePage" : "running.result") : index == 1 ? "runningDetail.detailsPage" : "runningDetail.cardPage")))
+                        .accessibilityIdentifier("running.page.\(index)")
+                        .accessibilityAddTraits(page == index ? .isSelected : [])
+                    }
+                }.padding(.trailing, 7)
+            }
+    }
+}
+
+// The original result controller separates the route, statistics and illustrated card.
 struct RunningSessionSummary: View {
     let session: RunningSession
     var content: EntryContent? = nil
@@ -79,80 +119,321 @@ struct RunningSessionSummary: View {
         let metrics = RunningMetrics(session: session)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .center) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale))
-                            .font(.system(size: 50, weight: .light)).minimumScaleFactor(0.6)
-                            .accessibilityIdentifier("running.result.distance")
-                        Text("running.kilometers").font(.system(size: 14)).foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 8)
-                    Text(LocalizedStringKey(session.kind.titleKey)).font(.system(size: 13, weight: .medium))
-                        .padding(.horizontal, 14).padding(.vertical, 10)
-                        .foregroundStyle(.white).background(RunningDetailStyle.color(session.kind), in: Capsule())
-                        .accessibilityIdentifier("running.result.kind")
-                }
-                Text(session.startedAt, format: .dateTime.year().month().day().hour().minute())
-                    .font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 4)
-                HStack(spacing: 12) {
-                    resultMetric(RunningDisplay.duration(metrics.elapsedSeconds), label: "running.duration")
-                    if session.kind == .cycling {
-                        resultMetric(RunningDetailStyle.number(metrics.averageSpeedKilometersPerHour, locale: locale, digits: 1), label: "running.averageSpeed")
-                    } else {
-                        resultMetric(metrics.averagePaceSecondsPerKilometer.map(RunningDisplay.paceSeconds) ?? "—", label: "running.averagePace")
-                    }
-                }.padding(.vertical, 22)
-                HStack(spacing: 12) {
-                    resultMetric(metrics.roundedEnergyKilocalories.map { $0.formatted(.number.locale(locale)) } ?? "—", label: "runningDetail.energy", identifier: "running.result.energy")
-                    resultMetric(RunningDetailStyle.number(metrics.maximumSpeedKilometersPerHour, locale: locale, digits: 1), label: "runningDetail.maximumSpeedUnit", identifier: "running.result.maximumSpeed")
-                }.padding(.bottom, 22)
-                if session.kind.usesGPS {
-                    RunningRouteMap(segments: session.segments, showsUser: false)
-                        .frame(height: 270).clipShape(RoundedRectangle(cornerRadius: 8))
-                        .accessibilityIdentifier("running.result.route")
-                    if session.segments.allSatisfy({ $0.isEmpty }) {
-                        Text("running.noRoute").font(.system(size: 13)).foregroundStyle(.secondary).padding(.top, 10)
-                    }
-                } else {
-                    HStack {
-                        Text("running.steps")
-                        Spacer()
-                        Text(session.steps.formatted(.number.locale(locale))).monospacedDigit().accessibilityIdentifier("running.result.steps")
-                    }.padding(.vertical, 18)
-                    HStack {
-                        Text("running.averageCadence")
-                        Spacer()
-                        Text(RunningDisplay.cadence(steps: session.steps, seconds: metrics.elapsedSeconds, locale: locale))
-                            .monospacedDigit().accessibilityIdentifier("running.result.cadence")
-                    }.padding(.bottom, 18)
-                    Text("running.indoorDistanceHint").font(.system(size: 13)).foregroundStyle(.secondary)
-                }
-                RunningSplitsSection(session: session, metrics: metrics)
-                Divider()
-                RunningChartsSection(session: session, metrics: metrics)
+                RunningDetailHeader(session: session, metrics: metrics)
+                RunningSplitsSection(session: session, metrics: metrics).padding(.horizontal, 15)
+                RunningChartsSection(session: session, metrics: metrics).padding(.horizontal, 15)
                 if let content, !content.isEmpty {
-                    Divider().padding(.vertical, 16)
-                    Text("runningDetail.memory").font(.system(size: 22, weight: .medium)).padding(.bottom, 14)
-                    if !content.text.isEmpty {
-                        Text(verbatim: content.text).font(.system(size: 16)).textSelection(.enabled)
-                            .accessibilityIdentifier("running.detail.text").padding(.bottom, 16)
-                    }
-                    if let data = content.photo, let image = UIImage(data: data) {
-                        Image(uiImage: image).resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 8))
-                            .accessibilityLabel(Text("content.photo")).accessibilityIdentifier("running.detail.photo")
-                    }
+                    VStack(alignment: .leading, spacing: 16) {
+                        Divider()
+                        Text("runningDetail.memory").font(.system(size: 22))
+                        if !content.text.isEmpty {
+                            Text(verbatim: content.text).font(.system(size: 16)).textSelection(.enabled)
+                                .accessibilityIdentifier("running.detail.text")
+                        }
+                        if let data = content.photo, let image = UIImage(data: data) {
+                            Image(uiImage: image).resizable().scaledToFit()
+                                .accessibilityLabel(Text("content.photo")).accessibilityIdentifier("running.detail.photo")
+                        }
+                    }.padding(15)
                 }
-            }.padding(22)
+            }.padding(.bottom, 20)
         }.background(.white).foregroundStyle(Color(hex: 0x222222))
             .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
             .accessibilityIdentifier("running.result")
     }
+}
 
-    private func resultMetric(_ value: String, label: LocalizedStringKey, identifier: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(verbatim: value).font(.system(size: 24, weight: .light)).monospacedDigit()
-                .accessibilityIdentifier(identifier ?? "")
-            Text(label).font(.system(size: 12)).foregroundStyle(.secondary)
+struct RunningDetailHeader: View {
+    let session: RunningSession
+    let metrics: RunningMetrics
+    @Environment(\.locale) private var locale
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale))
+                        .font(.custom("DINCondensedC", size: 50)).accessibilityIdentifier("running.result.distance")
+                    Text("running.kilometers").font(.system(size: 16)).foregroundStyle(Color(hex: 0x69696F))
+                }.padding(.leading, 15)
+                Spacer(minLength: 8)
+                Text(LocalizedStringKey(session.kind.titleKey)).font(.system(size: 15))
+                    .padding(.horizontal, 16).frame(height: 40).foregroundStyle(.white)
+                    .background(RunningDetailStyle.color(session.kind), in: UnevenRoundedRectangle(topLeadingRadius: 20, bottomLeadingRadius: 20))
+                    .accessibilityIdentifier("running.result.kind")
+            }.padding(.top, 15)
+            Text(RunningDetailStyle.date(session, locale: locale)).font(.system(size: 14))
+                .foregroundStyle(Color(hex: 0x98989E)).padding(.horizontal, 15)
+            HStack(alignment: .top) {
+                metric(RunningDisplay.duration(metrics.elapsedSeconds), "running.duration", alignment: .leading)
+                metric(RunningDetailStyle.pace(session, metrics: metrics, locale: locale), session.kind == .cycling ? "runningDetail.speed" : "runningDetail.pace", alignment: .center)
+                metric(metrics.roundedEnergyKilocalories.map { $0.formatted(.number.locale(locale)) } ?? "—", "runningDetail.kcal", alignment: .trailing, identifier: "running.result.energy")
+            }.padding(.horizontal, 15).padding(.top, 16).padding(.bottom, 20)
+            Divider().padding(.horizontal, 15)
+        }
+    }
+    private func metric(_ value: String, _ title: LocalizedStringKey, alignment: HorizontalAlignment, identifier: String = "") -> some View {
+        VStack(alignment: alignment, spacing: 3) {
+            Text(value).font(.custom("DINCondensedC", size: 22)).lineLimit(1).minimumScaleFactor(0.7).accessibilityIdentifier(identifier)
+            Text(title).font(.system(size: 14)).foregroundStyle(Color(hex: 0x98989E))
+        }.frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : alignment == .trailing ? .trailing : .center)
+    }
+}
+
+struct RunningResultOverview: View {
+    let session: RunningSession
+    @Binding var showingMap: Bool
+    var snapshotImage: UIImage? = nil
+    var exporting = false
+    @Environment(\.locale) private var locale
+    var body: some View {
+        let metrics = RunningMetrics(session: session)
+        GeometryReader { geometry in
+            let headerHeight = geometry.size.width * 272 / 750
+            ZStack(alignment: .topLeading) {
+                CalendarTheme.selected.color.ignoresSafeArea(edges: .bottom)
+                CardDetailThemeBackground().frame(height: headerHeight)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale)).font(.custom("DINCondensedC", size: 45))
+                        .accessibilityIdentifier("running.overview.distance")
+                    Text("Km").font(.system(size: 18, weight: .bold))
+                }.foregroundStyle(Color(hex: 0x222222).opacity(0.8)).padding(.leading, 25).padding(.top, 30)
+                VStack(spacing: 0) {
+                    HStack(spacing: 8) {
+                        stripMetric("run_result_speed", RunningDetailStyle.pace(session, metrics: metrics, locale: locale))
+                        Spacer(minLength: 0)
+                        stripMetric("run_result_time", RunningDisplay.duration(metrics.elapsedSeconds))
+                        Spacer(minLength: 0)
+                        stripMetric("run_result_calories", metrics.roundedEnergyKilocalories.map(String.init) ?? "—")
+                        Text("runningDetail.kcal").font(.system(size: 10))
+                    }.foregroundStyle(.white).padding(.horizontal, 12).frame(height: 40).background(Color(white: 44/255).opacity(0.8))
+                    ZStack(alignment: .bottomTrailing) {
+                        if session.kind.usesGPS {
+                            Group {
+                                if let snapshotImage {
+                                    Image(uiImage: snapshotImage).resizable().scaledToFill().clipped()
+                                } else if exporting {
+                                    Color(hex: 0xF6F6F6)
+                                } else {
+                                    RunningRouteMap(segments: session.segments, resultAverageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
+                                }
+                            }.allowsHitTesting(false)
+                                .overlay {
+                                    if session.segments.allSatisfy({ $0.isEmpty }) {
+                                        Text("running.noRoute").font(.system(size: 14)).padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                                    }
+                                }
+                                .overlay {
+                                    Button { showingMap = true } label: { Color.clear.contentShape(Rectangle()) }
+                                        .accessibilityLabel(Text("runningDetail.openMap")).accessibilityIdentifier("running.map.open")
+                                }
+                        } else {
+                            RunningIndoorResultGraph(session: session, metrics: metrics).padding(20)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(hex: 0xF6F6F6))
+                        }
+                        HStack(spacing: 4) {
+                            Text(LocalizedStringKey(session.kind.titleKey)).padding(.horizontal, 5).padding(.vertical, 3)
+                                .background(RunningDetailStyle.color(session.kind), in: Capsule())
+                            Text(RunningDetailStyle.date(session, locale: locale)).padding(.trailing, 5)
+                        }.font(.system(size: 9)).foregroundStyle(.white).background(.black.opacity(0.5), in: Capsule())
+                            .padding(.trailing, 9).padding(.bottom, session.kind.usesGPS ? 42 : 12)
+                    }
+                }.clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 15, bottomTrailingRadius: 15))
+                    .padding(.horizontal, 15).padding(.top, headerHeight).padding(.bottom, 25)
+            }
+        }.accessibilityElement(children: .contain).accessibilityIdentifier("running.overview")
+    }
+    private func stripMetric(_ image: String, _ value: String) -> some View {
+        HStack(spacing: 5) {
+            Image(image).resizable().scaledToFit().frame(width: 16, height: 18)
+            Text(value).font(.custom("DINCondensedC", size: 19)).lineLimit(1).minimumScaleFactor(0.6)
+        }
+    }
+}
+
+private struct RunningIndoorResultGraph: View {
+    let session: RunningSession
+    let metrics: RunningMetrics
+    @Environment(\.locale) private var locale
+    private var distanceByTime: [Date: Double] {
+        Dictionary(session.indoorSegments.flatMap { $0 }.map { ($0.timestamp, $0.distanceMeters / 1_000) }, uniquingKeysWith: { _, last in last })
+    }
+    var body: some View {
+        let distances = distanceByTime
+        let colors = [Color(hex: 0xFF8366), Color(hex: 0xFFDE00), Color(hex: 0x6ADFAD)]
+        VStack(spacing: 6) {
+            GeometryReader { geometry in
+                let height = geometry.size.height
+                let width = geometry.size.width
+                let maximum = max(0.01, metrics.maximumSpeedKilometersPerHour ?? 0)
+                let distance = max(0.001, metrics.distanceMeters / 1_000)
+                ZStack(alignment: .topLeading) {
+                    Path { path in
+                        for tick in 0...4 {
+                            let x = width * Double(tick) / 4
+                            path.move(to: CGPoint(x: x, y: 0))
+                            path.addLine(to: CGPoint(x: x, y: height))
+                        }
+                    }.stroke(Color(hex: 0xBAB9B9).opacity(0.4), lineWidth: 1)
+                    ForEach(Array(Dictionary(grouping: RunningChartSampling.points(metrics.speedSeries), by: \.segmentIndex).keys.sorted()), id: \.self) { segment in
+                        let points = RunningChartSampling.points(metrics.speedSeries).filter { $0.segmentIndex == segment }.map {
+                            CGPoint(x: min(width, max(0, (distances[$0.timestamp] ?? 0) / distance * width)),
+                                    y: height - min(maximum, max(0, $0.value)) / maximum * (height - 25))
+                        }
+                        RunningResultCurve(points: points, baseline: height, filled: true)
+                            .fill(LinearGradient(colors: colors.map { $0.opacity(0.12) }, startPoint: .top, endPoint: .bottom))
+                        RunningResultCurve(points: points, baseline: height, filled: false)
+                            .stroke(LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("runningDetail.maximumSpeed").font(.system(size: 11))
+                        Text(RunningDetailStyle.number(metrics.maximumSpeedKilometersPerHour.map { $0 / 3.6 }, locale: locale, digits: 2) + " m/s")
+                            .font(.custom("DINCondensedC", size: 12))
+                    }.foregroundStyle(Color(hex: 0x222222).opacity(0.4)).padding(.leading, 3)
+                    if metrics.speedSeries.isEmpty {
+                        Text("runningDetail.noSamples").font(.system(size: 14)).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }.frame(height: 255)
+            HStack {
+                ForEach(0...4, id: \.self) { tick in
+                    if tick > 0 { Spacer(minLength: 0) }
+                    Text(RunningDetailStyle.number(metrics.distanceMeters / 1_000 * Double(tick) / 4, locale: locale, digits: 2) + "km")
+                }
+            }.font(.custom("DINCondensedC", size: 12)).foregroundStyle(Color(hex: 0x222222).opacity(0.4))
+        }.accessibilityElement(children: .combine).accessibilityIdentifier("running.chart.speed")
+    }
+}
+
+/// The original curve uses horizontal tangents. Each measured segment remains a separate path.
+struct RunningResultCurve: Shape {
+    let points: [CGPoint]
+    let baseline: CGFloat
+    let filled: Bool
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        guard let first = points.first, let last = points.last else { return path }
+        path.move(to: first)
+        for (previous, point) in zip(points, points.dropFirst()) {
+            let x = (previous.x + point.x) / 2
+            path.addCurve(to: point, control1: CGPoint(x: x, y: previous.y), control2: CGPoint(x: x, y: point.y))
+        }
+        if filled {
+            path.addLine(to: CGPoint(x: last.x, y: baseline))
+            path.addLine(to: CGPoint(x: first.x, y: baseline))
+            path.closeSubpath()
+        }
+        return path
+    }
+}
+
+struct RunningResultCard: View {
+    let session: RunningSession
+    let profile: UserProfile?
+    @Environment(\.locale) private var locale
+    var body: some View {
+        let metrics = RunningMetrics(session: session)
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                LinearGradient(colors: [Color(hex: 0x7DD1CA), Color(hex: 0xDAF1FD)], startPoint: .top, endPoint: .bottom)
+                Image("running_result_head_bg").resizable()
+                    .frame(width: geometry.size.width, height: geometry.size.height * 375 / geometry.size.width)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                VStack(spacing: 0) {
+                    Group {
+                        if let data = profile?.avatar, let image = UIImage(data: data) {
+                            Image(uiImage: image).resizable().scaledToFill()
+                        } else { Image(systemName: "person.crop.circle.fill").resizable().foregroundStyle(.white.opacity(0.8)) }
+                    }.frame(width: 73, height: 73).clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2))
+                    Text(profile?.nickname ?? "").font(.system(size: 12)).frame(height: 12).padding(.top, 14)
+                    Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale))
+                        .font(.custom("DINCondensedC", size: 50))
+                        .overlay(alignment: .bottomTrailing) {
+                            Text("Km").font(.system(size: 18, weight: .bold)).fixedSize()
+                                .alignmentGuide(.trailing) { _ in -3 }.padding(.bottom, 8)
+                        }.padding(.top, 26)
+                    ZStack {
+                        Rectangle().frame(width: 1, height: 18)
+                        Text(RunningDetailStyle.pace(session, metrics: metrics, locale: locale))
+                            .overlay(alignment: .leading) {
+                                Image("run_result_speed_02").resizable().scaledToFit().frame(width: 16, height: 14)
+                                    .alignmentGuide(.leading) { $0.width + 7 }
+                            }.offset(x: -53)
+                        HStack(spacing: 7) {
+                            Image("run_result_time_02").resizable().scaledToFit().frame(width: 15, height: 17)
+                            Text(RunningDisplay.duration(metrics.elapsedSeconds))
+                        }.frame(width: geometry.size.width / 2 - 47, alignment: .leading)
+                            .offset(x: geometry.size.width / 4 + 23.5)
+                    }.font(.custom("DINCondensedC", size: 22)).frame(height: 22).padding(.top, 22)
+                }.padding(.top, 65).foregroundStyle(Color(hex: 0x222222).opacity(0.8))
+            }
+        }.accessibilityElement(children: .contain).accessibilityIdentifier("running.card")
+    }
+}
+
+struct RunningDetailMapView: View {
+    let session: RunningSession
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+    @State private var showsKilometers = false
+    @State private var showsPlaces = true
+    @State private var resetCamera = 0
+
+    // Mark the measured sample that first crosses each complete kilometer. Never bridge pauses.
+    private var kilometerPoints: [RunningPoint] {
+        var distance = 0.0
+        var points: [RunningPoint] = []
+        for segment in session.segments {
+            for (previous, point) in zip(segment, segment.dropFirst()) {
+                distance += previous.distance(to: point)
+                while distance >= Double(points.count + 1) * 1_000, points.count < session.splits.count {
+                    points.append(point)
+                }
+            }
+        }
+        return points
+    }
+    var body: some View {
+        let metrics = RunningMetrics(session: session)
+        NavigationStack {
+            RunningRouteMap(segments: session.segments, kilometerPoints: showsKilometers ? kilometerPoints : [],
+                            showsPlaces: showsPlaces, resetCamera: resetCamera, resultAverageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
+                .overlay(alignment: .bottomTrailing) {
+                    VStack(spacing: 12) {
+                        if !kilometerPoints.isEmpty {
+                            Button { showsKilometers.toggle() } label: { Image(systemName: showsKilometers ? "mappin.circle.fill" : "mappin.circle") }
+                                .accessibilityLabel(Text("runningDetail.kilometerMarkers")).accessibilityValue(Text(showsKilometers ? "runningDetail.visible" : "runningDetail.hidden"))
+                                .accessibilityIdentifier("running.map.kilometers")
+                        }
+                        Button { resetCamera += 1 } label: { Image(systemName: "scope") }
+                            .accessibilityLabel(Text("runningDetail.fitRoute")).accessibilityIdentifier("running.map.fit")
+                        Button { showsPlaces.toggle() } label: { Image(systemName: showsPlaces ? "mappin.and.ellipse" : "map") }
+                            .accessibilityLabel(Text("runningDetail.places")).accessibilityValue(Text(showsPlaces ? "runningDetail.visible" : "runningDetail.hidden"))
+                            .accessibilityIdentifier("running.map.places")
+                    }.buttonStyle(.borderedProminent).tint(.white).foregroundStyle(Color(hex: 0x333333)).font(.system(size: 20))
+                        .padding(15)
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale)).font(.custom("DINCondensedC", size: 45))
+                            Text("running.kilometers").font(.system(size: 14))
+                        }
+                        HStack(alignment: .top, spacing: 16) {
+                            mapMetric(RunningDisplay.duration(metrics.elapsedSeconds), "running.duration")
+                            mapMetric(RunningDetailStyle.pace(session, metrics: metrics, locale: locale), session.kind == .cycling ? "runningDetail.speed" : "runningDetail.pace")
+                            mapMetric(metrics.roundedEnergyKilocalories.map(String.init) ?? "—", "runningDetail.kcal")
+                        }
+                    }.padding(20).foregroundStyle(.white).frame(maxWidth: .infinity, alignment: .leading).background(Color(hex: 0x333333))
+                }
+                .navigationTitle(RunningDetailStyle.date(session, locale: locale)).navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { dismiss() }.accessibilityIdentifier("running.map.close") } }
+        }
+    }
+    private func mapMetric(_ value: String, _ title: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(value).font(.custom("DINCondensedC", size: 22)).lineLimit(1).minimumScaleFactor(0.7)
+            Text(title).font(.system(size: 12)).foregroundStyle(.white.opacity(0.7))
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -168,6 +449,36 @@ struct RunningRouteMap: View {
     var followsUser: Bool = false
     var isPreparation: Bool = false
     var avatarData: Data? = nil
+    var kilometerPoints: [RunningPoint] = []
+    var showsPlaces = false
+    var resetCamera = 0
+
+    var resultAverageSpeed: Double? = nil
+
+    private struct ColoredSegment: Identifiable {
+        let id: Int
+        var points: [RunningPoint]
+        let hex: UInt32
+    }
+    private var coloredSegments: [ColoredSegment] {
+        guard let average = resultAverageSpeed else { return [] }
+        var result: [ColoredSegment] = []
+        for segment in segments {
+            var current: ColoredSegment?
+            for (previous, point) in zip(segment, segment.dropFirst()) {
+                let duration = point.timestamp.timeIntervalSince(previous.timestamp)
+                let speed = duration > 0 ? previous.distance(to: point) / duration : 0
+                let hex: UInt32 = speed <= 1.94 ? 0xA2E36E : speed > average ? 0xFF9457 : 0xFFDF48
+                if current?.hex == hex { current?.points.append(point) }
+                else {
+                    if let current { result.append(current) }
+                    current = ColoredSegment(id: result.count, points: [previous, point], hex: hex)
+                }
+            }
+            if let current { result.append(current) }
+        }
+        return result
+    }
 
     private var usesSatellite: Bool { !isPreparation && settings.satelliteMap }
 
@@ -206,20 +517,32 @@ struct RunningRouteMap: View {
 
     private var mapSurface: some View {
         Map(position: $cameraPosition, interactionModes: isPreparation ? [.pan, .zoom] : .all) {
-            ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+            ForEach(coloredSegments) { segment in
+                MapPolyline(coordinates: segment.points.map { RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)) })
+                    .stroke(Color(hex: segment.hex), lineWidth: 5)
+            }
+            ForEach(Array((resultAverageSpeed == nil ? segments : []).enumerated()), id: \.offset) { _, segment in
                 if segment.count > 1 {
                     MapPolyline(coordinates: segment.map { RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)) })
                         .stroke(Color(hex: 0xFF6440), lineWidth: 5)
                 }
             }
+            ForEach(Array(kilometerPoints.enumerated()), id: \.offset) { index, point in
+                Annotation("\(index + 1)", coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: point.latitude, longitude: point.longitude))) {
+                    Text("\(index + 1)").font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 24, height: 24).background(Color(hex: 0xFF6440), in: Circle())
+                }.annotationTitles(.hidden)
+            }
             if !showsUser, let first = segments.first(where: { !$0.isEmpty })?.first {
                 Annotation(LocalizedStringKey("running.routeStart"), coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: first.latitude, longitude: first.longitude))) {
-                    Circle().fill(.green).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2))
+                    if resultAverageSpeed != nil { Image("run_result_start").resizable().scaledToFit().frame(width: 25, height: 25) }
+                    else { Circle().fill(.green).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2)) }
                 }
             }
             if !showsUser, let last = segments.last(where: { !$0.isEmpty })?.last {
                 Annotation(LocalizedStringKey("running.routeEnd"), coordinate: RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: last.latitude, longitude: last.longitude))) {
-                    Circle().fill(Color(hex: 0xFF6440)).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2))
+                    if resultAverageSpeed != nil { Image("run_result_end").resizable().scaledToFit().frame(width: 25, height: 25) }
+                    else { Circle().fill(Color(hex: 0xFF6440)).frame(width: 12, height: 12).overlay(Circle().stroke(.white, lineWidth: 2)) }
                 }
             }
             if !isPreparation, showsUser, let currentPoint {
@@ -233,10 +556,11 @@ struct RunningRouteMap: View {
         }.mapStyle(usesSatellite ? .imagery(elevation: .flat) : .standard(
             elevation: .flat,
             emphasis: isPreparation ? .muted : .automatic,
-            pointsOfInterest: isPreparation ? .all : .excludingAll
+            pointsOfInterest: isPreparation || showsPlaces ? .all : .excludingAll
         ))
             .mapControlVisibility(isPreparation ? .hidden : .automatic)
             .accessibilityValue(Text(LocalizedStringKey(usesSatellite ? "runningSettings.satellite" : "runningSettings.standard")))
+            .onChange(of: resetCamera) { _, _ in cameraPosition = .automatic }
             .onMapCameraChange(frequency: .continuous) { context in
                 if isPreparation { preparationVisibleRect = context.rect }
             }

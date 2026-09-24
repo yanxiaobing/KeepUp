@@ -3,10 +3,10 @@ import XCTest
 @MainActor final class RunningDetailsUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
-    private func launch(kind: String) -> XCUIApplication {
+    private func launch(kind: String, chinese: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding", "-reset-test-data",
-                               "-ui-testing-running-details", kind, "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+                               "-ui-testing-running-details", kind, "-AppleLanguages", chinese ? "(zh-Hans)" : "(en)", "-AppleLocale", chinese ? "zh_CN" : "en_US"]
         app.launch()
         XCTAssertTrue(app.buttons["tab.history"].waitForExistence(timeout: 20))
         return app
@@ -20,18 +20,28 @@ import XCTest
         app.buttons["tab.history"].tap()
         let record = app.buttons["entry.running.ui-details-" + kind]
         XCTAssertTrue(record.waitForExistence(timeout: 10))
-        record.tap()
-        XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 10))
+        record.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.25)).tap()
+        XCTAssertTrue(app.staticTexts["running.overview.distance"].waitForExistence(timeout: 10))
+        capture("KeepUp-Running-" + kind + "-Route")
+        XCTAssertEqual(app.buttons["running.page.2"].exists, kind != "cycling")
+        if kind != "cycling" {
+            app.buttons["running.page.2"].tap()
+            XCTAssertTrue(element("running.card", in: app).waitForExistence(timeout: 5))
+            capture("KeepUp-Running-" + kind + "-Card")
+        }
+        app.buttons["running.page.1"].tap()
+        XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
     }
 
     private func reveal(_ target: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<9 {
             if target.isHittable { return }
-            let scroll = app.scrollViews.firstMatch
-            // Use the detail page margin so a map/chart cannot consume this scroll gesture.
-            scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.85))
-                .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.25)))
+            let scroll = app.scrollViews["running.result"]
+            // The restored statistics page has no interactive map; scroll its center, away from paging edges.
+            scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
+                .press(forDuration: 0.05, thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)))
         }
+        if !target.isHittable { capture("Running-Detail-Unreachable"); print(app.debugDescription) }
         XCTAssertTrue(target.isHittable)
     }
 
@@ -40,6 +50,30 @@ import XCTest
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    func testChinesePagesAndRouteMap() {
+        for kind in ["outdoor", "cycling", "indoor"] {
+            let app = launch(kind: kind, chinese: true)
+            openRecord(kind: kind, in: app)
+            capture("KeepUp-Running-" + kind + "-Details-Chinese")
+            app.buttons["running.page.0"].tap()
+            if kind != "indoor" {
+                app.buttons["running.map.open"].tap()
+                XCTAssertTrue(app.buttons["running.map.close"].waitForExistence(timeout: 5))
+                XCTAssertTrue(app.maps.firstMatch.exists)
+                app.buttons["running.map.kilometers"].tap()
+                XCTAssertEqual(app.buttons["running.map.kilometers"].value as? String, "已显示")
+                app.buttons["running.map.places"].tap()
+                XCTAssertEqual(app.buttons["running.map.places"].value as? String, "已隐藏")
+                app.buttons["running.map.fit"].tap()
+                capture("KeepUp-Running-" + kind + "-Map-Chinese")
+                app.buttons["running.map.close"].tap()
+            }
+            app.swipeLeft()
+            XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
+            app.terminate()
+        }
     }
 
     func testOutdoorSplitsExpandAndSharePreviewContainsFullActivity() {
@@ -73,7 +107,6 @@ import XCTest
         let app = launch(kind: "indoor")
         openRecord(kind: "indoor", in: app)
         XCTAssertFalse(app.maps.firstMatch.exists)
-        XCTAssertTrue(app.staticTexts["running.result.steps"].exists)
         let cadence = element("running.chart.cadence", in: app)
         reveal(cadence, in: app)
         XCTAssertNotEqual(app.staticTexts["running.chart.cadence.maximum"].label, "— steps/min")

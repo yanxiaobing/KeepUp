@@ -11,6 +11,7 @@ struct RunningView: View {
     @State private var result: RunningSession?
     @State private var showingSettings = false
     @State private var showingShare = false
+    @State private var resultPage = 1
     @State private var showingLiveMap = false
     @State private var settingsKindAtOpen: RunningKind?
     @State private var visible = false
@@ -32,7 +33,9 @@ struct RunningView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let result { RunningSessionSummary(session: result) }
+                if let result {
+                    RunningResultPages(session: result, profile: model.snapshot.profile, page: $resultPage, showingMap: $showingLiveMap)
+                }
                 else if let session = controller.session { activeSession(session) }
                 else { preparation }
             }
@@ -56,10 +59,12 @@ struct RunningView: View {
                 }
             }
             .sheet(isPresented: $showingShare) {
-                if let result { RunningShareView(session: result) }
+                if let result { RunningShareView(session: result, style: RunningShareStyle(page: resultPage), profile: model.snapshot.profile) }
             }
             .fullScreenCover(isPresented: $showingLiveMap) {
-                if let session = controller.session, session.kind.usesGPS {
+                if let result, result.kind.usesGPS {
+                    RunningDetailMapView(session: result)
+                } else if let session = controller.session, session.kind.usesGPS {
                     liveMap(session)
                 }
             }

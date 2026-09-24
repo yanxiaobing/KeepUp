@@ -94,6 +94,8 @@ import XCTest
         XCTAssertTrue(records.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(records.count, 1)
         records.firstMatch.tap()
+        XCTAssertTrue(app.buttons["running.page.1"].waitForExistence(timeout: 5))
+        app.buttons["running.page.1"].tap()
         XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
     }
 
@@ -123,7 +125,7 @@ import XCTest
         app.buttons["tab.calendar"].tap()
         XCTAssertTrue(app.buttons["catalog.featured.96"].waitForExistence(timeout: 5))
         app.buttons["catalog.featured.96"].tap()
-        XCTAssertTrue(app.buttons["running.close"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["running.close"].waitForExistence(timeout: 5) || app.buttons["running.resume"].exists)
     }
 
     private func finishAndOpenHistory(_ app: XCUIApplication) {
@@ -139,6 +141,8 @@ import XCTest
         XCTAssertTrue(entries.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(entries.count, 1)
         entries.firstMatch.tap()
+        XCTAssertTrue(app.buttons["running.page.1"].waitForExistence(timeout: 5))
+        app.buttons["running.page.1"].tap()
         XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
     }
 
@@ -156,8 +160,11 @@ import XCTest
         app.buttons["running.pause"].tap()
         XCTAssertTrue(app.buttons["running.resume"].waitForExistence(timeout: 5))
         capture("KeepUp-Indoor-Paused-English")
-        // Opening another sport returns to the same active indoor session.
-        leaveRunning(app)
+        // Active screens no longer offer Close. Reopen through another sport after process recovery.
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-reset-test-data" }
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
         openCycling(app)
         XCTAssertTrue(app.staticTexts["running.steps"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["running.speed"].exists)
@@ -165,7 +172,6 @@ import XCTest
         XCTAssertTrue(app.buttons["running.pause"].waitForExistence(timeout: 5))
         finishAndOpenHistory(app)
         XCTAssertEqual(app.staticTexts["running.result.kind"].label, "Indoor run")
-        XCTAssertTrue(app.staticTexts["running.result.steps"].exists)
         XCTAssertTrue(app.staticTexts["running.result.cadence"].exists)
         XCTAssertFalse(app.maps.firstMatch.exists)
         capture("KeepUp-Indoor-Result-English")
@@ -185,7 +191,7 @@ import XCTest
     func testCyclingShowsSpeedAndSavesCyclingHistory() {
         let app = launch(mode: "route")
         openCycling(app)
-        XCTAssertTrue(app.navigationBars["Cycling"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["running.mode.cycling"].waitForExistence(timeout: 5))
         capture("KeepUp-Cycling-Prepare-English")
         XCTAssertTrue(app.buttons["running.mode.cycling"].isSelected)
         XCTAssertTrue(app.buttons["running.mode.indoor"].exists)

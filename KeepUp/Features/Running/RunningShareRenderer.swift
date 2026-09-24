@@ -35,6 +35,11 @@ final class RunningShareArtifact: Identifiable {
 
 enum RunningShareRenderError: Error { case imageUnavailable }
 
+enum RunningShareStyle: Equatable {
+    case report, overview, details, card
+    init(page: Int) { self = page == 0 ? .overview : page == 2 ? .card : .details }
+}
+
 @MainActor final class RunningShareRenderer {
     static let splitsPerPage = 20
     private let snapshotSource: any RunningShareSnapshotSource
@@ -43,24 +48,25 @@ enum RunningShareRenderError: Error { case imageUnavailable }
         self.snapshotSource = snapshotSource
     }
 
-    func render(session: RunningSession, locale: Locale, satellite: Bool = false) async throws -> RunningShareArtifact {
+    func render(session: RunningSession, locale: Locale, satellite: Bool = false, style: RunningShareStyle = .report, profile: UserProfile? = nil) async throws -> RunningShareArtifact {
         let metrics = RunningMetrics(session: session)
         let route = RunningShareRoute(session: session)
+        let mapSize = style == .overview ? CGSize(width: 360, height: 518) : CGSize(width: 342, height: 230)
         let status: RunningShareArtifact.MapStatus
         let mapImage: UIImage?
-        if !session.kind.usesGPS {
+        if !session.kind.usesGPS || style == .details || style == .card {
             status = .notNeeded; mapImage = nil
         } else if route.isEmpty {
             status = .empty; mapImage = nil
-        } else if let snapshot = await snapshotSource.snapshot(route: route, size: CGSize(width: 342, height: 230), satellite: satellite) {
+        } else if let snapshot = await snapshotSource.snapshot(route: route, size: mapSize, satellite: satellite) {
             status = .map; mapImage = snapshot
         } else {
             try Task.checkCancellation()
             status = .schematic
-            mapImage = RunningShareMapDrawing.schematic(route: route, size: CGSize(width: 342, height: 230), locale: locale)
+            mapImage = RunningShareMapDrawing.schematic(route: route, size: mapSize, locale: locale)
         }
         try Task.checkCancellation()
-        let pages = Self.splitPages(metrics.splits)
+        let pages: [[RunningMetricSplit]] = style == .report ? Self.splitPages(metrics.splits) : [style == .details ? Self.detailSplits(metrics) : []]
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("running-share-" + UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var exported: [RunningShareArtifact.Page] = []
@@ -68,8 +74,24 @@ enum RunningShareRenderError: Error { case imageUnavailable }
         for (index, splits) in pages.enumerated() {
             try Task.checkCancellation()
             let page: RunningShareArtifact.Page = try autoreleasepool {
-            let poster = RunningSharePoster(session: session, metrics: metrics, mapImage: mapImage,
-                                            splits: splits, page: index, pageCount: pages.count)
+            let poster = Group {
+                switch style {
+                case .report:
+                    RunningSharePoster(session: session, metrics: metrics, mapImage: mapImage,
+                                       splits: splits, page: index, pageCount: pages.count)
+                case .overview:
+                    RunningResultOverview(session: session, showingMap: .constant(false), snapshotImage: mapImage, exporting: true)
+                        .frame(height: 724)
+                case .details:
+                    VStack(spacing: 0) {
+                        RunningDetailHeader(session: session, metrics: metrics)
+                        RunningSplitsSection(session: session, metrics: metrics).padding(.horizontal, 15)
+                        RunningChartsSection(session: session, metrics: metrics).padding(.horizontal, 15)
+                    }.background(.white)
+                case .card:
+                    RunningResultCard(session: session, profile: profile).frame(height: 724)
+                }
+            }
                 .environment(\.locale, locale)
                 .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
                 .environment(\.colorScheme, .light)
@@ -93,6 +115,13 @@ enum RunningShareRenderError: Error { case imageUnavailable }
             throw error
         }
         return RunningShareArtifact(pages: exported, mapStatus: status, splitIDsByPage: pages.map { $0.map(\.id) }, directory: directory)
+    }
+
+    private static func detailSplits(_ metrics: RunningMetrics) -> [RunningMetricSplit] {
+        guard metrics.splits.count > 3 else { return metrics.splits }
+        let best = metrics.splits.firstIndex { $0.id == metrics.bestKilometer?.id } ?? 0
+        let start = min(max(0, best - 1), metrics.splits.count - 3)
+        return Array(metrics.splits.dropFirst(start).prefix(3))
     }
 
     static func splitPages(_ splits: [RunningMetricSplit]) -> [[RunningMetricSplit]] {

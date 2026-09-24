@@ -8,9 +8,21 @@ import UIKit
 
 struct RunningShareRoute {
     let segments: [[CLLocationCoordinate2D]]
+    let coloredSegments: [([CLLocationCoordinate2D], UInt32)]
     var isEmpty: Bool { segments.allSatisfy(\.isEmpty) }
 
     init(session: RunningSession) {
+        let average = RunningMetrics(session: session).averageSpeedKilometersPerHour.map { $0 / 3.6 } ?? 0
+        coloredSegments = session.segments.flatMap { segment in
+            zip(segment, segment.dropFirst()).compactMap { previous, point in
+                let raw = [previous, point].map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+                guard raw.allSatisfy(CLLocationCoordinate2DIsValid) else { return nil }
+                let duration = point.timestamp.timeIntervalSince(previous.timestamp)
+                let speed = duration > 0 ? previous.distance(to: point) / duration : 0
+                let hex: UInt32 = speed <= 1.94 ? 0xA2E36E : speed > average ? 0xFF9457 : 0xFFDF48
+                return (raw.map { RunningMapCoordinates.displayCoordinate(forWGS84: $0) }, hex)
+            }
+        }
         segments = session.segments.map { segment in
             segment.compactMap { point in
                 let coordinate = CLLocationCoordinate2D(latitude: point.latitude, longitude: point.longitude)
@@ -151,21 +163,26 @@ struct RunningShareRoute {
             context.cgContext.saveGState()
             context.cgContext.clip(to: CGRect(x: 0, y: 0, width: size.width, height: max(0, size.height - 30)))
             UIColor(red: 1, green: 0.39, blue: 0.25, alpha: 1).setStroke()
-            for segment in route.segments {
+            for (segment, hex) in route.coloredSegments {
+                UIColor(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255, alpha: 1).setStroke()
                 let path = UIBezierPath(); path.lineWidth = 4; path.lineCapStyle = .round; path.lineJoinStyle = .round
                 for (index, coordinate) in segment.enumerated() {
                     if index == 0 { path.move(to: project(coordinate)) } else { path.addLine(to: project(coordinate)) }
                 }
                 path.stroke()
             }
-            func marker(_ coordinate: CLLocationCoordinate2D?, color: UIColor) {
+            func marker(_ coordinate: CLLocationCoordinate2D?, color: UIColor, asset: String) {
                 guard let coordinate else { return }
                 let center = project(coordinate)
+                if let image = UIImage(named: asset) {
+                    image.draw(in: CGRect(x: center.x - 12.5, y: center.y - 12.5, width: 25, height: 25))
+                    return
+                }
                 let circle = UIBezierPath(ovalIn: CGRect(x: center.x - 5, y: center.y - 5, width: 10, height: 10))
                 color.setFill(); circle.fill(); UIColor.white.setStroke(); circle.lineWidth = 2; circle.stroke()
             }
-            marker(route.segments.first?.first, color: .systemGreen)
-            marker(route.segments.last?.last, color: .systemOrange)
+            marker(route.segments.first?.first, color: .systemGreen, asset: "run_result_start")
+            marker(route.segments.last?.last, color: .systemOrange, asset: "run_result_end")
             context.cgContext.restoreGState()
         }
     }

@@ -4358,5 +4358,115 @@
     "source": "Resource/DINCondensedC.ttf",
     "destination": "KeepUp/Resources/DINCondensedC.ttf",
     "sha256": "059f03f70d9eba4dd813e2d0db056217df4c541bab76255d3161528856d6b3da"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/running_result_head_bg.imageset/running_result_head_bg@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_result_head_bg.imageset/running_result_head_bg@2x.png",
+    "sha256": "b69553108878d48933ccec02574fd7f829faaa7bec8696b134fffba2cd2677c7"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/running_result_head_bg.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/running_result_head_bg.imageset/Contents.json",
+    "sha256": "e13385aeac7af60ec1ed0407ed330b0364bfbdfc4e41f25bfab3dedfb8c62fd4"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_speed.imageset/run_result_speed.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_speed.imageset/run_result_speed.png",
+    "sha256": "8ed0fd265bbe319b1343ee26c0a3509c2c31be30c554ff22e81928b65d74f560"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_speed.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_speed.imageset/Contents.json",
+    "sha256": "c6195aa0166f1e8cd89accf51af29213004d6f114afdeacb0dffe7d1e34de4d1"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_time.imageset/run_result_time.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_time.imageset/run_result_time.png",
+    "sha256": "68ac78b958649245434a2055c3b4dddabace38aa0952cde3d37acdb812ba7e17"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_time.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_time.imageset/Contents.json",
+    "sha256": "eb333ec66a03a61c1e5e1dfa56edbe410038bb67b281121cc19f22fc5678288c"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_calories.imageset/run_result_calories.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_calories.imageset/run_result_calories.png",
+    "sha256": "d79d17196cc2fdcb999661c4993a7e4a2bdc6c6c19580a92ef6e4cb19aeaeb47"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_calories.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_calories.imageset/Contents.json",
+    "sha256": "1d25b16a57703ad672ae09f6076b7c51f9db6a8d0c86cbcd3104bfefe12d678f"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_speed_02.imageset/run_result_speed_02@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_speed_02.imageset/run_result_speed_02@2x.png",
+    "sha256": "bdc8958ff43c4a025327a00a90278d7f40b03be4a96818ad2e2558390ffe24ad"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_speed_02.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_speed_02.imageset/Contents.json",
+    "sha256": "87385a3c67a7c6b0ae321b5d28af463019c9c6b44ad5a99bdaa207fd76de0298"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_time_02.imageset/run_result_time_02.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_time_02.imageset/run_result_time_02.png",
+    "sha256": "71bff79b30c6e3ddf60b3146ea757ec3d28fa80367b7118cc952a4aee7bc13ec"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_time_02.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_time_02.imageset/Contents.json",
+    "sha256": "66ff10bec3c7f90cf7d1d183f4b63ee183b102ff44b7b6b137b31cf9fd9a9309"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/no_step_frequency_data.imageset/no_step_frequency_data@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/no_step_frequency_data.imageset/no_step_frequency_data@2x.png",
+    "sha256": "fb7f27ce957acdc1c817b5110198158cd6d36baddb4282ee4d4fda3ac743f811"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/no_step_frequency_data.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/no_step_frequency_data.imageset/Contents.json",
+    "sha256": "95b36f96816a3a9b22e3b3535de1ec1a04615bc74e919eaad064882bddecb0d8"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_start.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_start.imageset/Contents.json",
+    "sha256": "21afc0f27625e06f5db89841bd1b6cb3ef3feac96eca6393f284a16b817764d5"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_start.imageset/run_result_start@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_start.imageset/run_result_start@2x.png",
+    "sha256": "bf724c30665daebc1389610128f1bf9d7327851bd8ebadb985c14b1b29db995f"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_end.imageset/run_result_end@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_end.imageset/run_result_end@2x.png",
+    "sha256": "23aab14e22b0394e932b0c05f93dfc815a58b3ff45374154538e57e5fb5b948d"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/run_result_end.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/run_result_end.imageset/Contents.json",
+    "sha256": "f01e2a51a8cbb4fe1fd04a8b6ae27951d468f6032bd5ed61099b815598ed3c04"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_indoor_ic_up.imageset/card_indoor_ic_up@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_indoor_ic_up.imageset/card_indoor_ic_up@2x.png",
+    "sha256": "8df9e816f113b90caf2c1b7d3aa0f231ba10ffada217951dbe9386f4c0fc8318"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_indoor_ic_up.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_indoor_ic_up.imageset/Contents.json",
+    "sha256": "9562e4c2b4f59827407b86f31ffa45c666109b4ac31f619c894bdbdfbf311a3d"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_indoor_ic_down.imageset/card_indoor_ic_down@2x.png",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_indoor_ic_down.imageset/card_indoor_ic_down@2x.png",
+    "sha256": "74aac95f21a5bc998bb9b976f9f6a8d3be2d653619cbf2072cbddd2575e1eb6d"
+  },
+  {
+    "source": "Assets.xcassets/CardDetails/card_indoor_ic_down.imageset/Contents.json",
+    "destination": "KeepUp/Resources/Assets.xcassets/PunchCard/card_indoor_ic_down.imageset/Contents.json",
+    "sha256": "e821fa024c8a30c6a59092e33649db52b03d325c0312ddbaef9c762a5905d94a"
   }
 ]
