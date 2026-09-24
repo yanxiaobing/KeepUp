@@ -86,8 +86,8 @@ struct StepsOriginalDetails: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let scale = min(geometry.size.width / 375, geometry.size.height / 460)
-            ZStack(alignment: .bottom) {
+            let scale = min(geometry.size.width / 375, max(0, geometry.size.height - 12) / 460)
+            ZStack(alignment: .top) {
                 if showsBackground { CardDetailThemeBackground() }
                 VStack(spacing: 0) {
                     VStack(spacing: 16 * scale) {
@@ -119,7 +119,7 @@ struct StepsOriginalDetails: View {
                     }.padding(.horizontal, 15 * scale).padding(.top, 26 * scale).frame(height: 110 * scale, alignment: .top)
                     StepsOriginalChart(data: data).padding(.horizontal, 15 * scale).frame(height: 160 * scale)
                     Spacer(minLength: 0)
-                }.frame(width: 375 * scale)
+                }.frame(width: 375 * scale).padding(.top, 12)
             }.frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
@@ -187,6 +187,7 @@ struct StepsOriginalChart: View {
 struct StepsOriginalCard: View {
     let data: StepsPresentation
     var encouragement: String? = nil
+    var showsBackground = true
     @Environment(\.locale) private var locale
     var body: some View {
         GeometryReader { geometry in
@@ -194,7 +195,7 @@ struct StepsOriginalCard: View {
             let cityHeight = geometry.size.width * 272 / 750
             let artworkScale = scale > 1 ? 1.2 : scale < 1 ? 0.9 : 1.05
             ZStack(alignment: .top) {
-                CardDetailThemeBackground()
+                if showsBackground { CardDetailThemeBackground() }
                 Circle().fill(CalendarTheme.selected.color.opacity(0.10))
                     .frame(width: 272 * scale, height: 272 * scale).offset(y: 98)
                 VStack(spacing: 5) {

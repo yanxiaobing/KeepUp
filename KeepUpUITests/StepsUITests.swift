@@ -3,10 +3,11 @@ import XCTest
 @MainActor final class StepsUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
-    private func launch(mode: String, language: String = "en") -> XCUIApplication {
+    private func launch(mode: String, language: String = "en", themeID: Int? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding", "-reset-test-data", "-ui-testing-steps", mode,
                                "-AppleLanguages", "(\(language))", "-AppleLocale", language == "en" ? "en_US" : "zh_CN"]
+        if let themeID { app.launchArguments += ["-themeID", String(themeID)] }
         app.launch()
         XCTAssertTrue(app.buttons["tab.calendar"].waitForExistence(timeout: 20))
         return app
@@ -176,6 +177,20 @@ import XCTest
         XCTAssertFalse(app.staticTexts["steps.goalReached"].exists)
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         shot.name = "KeepUp-Steps-Pending-English"; shot.lifetime = .keepAlways; add(shot)
+    }
+
+    func testLhasaDetailsStayFixedAfterVerticalSwipes() {
+        let app = launch(mode: "ready", language: "zh-Hans", themeID: 9)
+        openSteps(app)
+        let count = app.staticTexts["steps.count"]
+        XCTAssertTrue(count.waitForExistence(timeout: 5))
+        let originalFrame = count.frame
+        app.swipeUp()
+        app.swipeDown()
+        XCTAssertEqual(count.frame.minY, originalFrame.minY, accuracy: 1)
+        XCTAssertGreaterThan(count.frame.minY, app.navigationBars.firstMatch.frame.maxY + 24)
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "Steps-Lhasa-Fixed-Details"; shot.lifetime = .keepAlways; add(shot)
     }
 
     func testEnglishDetailsAndCardSharing() { verifySharing(language: "en") }

@@ -46,7 +46,6 @@ struct StepsView: View {
             GeometryReader { geometry in
                 TabView(selection: $selectedStyle) {
                     ZStack {
-                        CardDetailThemeBackground().ignoresSafeArea(edges: .bottom)
                         VStack(spacing: 0) {
                             StepsOriginalDetails(data: presentation, isMale: model.snapshot.profile?.isMale == true, showsBackground: false)
                                 .frame(maxHeight: 460 * geometry.size.width / 375).layoutPriority(1)
@@ -63,9 +62,15 @@ struct StepsView: View {
                             Color.clear.frame(height: geometry.size.width * 272 / 750 + 16)
                         }
                     }.tag(StepsPosterStyle.details)
-                    StepsOriginalCard(data: presentation, encouragement: encouragement)
+                    StepsOriginalCard(data: presentation, encouragement: encouragement, showsBackground: false)
                         .tag(StepsPosterStyle.card)
                 }.tabViewStyle(.page(indexDisplayMode: .never))
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .background(alignment: .top) {
+                        // Keep the shared backdrop outside the paging controller's safe-area clipping.
+                        CardDetailThemeBackground()
+                            .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
+                    }
                     .overlay(alignment: .topTrailing) {
                         HStack(spacing: 5.5) {
                             ForEach(StepsPosterStyle.allCases, id: \.self) { style in
@@ -79,7 +84,6 @@ struct StepsView: View {
                         }.padding(.trailing, 15)
                     }
             }.background(.white)
-                .ignoresSafeArea(edges: .bottom)
                 .navigationTitle(Text(verbatim: String(format: localized("entry.detailTitle %@", locale), localized("steps.title", locale))))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
