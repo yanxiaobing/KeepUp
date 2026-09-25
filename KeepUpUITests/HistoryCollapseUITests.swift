@@ -55,7 +55,7 @@ import XCTest
         XCTAssertEqual(toggle.value as? String, "Collapsed")
         XCTAssertTrue(row.label.contains("An updated ending"))
         row.tap()
-        XCTAssertTrue(app.buttons["entry.actions"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["entry.editContent"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.textViews["content.text"].exists)
     }
 

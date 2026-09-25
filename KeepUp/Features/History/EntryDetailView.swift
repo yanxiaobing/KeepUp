@@ -30,7 +30,11 @@ struct EntryDetailView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button { dismiss() } label: { Image(systemName: "xmark") }.accessibilityLabel(Text("action.close")).accessibilityIdentifier("entry.close")
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Button { editing = true } label: { Image(systemName: KeepUpStyle.editContentSymbol) }
+                            .accessibilityLabel(Text("content.edit"))
+                            .accessibilityIdentifier("entry.editContent")
+                            .disabled(busy)
                         Button { renderShare() } label: { Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24) }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("entry.share").disabled(busy)
                     }

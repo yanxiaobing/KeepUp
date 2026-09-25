@@ -9,6 +9,10 @@ enum KeepUpStyle {
     static let background = Color("Canvas")
     static let surface = Color("Surface")
     static let header = Color(red: 44/255, green: 44/255, blue: 44/255)
+    static var editContentSymbol: String {
+        if #available(iOS 27, *) { return "text.bubble.badge.sparkles" }
+        return "pencil.and.list.clipboard"
+    }
 }
 
 extension HabitCard {

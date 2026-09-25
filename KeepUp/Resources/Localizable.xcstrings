@@ -1189,7 +1189,6 @@
       }
     },
     "content.edit" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

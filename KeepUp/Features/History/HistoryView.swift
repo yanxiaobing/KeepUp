@@ -32,9 +32,7 @@ struct HistoryView: View {
                                     ForEach(model.entries(on: day)) { entry in
                                         if let card = model.card(for: entry) {
                                             EntryRowView(entry: entry, card: card, content: model.snapshot.publishedContent(for: entry), hasDraft: model.snapshot.content[entry.id]?.draft != nil) {
-                                                if ["punchcard.1", "punchcard.2", "punchcard.96"].contains(entry.cardID) { detail = entry }
-                                                else if model.snapshot.publishedContent(for: entry).isEmpty || model.snapshot.content[entry.id]?.draft != nil { editing = entry }
-                                                else { detail = entry }
+                                                detail = entry
                                             }
                                                 .contextMenu {
                                                     Button("entry.viewCard") { detail = entry }.accessibilityIdentifier("entry.viewCard")

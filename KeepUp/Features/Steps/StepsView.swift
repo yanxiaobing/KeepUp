@@ -17,6 +17,7 @@ struct StepsView: View {
         var id: LocalDay { day }
     }
     @State private var selectedStyle = StepsPosterStyle.details
+    @State private var editing = false
     @State private var shareImage: StepsShareImage?
     @State private var shareFailed = false
     private let clock = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -32,6 +33,9 @@ struct StepsView: View {
                           saved: model.snapshot.steps[selectedDay.rawValue], goal: StepsGoal.value(on: selectedDay))
     }
     private var count: Int? { presentation.steps }
+    private var savedEntry: CheckInEntry? {
+        model.entries(on: selectedDay).first { $0.cardID == "punchcard.1" }
+    }
     private var encouragement: String {
         guard let card = OriginalCatalog.card(1),
               let entry = model.entries(on: selectedDay).first(where: { $0.cardID == card.id }) else {
@@ -92,7 +96,12 @@ struct StepsView: View {
                         Button { dismiss() } label: { Image(systemName: "xmark") }
                             .accessibilityLabel(Text("action.close")).accessibilityIdentifier("steps.close")
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        if savedEntry != nil {
+                            Button { editing = true } label: { Image(systemName: KeepUpStyle.editContentSymbol) }
+                                .accessibilityLabel(Text("content.edit"))
+                                .accessibilityIdentifier("steps.editContent")
+                        }
                         Button {
                             guard let image = StepsPosterRenderer.render(data: presentation, style: selectedStyle, locale: locale,
                                                                         isMale: model.snapshot.profile?.isMale == true, encouragement: encouragement) else {
@@ -114,6 +123,11 @@ struct StepsView: View {
                     Button("action.ok", role: .cancel) {}
                 } message: { Text(localized("steps.energyExplanation", locale) + "\n\n" + localized("steps.activeExplanation", locale)) }
                 .sheet(item: $shareImage) { EntrySharePreview(image: $0.image) }
+                .fullScreenCover(isPresented: $editing) {
+                    if let savedEntry, let card = model.card(for: savedEntry) {
+                        EntryContentEditor(entry: savedEntry, card: card)
+                    }
+                }
                 .alert("error.title", isPresented: $shareFailed) {
                     Button("action.ok", role: .cancel) {}
                 } message: { Text("entry.shareError") }
