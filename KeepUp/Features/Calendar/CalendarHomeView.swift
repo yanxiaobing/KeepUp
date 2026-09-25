@@ -29,7 +29,7 @@ struct CalendarHomeView: View {
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = locale
-        calendar.firstWeekday = 2 // PunchCard starts the displayed week on Monday.
+        calendar.firstWeekday = locale.identifier.hasPrefix("zh") ? 2 : 1
         return calendar
     }
     private var selectedDay: LocalDay { LocalDay(date: selectedDate) }
@@ -227,7 +227,7 @@ struct CalendarHomeView: View {
                 let weekdays = calendar.veryShortStandaloneWeekdaySymbols
                 HStack(spacing: 0) {
                     ForEach(0..<7, id: \.self) { index in
-                        Text(weekdays[(index + 1) % 7]).font(.system(size: 12)).foregroundStyle(Color.gray)
+                        Text(weekdays[(index + calendar.firstWeekday - 1) % 7]).font(.system(size: 12)).foregroundStyle(Color.gray)
                             .frame(maxWidth: .infinity).frame(height: 22)
                     }
                 }.padding(.horizontal, 8).padding(.top, 12).padding(.bottom, 6)

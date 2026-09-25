@@ -141,16 +141,44 @@ struct ThemeListView: View {
     }
 }
 
+struct ThemeCalendarMonth {
+    let firstWeekday: Int
+    let weekdaySymbols: [String]
+    let leadingDayCount: Int
+    let dayCount: Int
+    let cellCount: Int
+
+    init(date: Date, locale: Locale) {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        calendar.firstWeekday = locale.identifier.hasPrefix("zh") ? 2 : 1
+        let weekStart = calendar.firstWeekday
+        firstWeekday = weekStart
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        weekdaySymbols = (0..<7).map { symbols[($0 + weekStart - 1) % 7] }
+        let monthStart = calendar.dateInterval(of: .month, for: date)!.start
+        let offset = (calendar.component(.weekday, from: monthStart) - weekStart + 7) % 7
+        let days = calendar.range(of: .day, in: .month, for: date)!.count
+        leadingDayCount = offset
+        dayCount = days
+        cellCount = ((offset + days + 6) / 7) * 7
+    }
+
+    func day(at index: Int) -> Int? {
+        let day = index - leadingDayCount + 1
+        return (0..<cellCount).contains(index) && (1...dayCount).contains(day) ? day : nil
+    }
+}
+
 private struct ThemePageThumbnail: View {
     let theme: CalendarTheme
     let width: CGFloat
     @Environment(\.locale) private var locale
 
     var body: some View {
+        let monthDate = Date.now
+        let month = ThemeCalendarMonth(date: monthDate, locale: locale)
         let height = width * 1.42
-        let weekdays = locale.identifier.hasPrefix("zh")
-            ? ["一", "二", "三", "四", "五", "六", "日"]
-            : ["M", "T", "W", "T", "F", "S", "S"]
         ZStack(alignment: .bottom) {
             LinearGradient(stops: [
                 .init(color: theme.color, location: 0),
@@ -159,9 +187,9 @@ private struct ThemePageThumbnail: View {
             Image(theme.transparentCityImage)
                 .resizable().scaledToFit()
                 .frame(width: width, height: width * 272/750)
-            VStack(spacing: width * 0.08) {
+            VStack(spacing: width * 0.06) {
                 HStack {
-                    Text(Date.now.formatted(.dateTime.year().month(.abbreviated).locale(locale)))
+                    Text(monthDate.formatted(.dateTime.year().month(.abbreviated).locale(locale)))
                         .font(.system(size: width * 0.085, weight: .semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -171,14 +199,14 @@ private struct ThemePageThumbnail: View {
                 }
                 HStack(spacing: 0) {
                     ForEach(0..<7) { day in
-                        Text(weekdays[day]).frame(maxWidth: .infinity)
+                        Text(month.weekdaySymbols[day]).frame(maxWidth: .infinity)
                     }
                 }
                 .font(.system(size: width * 0.05))
                 .foregroundStyle(.secondary)
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: width * 0.07) {
-                    ForEach(1...35, id: \.self) { day in
-                        Text(day <= 31 ? String(format: "%02d", day) : "")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: width * 0.05) {
+                    ForEach(0..<month.cellCount, id: \.self) { index in
+                        Text(month.day(at: index).map { String(format: "%02d", $0) } ?? "")
                             .font(.system(size: width * 0.055, weight: .light))
                             .frame(maxWidth: .infinity)
                     }
