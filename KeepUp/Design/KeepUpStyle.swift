@@ -71,7 +71,7 @@ struct EntryRowView: View {
     // so explicit newlines and different scripts fold at the same visual boundary.
     private var foldedHeight: CGFloat { 108 * scale }
     private var canExpand: Bool { !content.text.isEmpty && textHeight > foldedHeight + 0.5 }
-    private var avatarScale: CGFloat { 0.3 * scale }
+    private var avatarScale: CGFloat { 0.35 * scale }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -144,7 +144,7 @@ struct EntryRowView: View {
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("history.footer.\(entry.id)")
-            }.padding(.leading, 38.4 * scale)
+            }.padding(.leading, 42.8 * scale)
         }.padding(15 * scale).frame(maxWidth: .infinity, alignment: .leading)
             .onChange(of: content) { isExpanded = false }
             .onChange(of: entry.id) { isExpanded = false }
