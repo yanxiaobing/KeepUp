@@ -249,7 +249,7 @@ struct ProfileView: View {
     }
 
     private var profileHeader: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 50) {
             Button { showPersonalInfo = true } label: {
                 HStack(spacing: 14) {
                     profileAvatar
@@ -290,7 +290,7 @@ struct ProfileView: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.top, 22)
+        .padding(.top, 38)
         .padding(.bottom, 28)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(alignment: .top) {
