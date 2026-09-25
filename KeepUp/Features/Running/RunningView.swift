@@ -34,7 +34,7 @@ struct RunningView: View {
         NavigationStack {
             Group {
                 if let result {
-                    RunningResultPages(session: result, profile: model.snapshot.profile, page: $resultPage, showingMap: $showingLiveMap)
+                    RunningResultPages(session: result, page: $resultPage, showingMap: $showingLiveMap)
                 }
                 else if let session = controller.session { activeSession(session) }
                 else { preparation }
@@ -60,7 +60,7 @@ struct RunningView: View {
                 }
             }
             .sheet(isPresented: $showingShare) {
-                if let result { RunningShareView(session: result, style: RunningShareStyle(page: resultPage), profile: model.snapshot.profile) }
+                if let result { RunningShareView(session: result, style: RunningShareStyle(page: resultPage)) }
             }
             .fullScreenCover(isPresented: $showingLiveMap) {
                 if let result, result.kind.usesGPS {

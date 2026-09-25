@@ -36,8 +36,8 @@ final class RunningShareArtifact: Identifiable {
 enum RunningShareRenderError: Error { case imageUnavailable }
 
 enum RunningShareStyle: Equatable {
-    case report, overview, details, card
-    init(page: Int) { self = page == 0 ? .overview : page == 2 ? .card : .details }
+    case report, overview, details
+    init(page: Int) { self = page == 0 ? .overview : .details }
 }
 
 @MainActor final class RunningShareRenderer {
@@ -48,13 +48,13 @@ enum RunningShareStyle: Equatable {
         self.snapshotSource = snapshotSource
     }
 
-    func render(session: RunningSession, locale: Locale, satellite: Bool = false, style: RunningShareStyle = .report, profile: UserProfile? = nil) async throws -> RunningShareArtifact {
+    func render(session: RunningSession, locale: Locale, satellite: Bool = false, style: RunningShareStyle = .report) async throws -> RunningShareArtifact {
         let metrics = RunningMetrics(session: session)
         let route = RunningShareRoute(session: session)
         let mapSize = style == .overview ? CGSize(width: 360, height: 518) : CGSize(width: 342, height: 230)
         let status: RunningShareArtifact.MapStatus
         let mapImage: UIImage?
-        if !session.kind.usesGPS || style == .details || style == .card {
+        if !session.kind.usesGPS || style == .details {
             status = .notNeeded; mapImage = nil
         } else if route.isEmpty {
             status = .empty; mapImage = nil
@@ -88,8 +88,6 @@ enum RunningShareStyle: Equatable {
                         RunningSplitsSection(session: session, metrics: metrics).padding(.horizontal, 15)
                         RunningChartsSection(session: session, metrics: metrics).padding(.horizontal, 15)
                     }.background(.white)
-                case .card:
-                    RunningResultCard(session: session, profile: profile).frame(height: 724)
                 }
             }
                 .environment(\.locale, locale)

@@ -7893,23 +7893,6 @@
         }
       }
     },
-    "runningDetail.cardPage" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Card"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "卡片"
-          }
-        }
-      }
-    },
     "runningDetail.collapseSplits" : {
       "extractionState" : "manual",
       "localizations" : {

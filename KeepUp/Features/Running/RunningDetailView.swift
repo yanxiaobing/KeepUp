@@ -22,7 +22,7 @@ struct RunningDetailView: View {
     var body: some View {
         NavigationStack {
             RunningResultPages(session: session, content: currentEntry.map { model.snapshot.publishedContent(for: $0) },
-                               profile: model.snapshot.profile, page: $page, showingMap: $showingMap)
+                               page: $page, showingMap: $showingMap)
                 .navigationTitle(session.kind == .cycling ? "runningDetail.cyclingTitle" : "runningDetail.runningTitle")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(CalendarTheme.selected.color, for: .navigationBar)
@@ -46,7 +46,7 @@ struct RunningDetailView: View {
                 .fullScreenCover(isPresented: $editing) {
                     if let currentEntry, let card { EntryContentEditor(entry: currentEntry, card: card) }
                 }
-                .sheet(isPresented: $sharing) { RunningShareView(session: session, style: RunningShareStyle(page: page), profile: model.snapshot.profile) }
+                .sheet(isPresented: $sharing) { RunningShareView(session: session, style: RunningShareStyle(page: page)) }
                 .fullScreenCover(isPresented: $showingMap) { RunningDetailMapView(session: session) }
                 .confirmationDialog("entry.deleteConfirmation", isPresented: $confirmingDelete, titleVisibility: .visible) {
                     Button("action.delete", role: .destructive) { Task { await deleteRecord() } }
@@ -73,37 +73,42 @@ struct RunningDetailView: View {
 struct RunningResultPages: View {
     let session: RunningSession
     var content: EntryContent? = nil
-    var profile: UserProfile? = nil
     @Binding var page: Int
     @Binding var showingMap: Bool
 
     var body: some View {
-        TabView(selection: $page) {
-            RunningResultOverview(session: session, showingMap: $showingMap).tag(0)
-            RunningSessionSummary(session: session, content: content).tag(1)
-            if session.kind != .cycling {
-                RunningResultCard(session: session, profile: profile).tag(2)
+        GeometryReader { geometry in
+            TabView(selection: $page) {
+                RunningResultOverview(session: session, showingMap: $showingMap).tag(0)
+                RunningSessionSummary(session: session, content: content).tag(1)
             }
-        }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .ignoresSafeArea(.container, edges: .bottom)
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .background(alignment: .top) {
+                CardDetailThemeBackground()
+                    .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
+            }
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 0) {
-                    ForEach(0..<(session.kind == .cycling ? 2 : 3), id: \.self) { index in
+                    ForEach(0..<2, id: \.self) { index in
                         Button { withAnimation { page = index } } label: {
-                            Circle().fill(page == index ? Color(hex: 0x222222) : Color(hex: 0x98989E))
-                                .frame(width: 6, height: 6).frame(width: 24, height: 30)
+                            Circle().fill(page == index ? Color(hex: 0x48484D) : Color(hex: 0xC1C1C1))
+                                .frame(width: 6, height: 6)
+                                .frame(width: 12, height: 30)
+                                .contentShape(Rectangle())
                         }
-                        .accessibilityLabel(Text(LocalizedStringKey(index == 0 ? (session.kind.usesGPS ? "runningDetail.routePage" : "running.result") : index == 1 ? "runningDetail.detailsPage" : "runningDetail.cardPage")))
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(LocalizedStringKey(index == 0 ? (session.kind.usesGPS ? "runningDetail.routePage" : "running.result") : "runningDetail.detailsPage")))
                         .accessibilityIdentifier("running.page.\(index)")
                         .accessibilityAddTraits(page == index ? .isSelected : [])
                     }
-                }.padding(.trailing, 7)
+                }.padding(.trailing, 15)
             }
+        }.background(.white)
     }
 }
 
-// The original result controller separates the route, statistics and illustrated card.
+// The result pages separate the route or indoor result from the statistics.
 struct RunningSessionSummary: View {
     let session: RunningSession
     var content: EntryContent? = nil
@@ -182,71 +187,79 @@ struct RunningResultOverview: View {
     var body: some View {
         let metrics = RunningMetrics(session: session)
         GeometryReader { geometry in
-            let headerHeight = geometry.size.width * 272 / 750
-            ZStack(alignment: .topLeading) {
-                CalendarTheme.selected.color.ignoresSafeArea(edges: .bottom)
-                CardDetailThemeBackground().frame(height: headerHeight)
+            let cityHeight = geometry.size.width * 272 / 750
+            let mapHeight = max(220, geometry.size.height - cityHeight - 159 + geometry.safeAreaInsets.bottom)
+            VStack(spacing: 0) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale)).font(.custom("DINCondensedC", size: 45))
                         .accessibilityIdentifier("running.overview.distance")
                     Text("Km").font(.system(size: 18, weight: .bold))
-                }.foregroundStyle(Color(hex: 0x222222).opacity(0.8)).padding(.leading, 25).padding(.top, 30)
-                VStack(spacing: 0) {
-                    HStack(spacing: 8) {
-                        stripMetric("run_result_speed", RunningDetailStyle.pace(session, metrics: metrics, locale: locale))
-                        Spacer(minLength: 0)
-                        stripMetric("run_result_time", RunningDisplay.duration(metrics.elapsedSeconds))
-                        Spacer(minLength: 0)
-                        stripMetric("run_result_calories", metrics.roundedEnergyKilocalories.map(String.init) ?? "—")
-                        Text("runningDetail.kcal").font(.system(size: 10))
-                    }.foregroundStyle(.white).padding(.horizontal, 12).frame(height: 40).background(Color(white: 44/255).opacity(0.8))
-                    ZStack(alignment: .bottomTrailing) {
-                        if session.kind.usesGPS {
-                            Group {
-                                if let snapshotImage {
-                                    Image(uiImage: snapshotImage).resizable().scaledToFill().clipped()
-                                } else if exporting {
-                                    Color(hex: 0xF6F6F6)
-                                } else {
-                                    RunningRouteMap(segments: session.segments, resultAverageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
+                }.foregroundStyle(Color(hex: 0x222222).opacity(0.8))
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 25).padding(.top, 22)
+                HStack(spacing: 0) {
+                    stripMetric("run_result_speed", RunningDetailStyle.pace(session, metrics: metrics, locale: locale),
+                                session.kind == .cycling ? "runningDetail.speed" : "runningDetail.pace")
+                    stripMetric("run_result_time", RunningDisplay.duration(metrics.elapsedSeconds), "running.duration")
+                    stripMetric("run_result_calories", metrics.roundedEnergyKilocalories.map(String.init) ?? "—", "runningDetail.kcal")
+                }.foregroundStyle(.white).frame(height: 58)
+                    .background(Color(white: 44/255).opacity(0.85), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 15).padding(.top, 10)
+                ZStack(alignment: .bottomTrailing) {
+                    if session.kind.usesGPS {
+                        Group {
+                            if let snapshotImage {
+                                Image(uiImage: snapshotImage).resizable().scaledToFill().clipped()
+                            } else if exporting {
+                                Color(hex: 0xF6F6F6)
+                            } else {
+                                RunningRouteMap(segments: session.segments, resultAverageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
+                            }
+                        }.allowsHitTesting(false)
+                            .overlay {
+                                if session.segments.allSatisfy({ $0.isEmpty }) {
+                                    Text("running.noRoute").font(.system(size: 14)).padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                                 }
-                            }.allowsHitTesting(false)
-                                .overlay {
-                                    if session.segments.allSatisfy({ $0.isEmpty }) {
-                                        Text("running.noRoute").font(.system(size: 14)).padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                                    }
-                                }
-                                .overlay {
-                                    Button { showingMap = true } label: { Color.clear.contentShape(Rectangle()) }
-                                        .accessibilityLabel(Text("runningDetail.openMap")).accessibilityIdentifier("running.map.open")
-                                }
-                        } else {
-                            RunningIndoorResultGraph(session: session, metrics: metrics).padding(20)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(hex: 0xF6F6F6))
-                        }
-                        HStack(spacing: 4) {
-                            Text(LocalizedStringKey(session.kind.titleKey)).padding(.horizontal, 5).padding(.vertical, 3)
-                                .background(RunningDetailStyle.color(session.kind), in: Capsule())
-                            Text(RunningDetailStyle.date(session, locale: locale)).padding(.trailing, 5)
-                        }.font(.system(size: 9)).foregroundStyle(.white).background(.black.opacity(0.5), in: Capsule())
-                            .padding(.trailing, 9).padding(.bottom, session.kind.usesGPS ? 42 : 12)
+                            }
+                            .overlay {
+                                Button { showingMap = true } label: { Color.clear.contentShape(Rectangle()) }
+                                    .accessibilityLabel(Text("runningDetail.openMap")).accessibilityIdentifier("running.map.open")
+                            }
+                    } else {
+                        RunningIndoorResultGraph(session: session, metrics: metrics, chartHeight: min(255, max(150, mapHeight - 75))).padding(20)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(hex: 0xF6F6F6))
                     }
-                }.clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 15, bottomTrailingRadius: 15))
-                    .padding(.horizontal, 15).padding(.top, headerHeight).padding(.bottom, 25)
+                    HStack(spacing: 4) {
+                        Text(LocalizedStringKey(session.kind.titleKey)).padding(.horizontal, 5).padding(.vertical, 3)
+                            .background(RunningDetailStyle.color(session.kind), in: Capsule())
+                        Text(RunningDetailStyle.date(session, locale: locale)).padding(.trailing, 5)
+                    }.font(.system(size: 9)).foregroundStyle(.white).background(.black.opacity(0.5), in: Capsule())
+                        .padding(.trailing, 9).padding(.bottom, session.kind.usesGPS ? 42 : 12)
+                }.frame(height: mapHeight).clipShape(RoundedRectangle(cornerRadius: 15))
+                    .padding(.horizontal, 15).padding(.top, 12)
+                Spacer(minLength: 0)
             }
-        }.accessibilityElement(children: .contain).accessibilityIdentifier("running.overview")
-    }
-    private func stripMetric(_ image: String, _ value: String) -> some View {
-        HStack(spacing: 5) {
-            Image(image).resizable().scaledToFit().frame(width: 16, height: 18)
-            Text(value).font(.custom("DINCondensedC", size: 19)).lineLimit(1).minimumScaleFactor(0.6)
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .background {
+                if exporting { CardDetailThemeBackground() }
+            }
         }
+        .accessibilityElement(children: .contain).accessibilityIdentifier("running.overview")
+    }
+    private func stripMetric(_ image: String, _ value: String, _ title: LocalizedStringKey) -> some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Image(image).resizable().scaledToFit().frame(width: 16, height: 18)
+                Text(value).font(.custom("DINCondensedC", size: 19)).lineLimit(1).minimumScaleFactor(0.6)
+            }
+            Text(title).font(.system(size: 10)).lineLimit(1).minimumScaleFactor(0.8)
+        }.frame(maxWidth: .infinity)
     }
 }
 
 private struct RunningIndoorResultGraph: View {
     let session: RunningSession
     let metrics: RunningMetrics
+    let chartHeight: CGFloat
     @Environment(\.locale) private var locale
     private var distanceByTime: [Date: Double] {
         Dictionary(session.indoorSegments.flatMap { $0 }.map { ($0.timestamp, $0.distanceMeters / 1_000) }, uniquingKeysWith: { _, last in last })
@@ -288,7 +301,7 @@ private struct RunningIndoorResultGraph: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
-            }.frame(height: 255)
+            }.frame(height: chartHeight)
             HStack {
                 ForEach(0...4, id: \.self) { tick in
                     if tick > 0 { Spacer(minLength: 0) }
@@ -318,50 +331,6 @@ struct RunningResultCurve: Shape {
             path.closeSubpath()
         }
         return path
-    }
-}
-
-struct RunningResultCard: View {
-    let session: RunningSession
-    let profile: UserProfile?
-    @Environment(\.locale) private var locale
-    var body: some View {
-        let metrics = RunningMetrics(session: session)
-        GeometryReader { geometry in
-            ZStack(alignment: .top) {
-                LinearGradient(colors: [Color(hex: 0x7DD1CA), Color(hex: 0xDAF1FD)], startPoint: .top, endPoint: .bottom)
-                Image("running_result_head_bg").resizable()
-                    .frame(width: geometry.size.width, height: geometry.size.height * 375 / geometry.size.width)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                VStack(spacing: 0) {
-                    Group {
-                        if let data = profile?.avatar, let image = UIImage(data: data) {
-                            Image(uiImage: image).resizable().scaledToFill()
-                        } else { Image(systemName: "person.crop.circle.fill").resizable().foregroundStyle(.white.opacity(0.8)) }
-                    }.frame(width: 73, height: 73).clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2))
-                    Text(profile?.nickname ?? "").font(.system(size: 12)).frame(height: 12).padding(.top, 14)
-                    Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale))
-                        .font(.custom("DINCondensedC", size: 50))
-                        .overlay(alignment: .bottomTrailing) {
-                            Text("Km").font(.system(size: 18, weight: .bold)).fixedSize()
-                                .alignmentGuide(.trailing) { _ in -3 }.padding(.bottom, 8)
-                        }.padding(.top, 26)
-                    ZStack {
-                        Rectangle().frame(width: 1, height: 18)
-                        Text(RunningDetailStyle.pace(session, metrics: metrics, locale: locale))
-                            .overlay(alignment: .leading) {
-                                Image("run_result_speed_02").resizable().scaledToFit().frame(width: 16, height: 14)
-                                    .alignmentGuide(.leading) { $0.width + 7 }
-                            }.offset(x: -53)
-                        HStack(spacing: 7) {
-                            Image("run_result_time_02").resizable().scaledToFit().frame(width: 15, height: 17)
-                            Text(RunningDisplay.duration(metrics.elapsedSeconds))
-                        }.frame(width: geometry.size.width / 2 - 47, alignment: .leading)
-                            .offset(x: geometry.size.width / 4 + 23.5)
-                    }.font(.custom("DINCondensedC", size: 22)).frame(height: 22).padding(.top, 22)
-                }.padding(.top, 65).foregroundStyle(Color(hex: 0x222222).opacity(0.8))
-            }
-        }.accessibilityElement(children: .contain).accessibilityIdentifier("running.card")
     }
 }
 

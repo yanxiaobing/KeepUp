@@ -133,14 +133,14 @@ private func shareFixture(kind: RunningKind = .outdoor, kilometers: Int = 2, tai
     let source = FakeRunningShareSnapshotSource()
     source.succeeds = true
     let renderer = RunningShareRenderer(snapshotSource: source)
-    for (page, style) in [(0, RunningShareStyle.overview), (1, .details), (2, .card)] {
+    for (page, style) in [(0, RunningShareStyle.overview), (1, .details)] {
         #expect(RunningShareStyle(page: page) == style)
         let result = try await renderer.render(session: shareFixture(), locale: Locale(identifier: "zh-Hans"), style: style)
         #expect(result.pages.count == 1)
         #expect(source.calls == 1)
         #expect(result.mapStatus == (style == .overview ? .map : .notNeeded))
         #expect(result.pages[0].previewImage() != nil)
-        if style != .details { #expect(result.pages[0].size.height == 724) }
+        if style == .overview { #expect(result.pages[0].size.height == 724) }
         Attachment.record(Array(try Data(contentsOf: result.pages[0].url)), named: "running-selected-page-\(page).png")
     }
 }

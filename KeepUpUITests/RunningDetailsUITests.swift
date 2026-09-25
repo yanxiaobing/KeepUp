@@ -3,10 +3,11 @@ import XCTest
 @MainActor final class RunningDetailsUITests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
-    private func launch(kind: String, chinese: Bool = false) -> XCUIApplication {
+    private func launch(kind: String, chinese: Bool = false, themeID: Int? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding", "-reset-test-data",
                                "-ui-testing-running-details", kind, "-AppleLanguages", chinese ? "(zh-Hans)" : "(en)", "-AppleLocale", chinese ? "zh_CN" : "en_US"]
+        if let themeID { app.launchArguments += ["-themeID", String(themeID)] }
         app.launch()
         XCTAssertTrue(app.buttons["tab.history"].waitForExistence(timeout: 20))
         return app
@@ -23,12 +24,7 @@ import XCTest
         record.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.25)).tap()
         XCTAssertTrue(app.staticTexts["running.overview.distance"].waitForExistence(timeout: 10))
         capture("KeepUp-Running-" + kind + "-Route")
-        XCTAssertEqual(app.buttons["running.page.2"].exists, kind != "cycling")
-        if kind != "cycling" {
-            app.buttons["running.page.2"].tap()
-            XCTAssertTrue(element("running.card", in: app).waitForExistence(timeout: 5))
-            capture("KeepUp-Running-" + kind + "-Card")
-        }
+        XCTAssertFalse(app.buttons["running.page.2"].exists)
         app.buttons["running.page.1"].tap()
         XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
     }
@@ -54,7 +50,7 @@ import XCTest
 
     func testChinesePagesAndRouteMap() {
         for kind in ["outdoor", "cycling", "indoor"] {
-            let app = launch(kind: kind, chinese: true)
+            let app = launch(kind: kind, chinese: true, themeID: kind == "outdoor" ? 12 : nil)
             openRecord(kind: kind, in: app)
             capture("KeepUp-Running-" + kind + "-Details-Chinese")
             app.buttons["running.page.0"].tap()
