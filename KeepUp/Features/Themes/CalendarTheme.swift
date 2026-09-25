@@ -65,16 +65,11 @@ struct ThemeListView: View {
             GeometryReader { geometry in
                 let s = geometry.size.width/375
                 let cityHeight = geometry.size.width * 272/750
-                ZStack(alignment: .top) {
-                    ZStack(alignment: .bottom) {
-                        LinearGradient(stops: [
-                            .init(color: current.color, location: 0),
-                            .init(color: .white, location: 0.72)
-                        ], startPoint: .top, endPoint: .bottom)
-                        Image(current.transparentCityImage)
-                            .resizable().scaledToFit()
-                            .frame(width: geometry.size.width, height: cityHeight)
-                    }
+                ZStack(alignment: .bottom) {
+                    LinearGradient(stops: [
+                        .init(color: current.color, location: 0),
+                        .init(color: .white, location: 0.72)
+                    ], startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
                     .accessibilityHidden(true)
 
@@ -95,11 +90,21 @@ struct ThemeListView: View {
                         }
                         .padding(.horizontal, 15*s)
                         .padding(.top, 16*s)
-                        .padding(.bottom, 16*s)
+                        .padding(.bottom, cityHeight + 16*s)
                     }
-                    .frame(height: max(0, geometry.size.height - cityHeight))
                     .scrollIndicators(.hidden)
+
+                    LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .bottom)
+                        .frame(height: cityHeight)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                    Image(current.transparentCityImage)
+                        .resizable().scaledToFit()
+                        .frame(width: geometry.size.width, height: cityHeight)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
+                .ignoresSafeArea(edges: .bottom)
             }.navigationTitle("theme.list").navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.hidden, for: .navigationBar)
                 .toolbar {
