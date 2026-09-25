@@ -419,7 +419,8 @@ struct CalendarHomeView: View {
     private func entryLabel(_ entry: CheckInEntry, card: HabitCard) -> String {
         var label = localized(card.titleKey, locale)
         if let quantity = entry.quantity {
-            label += ", " + quantity.formatted(.number.precision(.fractionLength(0...1)).locale(locale)) + localized(entry.unit.titleKey, locale)
+            let digits = ["punchcard.2", "punchcard.96"].contains(card.id) ? 2...2 : 0...1
+            label += ", " + quantity.formatted(.number.precision(.fractionLength(digits)).locale(locale)) + localized(entry.unit.titleKey, locale)
         }
         return label
     }

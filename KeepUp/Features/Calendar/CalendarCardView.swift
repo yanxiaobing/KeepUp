@@ -49,7 +49,8 @@ struct CalendarTicketCard: View {
         if let badge { return badge }
         if let wake { return wake.isEarly ? localized("wake.earlyBadge", locale) : nil }
         if let quantity = entry?.quantity, quantity > 0, let entry {
-            let value = quantity.formatted(.number.precision(.fractionLength(card.id == "punchcard.50" ? 1...1 : 0...1)).locale(locale))
+            let digits = ["punchcard.2", "punchcard.96"].contains(card.id) ? 2...2 : card.id == "punchcard.50" ? 1...1 : 0...1
+            let value = quantity.formatted(.number.precision(.fractionLength(digits)).locale(locale))
             return value + localized(entry.unit.titleKey, locale)
         }
         return nil

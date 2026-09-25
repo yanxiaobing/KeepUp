@@ -81,7 +81,8 @@ struct EntryPoster: View {
     private var name: String { localized(card.titleKey, locale) }
     private var title: String {
         guard let quantity = entry.quantity else { return name }
-        let value = quantity.formatted(.number.precision(.fractionLength(card.id == "punchcard.50" ? 1...1 : 0...1)).locale(locale))
+        let digits = ["punchcard.2", "punchcard.96"].contains(card.id) ? 2...2 : card.id == "punchcard.50" ? 1...1 : 0...1
+        let value = quantity.formatted(.number.precision(.fractionLength(digits)).locale(locale))
         let unit = localized(entry.unit.titleKey, locale)
         return locale.identifier.hasPrefix("zh") ? "\(name)\(value)\(unit)" : "\(name) \(value) \(unit)"
     }
