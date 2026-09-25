@@ -94,7 +94,13 @@ struct ThemeListView: View {
                     }
                     .scrollIndicators(.hidden)
 
-                    LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .bottom)
+                    LinearGradient(stops: [
+                        .init(color: .white.opacity(0), location: 0),
+                        .init(color: .white.opacity(0.06), location: 0.25),
+                        .init(color: .white.opacity(0.3), location: 0.55),
+                        .init(color: .white.opacity(0.7), location: 0.8),
+                        .init(color: .white, location: 1)
+                    ], startPoint: .top, endPoint: .bottom)
                         .frame(height: cityHeight)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
