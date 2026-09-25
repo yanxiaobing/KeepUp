@@ -35,8 +35,9 @@ final class RunningShareArtifact: Identifiable {
 
 enum RunningShareRenderError: Error { case imageUnavailable }
 
-enum RunningShareStyle: Equatable {
+enum RunningShareStyle: String, Identifiable {
     case report, overview, details
+    var id: String { rawValue }
     init(page: Int) { self = page == 0 ? .overview : .details }
 }
 

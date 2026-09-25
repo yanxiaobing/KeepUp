@@ -72,6 +72,24 @@ import XCTest
         }
     }
 
+    func testShareUsesSelectedPageAfterTappingPageDots() {
+        let app = launch(kind: "indoor")
+        openRecord(kind: "indoor", in: app)
+        let share = app.buttons["running.detail.share"]
+        share.tap()
+        XCTAssertTrue(app.scrollViews["running.share.style.details"].waitForExistence(timeout: 5))
+        app.buttons["running.share.close"].tap()
+
+        app.buttons["running.page.0"].tap()
+        share.tap()
+        XCTAssertTrue(app.scrollViews["running.share.style.overview"].waitForExistence(timeout: 5))
+        app.buttons["running.share.close"].tap()
+
+        app.buttons["running.page.1"].tap()
+        share.tap()
+        XCTAssertTrue(app.scrollViews["running.share.style.details"].waitForExistence(timeout: 5))
+    }
+
     func testOutdoorSplitsExpandAndSharePreviewContainsFullActivity() {
         let app = launch(kind: "outdoor")
         openRecord(kind: "outdoor", in: app)

@@ -10,7 +10,7 @@ struct RunningDetailView: View {
     @State private var page = 0
     @State private var showingMap = false
     @State private var editing = false
-    @State private var sharing = false
+    @State private var shareStyle: RunningShareStyle?
     @State private var confirmingDelete = false
     @State private var deleting = false
     @State private var deleteFailed = false
@@ -38,7 +38,7 @@ struct RunningDetailView: View {
                                 .accessibilityLabel(Text("content.edit"))
                                 .accessibilityIdentifier("running.detail.editContent")
                         }
-                        Button { sharing = true } label: {
+                        Button { shareStyle = RunningShareStyle(page: page) } label: {
                             Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24)
                         }.accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.detail.share")
                     }
@@ -46,7 +46,7 @@ struct RunningDetailView: View {
                 .fullScreenCover(isPresented: $editing) {
                     if let currentEntry, let card { EntryContentEditor(entry: currentEntry, card: card) }
                 }
-                .sheet(isPresented: $sharing) { RunningShareView(session: session, style: RunningShareStyle(page: page)) }
+                .sheet(item: $shareStyle) { style in RunningShareView(session: session, style: style) }
                 .fullScreenCover(isPresented: $showingMap) { RunningDetailMapView(session: session) }
                 .confirmationDialog("entry.deleteConfirmation", isPresented: $confirmingDelete, titleVisibility: .visible) {
                     Button("action.delete", role: .destructive) { Task { await deleteRecord() } }
@@ -98,7 +98,7 @@ struct RunningResultPages: View {
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 0) {
                     ForEach(0..<2, id: \.self) { index in
-                        Button { withAnimation { page = index } } label: {
+                        Button { page = index } label: {
                             Circle().fill(page == index ? Color(hex: 0x48484D) : Color(hex: 0xC1C1C1))
                                 .frame(width: 6, height: 6)
                                 .frame(width: 12, height: 30)
@@ -143,8 +143,9 @@ struct RunningSessionSummary: View {
                         }
                     }.padding(15)
                 }
-            }.padding(.bottom, bottomPadding)
-        }.foregroundStyle(Color(hex: 0x222222))
+            }.padding(.top, 16).padding(.bottom, bottomPadding)
+        }.scrollIndicators(.hidden)
+            .foregroundStyle(Color(hex: 0x222222))
             .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
             .accessibilityIdentifier("running.result")
     }

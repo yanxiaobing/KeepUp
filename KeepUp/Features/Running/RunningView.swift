@@ -10,7 +10,7 @@ struct RunningView: View {
     @State private var confirmingFinish = false
     @State private var result: RunningSession?
     @State private var showingSettings = false
-    @State private var showingShare = false
+    @State private var shareStyle: RunningShareStyle?
     @State private var resultPage = 1
     @State private var showingLiveMap = false
     @State private var settingsKindAtOpen: RunningKind?
@@ -54,13 +54,13 @@ struct RunningView: View {
                 }
                 if result != nil {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button { showingShare = true } label: { Image(systemName: "square.and.arrow.up") }
+                        Button { shareStyle = RunningShareStyle(page: resultPage) } label: { Image(systemName: "square.and.arrow.up") }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.result.share")
                     }
                 }
             }
-            .sheet(isPresented: $showingShare) {
-                if let result { RunningShareView(session: result, style: RunningShareStyle(page: resultPage)) }
+            .sheet(item: $shareStyle) { style in
+                if let result { RunningShareView(session: result, style: style) }
             }
             .fullScreenCover(isPresented: $showingLiveMap) {
                 if let result, result.kind.usesGPS {

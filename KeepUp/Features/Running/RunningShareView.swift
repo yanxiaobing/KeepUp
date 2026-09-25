@@ -49,6 +49,7 @@ struct RunningShareView: View {
                         .accessibilityIdentifier("running.share.loading")
                 }
             }.background(Color(white: 0.94))
+                .accessibilityIdentifier("running.share.style." + style.rawValue)
                 .navigationTitle("entry.share").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -78,7 +79,10 @@ struct RunningShareView: View {
                     Button("action.ok") { message = nil }
                 } message: { Text(LocalizedStringKey(message ?? "entry.shareError")) }
         }
-        .task(id: locale.identifier + String(settings.satelliteMap)) { await render() }
+        .task(id: locale.identifier + String(settings.satelliteMap) + style.rawValue) {
+            artifact = nil
+            await render()
+        }
         .onDisappear { retryTask?.cancel() }
     }
 

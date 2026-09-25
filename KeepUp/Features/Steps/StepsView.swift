@@ -78,7 +78,7 @@ struct StepsView: View {
                     .overlay(alignment: .topTrailing) {
                         HStack(spacing: 5.5) {
                             ForEach(StepsPosterStyle.allCases, id: \.self) { style in
-                                Button { withAnimation { selectedStyle = style } } label: {
+                                Button { selectedStyle = style } label: {
                                     Circle().fill(selectedStyle == style ? Color(hex: 0x48484D) : Color(hex: 0xC1C1C1))
                                         .frame(width: 6, height: 6).padding(.vertical, 10)
                                 }.buttonStyle(.plain).accessibilityLabel(Text(LocalizedStringKey(style.titleKey)))
@@ -103,11 +103,12 @@ struct StepsView: View {
                                 .accessibilityIdentifier("steps.editContent")
                         }
                         Button {
-                            guard let image = StepsPosterRenderer.render(data: presentation, style: selectedStyle, locale: locale,
+                            let style = selectedStyle
+                            guard let image = StepsPosterRenderer.render(data: presentation, style: style, locale: locale,
                                                                         isMale: model.snapshot.profile?.isMale == true, encouragement: encouragement) else {
                                 shareFailed = true; return
                             }
-                            shareImage = StepsShareImage(image: image)
+                            shareImage = StepsShareImage(style: style, image: image)
                         } label: { Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24) }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("steps.share").disabled(count == nil)
                     }
@@ -122,7 +123,10 @@ struct StepsView: View {
                 .alert("steps.measurementInfo", isPresented: $showingExplanation) {
                     Button("action.ok", role: .cancel) {}
                 } message: { Text(localized("steps.energyExplanation", locale) + "\n\n" + localized("steps.activeExplanation", locale)) }
-                .sheet(item: $shareImage) { EntrySharePreview(image: $0.image) }
+                .sheet(item: $shareImage) { share in
+                    EntrySharePreview(image: share.image)
+                        .accessibilityIdentifier("steps.share.preview." + share.style.rawValue)
+                }
                 .fullScreenCover(isPresented: $editing) {
                     if let savedEntry, let card = model.card(for: savedEntry) {
                         EntryContentEditor(entry: savedEntry, card: card)
@@ -200,4 +204,8 @@ struct StepsView: View {
     }
 }
 
-private struct StepsShareImage: Identifiable { let id = UUID(); let image: UIImage }
+private struct StepsShareImage: Identifiable {
+    let id = UUID()
+    let style: StepsPosterStyle
+    let image: UIImage
+}
