@@ -92,7 +92,8 @@ final class CoreMotionStepSource: StepSource {
         // Objective-C does not annotate this handler Sendable; prevent inherited MainActor isolation.
         return try await withCheckedThrowingContinuation { continuation in
             queryPedometer.queryPedometerData(from: interval.start, to: interval.end) { @Sendable data, error in
-                continuation.resume(with: Self.reading(data, error: error, day: day, timeZoneID: timeZone.identifier))
+                continuation.resume(with: Self.reading(data, error: error, day: day,
+                    timeZoneID: timeZone.identifier, latestAllowed: interval.end))
             }
         }
     }
@@ -107,7 +108,8 @@ final class CoreMotionStepSource: StepSource {
         let pedometer = self.pedometer ?? makePedometer()
         self.pedometer = pedometer
         pedometer.startUpdates(from: start) { @Sendable data, error in
-            switch Self.reading(data, error: error, day: day, timeZoneID: timeZone.identifier) {
+            switch Self.reading(data, error: error, day: day, timeZoneID: timeZone.identifier,
+                                latestAllowed: .now) {
             case .success(let reading): continuation.yield(reading)
             case .failure(let error): continuation.finish(throwing: error)
             }
@@ -145,11 +147,15 @@ final class CoreMotionStepSource: StepSource {
         return StepIntraday(intervals: samples, measuredThrough: through)
     }
 
-    nonisolated private static func reading(_ data: CMPedometerData?, error: Error?, day: LocalDay, timeZoneID: String) -> Result<StepReading, Error> {
+    nonisolated private static func reading(_ data: CMPedometerData?, error: Error?, day: LocalDay,
+                                            timeZoneID: String, latestAllowed: Date) -> Result<StepReading, Error> {
         if let error { return .failure(error) }
         guard let data else { return .failure(StepSourceError.unavailable) }
+        // Pedometer callbacks may report an end date past the query boundary
+        // or slightly ahead of the wall clock. Only completed time is stored.
+        let measuredAt = min(data.endDate, latestAllowed, Date.now)
         let result = StepReading(day: day, timeZoneID: timeZoneID, steps: data.numberOfSteps.intValue,
-                                 distance: data.distance?.doubleValue, measuredAt: data.endDate)
+                                 distance: data.distance?.doubleValue, measuredAt: measuredAt)
         guard result.isValid else { return .failure(StepSourceError.invalidReading) }
         return .success(result)
     }

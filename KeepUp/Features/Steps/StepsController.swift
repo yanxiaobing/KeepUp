@@ -103,6 +103,13 @@ final class StepsController {
 
     private func receive(_ reading: StepReading, token: Int, save: @MainActor (StepReading) async -> Bool) async {
         guard reading.isValid, generation == token else { return }
+        // Core Motion can return an interval end later than the current wall
+        // clock after a time change. Wait for a fresh reading instead of
+        // submitting a future timestamp to storage.
+        guard reading.measuredAt <= Date.now else {
+            if reading.day == selectedDay { state = .failed }
+            return
+        }
         if let existing = readings[reading.day], existing.timeZoneID == reading.timeZoneID,
            existing.measuredAt > reading.measuredAt { return }
         var reading = reading

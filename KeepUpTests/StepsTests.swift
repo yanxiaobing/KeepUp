@@ -114,6 +114,23 @@ private func waitForSteps(_ condition: () -> Bool) async {
     #expect(saved == 0)
 }
 
+@Test @MainActor func futureSensorTimestampIsRetriedWithoutSaving() async {
+    let now = Date.now
+    let day = LocalDay(date: now)
+    let source = ControlledStepSource()
+    source.suspendedQueries = 1
+    let controller = StepsController(day: day, source: source)
+    var saved: [StepReading] = []
+    controller.refresh(now: now) { saved.append($0); return true }
+    await waitForSteps { source.pending.count == 1 }
+    source.pending[0].resume(returning: StepReading(day: day, timeZoneID: TimeZone.current.identifier,
+        steps: 10, distance: nil, measuredAt: now.addingTimeInterval(60)))
+    await waitForSteps { source.queryCount == 7 }
+    #expect(saved.allSatisfy { $0.day != day })
+    #expect(controller.state == .failed)
+    controller.stop()
+}
+
 @Test @MainActor func oldStepQueryCannotOverwriteNewRefresh() async {
     let now = stepsDay("2026-03-09").date(in: stepsZone)
     let source = ControlledStepSource()
