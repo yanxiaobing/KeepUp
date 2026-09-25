@@ -268,10 +268,6 @@ struct ProfileView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.primary.opacity(0.55))
-                        .accessibilityHidden(true)
                 }
                 .contentShape(Rectangle())
             }
@@ -341,27 +337,55 @@ struct ProfileView: View {
 
     private var membershipCard: some View {
         Button { showMembership = true } label: {
-            HStack(spacing: 13) {
+            HStack(spacing: 14) {
                 Image(systemName: "crown.fill")
-                    .font(.system(size: 19, weight: .medium))
-                    .foregroundStyle(KeepUpStyle.accent)
-                    .frame(width: 22)
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 46, height: 46)
+                    .background {
+                        RoundedRectangle(cornerRadius: 13)
+                            .fill(LinearGradient(colors: [KeepUpStyle.accent, Color(red: 1, green: 0.63, blue: 0.43)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                    }
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("profile.premium").font(.subheadline.weight(.semibold))
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("profile.premium")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color(white: 0.16))
                     Text(LocalizedStringKey(membership.isPremium ? "membership.active" : "profile.premiumSubtitle"))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption)
+                        .foregroundStyle(Color(white: 0.43))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(KeepUpStyle.accent)
+                    .frame(width: 28, height: 28)
+                    .background(.white.opacity(0.9), in: Circle())
                     .accessibilityHidden(true)
             }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 65)
-            .background(.white, in: RoundedRectangle(cornerRadius: 12))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 17)
+            .frame(minHeight: 84)
+            .background {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(LinearGradient(colors: [Color(red: 1, green: 0.99, blue: 0.97),
+                                                  Color(red: 1, green: 0.94, blue: 0.89)],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .overlay(alignment: .trailing) {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 92))
+                            .foregroundStyle(KeepUpStyle.accent.opacity(0.07))
+                            .rotationEffect(.degrees(-18))
+                            .offset(x: 12, y: 10)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 18)
+                    .strokeBorder(KeepUpStyle.accent.opacity(0.12), lineWidth: 1)
+            }
+            .shadow(color: KeepUpStyle.accent.opacity(0.08), radius: 12, y: 5)
+            .contentShape(RoundedRectangle(cornerRadius: 18))
         }
         .buttonStyle(.plain)
         .disabled(preparingFeature)
