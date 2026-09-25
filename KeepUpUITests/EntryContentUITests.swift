@@ -152,8 +152,17 @@ final class EntryContentUITests: XCTestCase {
         app.buttons["theme.open"].tap()
         XCTAssertTrue(app.buttons["theme.1"].waitForExistence(timeout: 5))
         app.buttons["theme.1"].tap()
-        XCTAssertTrue(app.buttons["theme.apply"].waitForExistence(timeout: 5))
-        app.buttons["theme.apply"].tap()
+        XCTAssertTrue(app.alerts["北京"].waitForExistence(timeout: 5))
+        let cancelTheme = app.alerts["北京"].buttons["theme.cancel"].firstMatch
+        XCTAssertTrue(cancelTheme.waitForExistence(timeout: 5))
+        cancelTheme.tap()
+        XCTAssertFalse(app.alerts["北京"].exists)
+        XCTAssertTrue(app.buttons["theme.1"].exists)
+        app.buttons["theme.1"].tap()
+        let applyTheme = app.alerts["北京"].buttons["theme.apply"].firstMatch
+        XCTAssertTrue(applyTheme.waitForExistence(timeout: 5))
+        XCTAssertEqual(applyTheme.label, "换个皮肤 换种心情")
+        applyTheme.tap()
         XCTAssertTrue(app.buttons["theme.open"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["membership.purchase"].exists)
         app.terminate()
@@ -161,9 +170,8 @@ final class EntryContentUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["theme.open"].waitForExistence(timeout: 15))
         app.buttons["theme.open"].tap()
-        app.buttons["theme.1"].tap()
-        XCTAssertTrue(app.buttons["theme.apply"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["theme.apply"].isEnabled)
+        XCTAssertTrue(app.buttons["theme.0"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["theme.1"].exists)
         shot("KeepUp-Theme-Applied-Without-Membership")
     }
 
