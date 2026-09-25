@@ -148,10 +148,10 @@ struct ThemeCalendarMonth {
     let dayCount: Int
     let cellCount: Int
 
-    init(date: Date, locale: Locale) {
+    init(date: Date, locale: Locale, firstWeekday selection: Int = 0) {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = locale
-        calendar.firstWeekday = locale.identifier.hasPrefix("zh") ? 2 : 1
+        calendar.firstWeekday = WeekStartPreference.weekday(locale: locale, selection: selection)
         let weekStart = calendar.firstWeekday
         firstWeekday = weekStart
         let symbols = calendar.veryShortStandaloneWeekdaySymbols
@@ -174,10 +174,11 @@ private struct ThemePageThumbnail: View {
     let theme: CalendarTheme
     let width: CGFloat
     @Environment(\.locale) private var locale
+    @Default(.firstWeekday) private var firstWeekdaySelection
 
     var body: some View {
         let monthDate = Date.now
-        let month = ThemeCalendarMonth(date: monthDate, locale: locale)
+        let month = ThemeCalendarMonth(date: monthDate, locale: locale, firstWeekday: firstWeekdaySelection)
         let height = width * 1.42
         ZStack(alignment: .bottom) {
             LinearGradient(stops: [

@@ -45,6 +45,22 @@ import Testing
     #expect(english.leadingDayCount == 2)
     #expect(english.day(at: 2) == 1)
 
+    let chosenMonday = ThemeCalendarMonth(date: september, locale: Locale(identifier: "en_US"), firstWeekday: 2)
+    #expect(chosenMonday.firstWeekday == 2)
+    #expect(chosenMonday.leadingDayCount == 1)
+    let chosenSunday = ThemeCalendarMonth(date: september, locale: Locale(identifier: "zh_CN"), firstWeekday: 1)
+    #expect(chosenSunday.firstWeekday == 1)
+    #expect(chosenSunday.leadingDayCount == 2)
+
     let august = try #require(calendar.date(from: DateComponents(year: 2026, month: 8, day: 1)))
     #expect(ThemeCalendarMonth(date: august, locale: Locale(identifier: "en_US")).cellCount == 42)
+}
+
+@Test func weekStartSelectionOverridesLanguageOnlyAfterSelection() {
+    let chinese = Locale(identifier: "zh_CN")
+    let english = Locale(identifier: "en_US")
+    #expect(WeekStartPreference.weekday(locale: chinese, selection: 0) == 2)
+    #expect(WeekStartPreference.weekday(locale: english, selection: 0) == 1)
+    #expect(WeekStartPreference.weekday(locale: chinese, selection: 1) == 1)
+    #expect(WeekStartPreference.weekday(locale: english, selection: 2) == 2)
 }

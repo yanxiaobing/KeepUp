@@ -6,6 +6,9 @@ struct ProfileNicknameField: UIViewRepresentable {
     @Binding var focused: Bool
     let placeholder: String
     let scale: CGFloat
+    var maxLength = 7
+    var fieldIdentifier = "info.nickname"
+    var selectAllOnFocus = false
     var settingsStyle = false
     var onCommit: (() -> Void)?
     func makeCoordinator() -> Coordinator { Coordinator(self) }
@@ -17,12 +20,13 @@ struct ProfileNicknameField: UIViewRepresentable {
         view.textColor = .black
         view.tintColor = UIColor(red: 108/255, green: 99/255, blue: 1, alpha: 1)
         view.font = UIFont(name: "PingFangSC-Medium", size: 13*scale)
-        view.accessibilityIdentifier = "info.nickname"
+        view.accessibilityIdentifier = fieldIdentifier
         view.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .editingChanged)
         return view
     }
     func updateUIView(_ view: NicknameTextField, context: Context) {
         context.coordinator.parent = self
+        view.accessibilityIdentifier = fieldIdentifier
         view.font = settingsStyle ? .systemFont(ofSize: 16*scale) : UIFont(name: "PingFangSC-Medium", size: 13*scale)
         view.textAlignment = settingsStyle ? .right : .left
         view.textColor = settingsStyle ? .secondaryLabel : .black
@@ -44,13 +48,16 @@ struct ProfileNicknameField: UIViewRepresentable {
             guard field.markedTextRange == nil else { return }
             var result = ""
             for character in field.text ?? "" {
-                guard (result+String(character)).utf16.count <= 7 else { break }
+                guard (result+String(character)).utf16.count <= parent.maxLength else { break }
                 result.append(character)
             }
             if result != field.text { field.text = result }
             if parent.text != result { parent.text = result }
         }
-        func textFieldDidBeginEditing(_ textField: UITextField) { if !parent.focused { parent.focused = true } }
+        func textFieldDidBeginEditing(_ textField: UITextField) {
+            if !parent.focused { parent.focused = true }
+            if parent.selectAllOnFocus { textField.selectAll(nil) }
+        }
         func textFieldDidEndEditing(_ textField: UITextField) {
             changed(textField)
             if parent.focused { parent.focused = false }

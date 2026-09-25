@@ -135,16 +135,14 @@ final class ProfileMembershipUITests: XCTestCase {
         XCTAssertFalse(app.buttons["membership.purchase"].isEnabled)
         app.buttons["membership.close"].tap()
         XCTAssertTrue(app.buttons["membership.close"].waitForNonExistence(timeout: 5))
-        app.buttons["profile.settings"].tap()
-        XCTAssertTrue(app.buttons["profile.edit"].waitForExistence(timeout: 5))
-        app.buttons["profile.edit"].tap()
+        app.buttons["profile.nickname"].tap()
         XCTAssertEqual(app.textFields["info.nickname"].value as? String, "KeepUp")
         app.textFields["info.nickname"].tap()
         app.textFields["info.nickname"].typeText("X\n")
         let editedNickname = app.textFields["info.nickname"].value as? String
         XCTAssertTrue(editedNickname?.contains("X") == true)
         app.buttons["profile.info.back"].tap()
-        app.buttons["profile.edit"].tap()
+        app.buttons["profile.nickname"].tap()
         XCTAssertEqual(app.textFields["info.nickname"].value as? String, editedNickname)
         screenshot("KeepUp-Profile-Personal-Info")
         app.buttons["profile.info.back"].tap()
@@ -175,15 +173,14 @@ final class ProfileMembershipUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
         app.buttons["tab.profile"].tap()
-        app.buttons["profile.settings"].tap()
-        app.buttons["profile.edit"].tap()
+        app.buttons["profile.nickname"].tap()
         let nickname = app.textFields["info.nickname"]
         nickname.tap()
         let old = nickname.value as? String ?? ""
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old.count) + "Alex")
         app.buttons["profile.info.back"].tap()
-        XCTAssertTrue(app.buttons["profile.edit"].waitForExistence(timeout: 5))
-        app.buttons["profile.edit"].tap()
+        XCTAssertTrue(app.buttons["profile.nickname"].waitForExistence(timeout: 5))
+        app.buttons["profile.nickname"].tap()
         XCTAssertEqual(nickname.value as? String, "Alex")
         app.buttons["profile.info.avatar"].tap()
         XCTAssertTrue(app.buttons["info.avatar.cancel"].waitForExistence(timeout: 5))
@@ -215,7 +212,7 @@ final class ProfileMembershipUITests: XCTestCase {
             app.buttons["info.ruler.confirm"].tap()
         }
         app.buttons["profile.info.back"].tap()
-        app.buttons["profile.edit"].tap()
+        app.buttons["profile.nickname"].tap()
         XCTAssertEqual(nickname.value as? String, "Alex")
         for key in ["year", "height", "weight"] {
             app.buttons["profile.info.\(key)"].tap()
@@ -223,6 +220,48 @@ final class ProfileMembershipUITests: XCTestCase {
             app.buttons["info.ruler.confirm"].tap()
         }
         screenshot("Personal-Info-Saved")
+    }
+
+    func testMottoLegalLinksAndFirstWeekdayInlinePreference() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing", "-reset-test-data", "-ui-testing-skip-onboarding",
+                               "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
+        app.buttons["tab.profile"].tap()
+        XCTAssertEqual(app.buttons["profile.nickname"].value as? String, "热爱生活,保持向上")
+        XCTAssertTrue(app.buttons["profile.privacyPolicy"].exists)
+        XCTAssertTrue(app.buttons["profile.userAgreement"].exists)
+
+        app.buttons["profile.nickname"].tap()
+        let motto = app.textFields["info.motto"]
+        XCTAssertTrue(motto.waitForExistence(timeout: 5))
+        screenshot("KeepUp-Personal-Info-Motto")
+        motto.tap()
+        motto.typeText("Keep going\n")
+        app.buttons["profile.info.back"].tap()
+        XCTAssertEqual(app.buttons["profile.nickname"].value as? String, "Keep going")
+
+        app.buttons["profile.settings"].tap()
+        XCTAssertFalse(app.buttons["profile.edit"].exists)
+        XCTAssertFalse(app.buttons["settings.privacyPolicy"].exists)
+        XCTAssertFalse(app.buttons["settings.userAgreement"].exists)
+        XCTAssertTrue(app.buttons["settings.firstWeekday"].label.contains("星期一"))
+        screenshot("KeepUp-Settings-Week-Start")
+        app.buttons["settings.firstWeekday"].tap()
+        app.buttons["firstWeekday.sunday"].tap()
+        XCTAssertTrue(app.buttons["settings.firstWeekday"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["settings.firstWeekday"].label.contains("星期日"))
+        app.terminate()
+
+        app.launchArguments = ["-ui-testing", "-ui-testing-skip-onboarding",
+                               "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        XCTAssertTrue(app.buttons["tab.profile"].waitForExistence(timeout: 20))
+        app.buttons["tab.profile"].tap()
+        XCTAssertEqual(app.buttons["profile.nickname"].value as? String, "Keep going")
+        app.buttons["profile.settings"].tap()
+        XCTAssertTrue(app.buttons["settings.firstWeekday"].label.contains("Sunday"))
     }
 
     func testMembershipRestoredCloudAndSkipCopy() {

@@ -13,6 +13,8 @@ private func entry(_ date: String, id: String = UUID().uuidString, card: String 
     let records = [entry("2026-03-01"), entry("2026-03-02"), entry("2026-03-02"), entry("2026-03-08"), entry("2026-03-09"), entry("2026-03-03", card: "other")]
     #expect(target.completedDays(entries: records, day: day("2026-03-08"), timeZone: zone) == [day("2026-03-02"), day("2026-03-08")])
     #expect(target.completedDays(entries: records, day: day("2026-03-09"), timeZone: zone) == [day("2026-03-09")])
+    #expect(target.completedDays(entries: records, day: day("2026-03-08"), timeZone: zone, firstWeekday: 1) ==
+            [day("2026-03-08")])
 }
 
 @Test func remindersSkipCompletedDaysKeepFutureAndRespectQueueLimit() {

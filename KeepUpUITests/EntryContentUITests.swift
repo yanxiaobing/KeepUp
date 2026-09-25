@@ -129,7 +129,7 @@ final class EntryContentUITests: XCTestCase {
     }
     func testPersonalInfoUpdatesAndWeightCheckIn() throws {
         let app = launch("zh-Hans")
-        app.buttons["tab.profile"].tap(); app.buttons["profile.settings"].tap(); app.buttons["profile.edit"].tap()
+        app.buttons["tab.profile"].tap(); app.buttons["profile.nickname"].tap()
         XCTAssertTrue(app.buttons["profile.info.gender"].waitForExistence(timeout: 5))
         shot("KeepUp-Profile-Personal-Chinese")
         app.buttons["profile.info.gender"].tap(); app.buttons["profile.info.male"].tap()

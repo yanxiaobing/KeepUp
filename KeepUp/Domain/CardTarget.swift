@@ -23,8 +23,8 @@ struct CardTarget: Identifiable, Codable, Equatable, Sendable {
               !reminderEnabled || !weekdays.isEmpty else { throw StoreError.invalidTarget }
         var value = self; value.weekdays = Array(Set(weekdays)).sorted(); return value
     }
-    func completedDays(entries: [CheckInEntry], day: LocalDay, timeZone: TimeZone = .current) -> Set<LocalDay> {
-        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = timeZone; calendar.firstWeekday = 2
+    func completedDays(entries: [CheckInEntry], day: LocalDay, timeZone: TimeZone = .current, firstWeekday: Int = 2) -> Set<LocalDay> {
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = timeZone; calendar.firstWeekday = firstWeekday
         let start = calendar.dateInterval(of: .weekOfYear, for: day.date(in: timeZone))!.start
         let first = LocalDay(date: start, timeZone: timeZone)
         let end = LocalDay(date: calendar.date(byAdding: .day, value: 7, to: start)!, timeZone: timeZone)

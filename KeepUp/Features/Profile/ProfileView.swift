@@ -20,6 +20,7 @@ struct ProfileView: View {
     @State private var rewardDecision: (RewardedFeatureAccess.FeatureID, RewardedFeatureAccessView.Decision)?
     @State private var preparingFeature = false
     @State private var privacyError = false
+    @State private var selectedLegalDocument: LegalDocument?
     @State private var contextID = UUID()
     @State private var featureTask: Task<Void, Never>?
     @State private var privacyTask: Task<Void, Never>?
@@ -28,6 +29,10 @@ struct ProfileView: View {
         let nickname = model.snapshot.profile?.nickname ?? ""
         return nickname.isEmpty ? localized("profile.nickname", locale) : nickname
     }
+    private var profileMotto: String {
+        let value = model.snapshot.profile?.motto ?? ""
+        return value.isEmpty ? localized("profile.defaultMotto", locale) : value
+    }
 
     var body: some View {
         Group {
@@ -35,6 +40,7 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     profileHeader
                     VStack(alignment: .leading, spacing: 18) {
+                        membershipCard
                         section("profile.goals") {
                             rowGroup {
                                 actionRow("profile.stepTarget", symbol: "figure.walk", value: stepGoalDescription, identifier: "profile.stepTarget") {
@@ -53,44 +59,42 @@ struct ProfileView: View {
                                 actionRow("profile.alarms", symbol: "bell", identifier: "profile.alarms") { requestFeature(.reminders) }
                             }
                         }
-                        membershipCard
                         section("profile.more") {
                             rowGroup {
-                                NavigationLink { ProfileSettingsView() } label: {
-                                    rowLabel("profile.settings", symbol: "gearshape")
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(preparingFeature)
-                                .accessibilityIdentifier("profile.settings")
-                                separator
                                 actionRow("profile.review", symbol: "star", identifier: "profile.review") { pendingFeature = "profile.review" }
                                 separator
                                 actionRow("profile.contact", symbol: "envelope", identifier: "profile.contact") { pendingFeature = "profile.contact" }
+                                separator
+                                Button { selectedLegalDocument = .privacy } label: {
+                                    rowLabel("legal.privacyPolicy", symbol: "hand.raised")
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("profile.privacyPolicy")
+                                separator
+                                Button { selectedLegalDocument = .agreement } label: {
+                                    rowLabel("legal.userAgreement", symbol: "doc.text")
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("profile.userAgreement")
                                 if advertising.consent.privacyOptionsRequired {
                                     separator
                                     actionRow("ads.privacyOptions", symbol: "hand.raised", identifier: "ads.privacyOptions") { presentPrivacyOptions() }
                                         .disabled(advertising.consent.isBusy || preparingFeature)
                                 }
-                                separator
-                                HStack(spacing: 13) {
-                                    rowIcon("info.circle")
-                                    Text("profile.version")
-                                    Spacer(minLength: 8)
-                                    Text("V" + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"))
-                                        .foregroundStyle(.secondary)
-                                }
-                                .font(.system(size: 15))
-                                .padding(.horizontal, 16)
-                                .frame(minHeight: 54)
                             }
                         }
+                        Text(verbatim: "Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0")")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 4)
+                            .accessibilityIdentifier("profile.version")
                     }
                     .padding(.horizontal, 15)
                 }
                 .padding(.bottom, 28)
             }
             .scrollIndicators(.hidden)
-            .scrollEdgeEffectHidden(true, for: .all)
             .background {
                 ZStack {
                     Color.white
@@ -104,6 +108,17 @@ struct ProfileView: View {
             .navigationTitle("nav.profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink { ProfileSettingsView() } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .tint(Color(white: 0.2))
+                    .disabled(preparingFeature)
+                    .accessibilityLabel(Text("settings.title"))
+                    .accessibilityIdentifier("profile.settings")
+                }
+            }
             .fullScreenCover(item: $rewardGate, onDismiss: finishRewardGate) { request in
                 RewardedFeatureAccessView(feature: request.feature) { decision in
                     rewardDecision = (request.feature, decision)
@@ -113,6 +128,9 @@ struct ProfileView: View {
             .alert("error.title", isPresented: $privacyError) {
                 Button("action.ok") {}
             } message: { Text("ads.privacyError") }
+            .sheet(item: $selectedLegalDocument) { document in
+                LegalDocumentSafariView(document: document, locale: locale)
+            }
             .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
             .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
             .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
@@ -244,9 +262,11 @@ struct ProfileView: View {
                             .font(.system(.title3, design: .rounded, weight: .semibold))
                             .lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("profile.personalInfo")
+                        Text(verbatim: profileMotto)
                             .font(.subheadline)
                             .foregroundStyle(.primary.opacity(0.65))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     Image(systemName: "chevron.right")
                         .font(.caption.weight(.semibold))
@@ -259,6 +279,7 @@ struct ProfileView: View {
             .disabled(preparingFeature)
             .accessibilityIdentifier("profile.nickname")
             .accessibilityLabel(Text(verbatim: profileNickname))
+            .accessibilityValue(Text(verbatim: profileMotto))
 
             Group {
                 if dynamicTypeSize.isAccessibilitySize {
@@ -285,6 +306,19 @@ struct ProfileView: View {
     }
 
     @ViewBuilder private var profileMilestones: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let days = ProfileDuration.dayCount(since: model.snapshot.profile?.createdAt ?? context.date, now: context.date)
+            HStack(spacing: 6) {
+                Image(systemName: "calendar").accessibilityHidden(true)
+                Text(String(format: localized("profile.journey %lld", locale), Int64(days)))
+                    .accessibilityIdentifier("profile.journey")
+            }
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 11)
+            .padding(.vertical, 7)
+            .background(.white.opacity(0.82), in: Capsule())
+        }
+
         HStack(spacing: 6) {
             Image(systemName: "flame.fill").foregroundStyle(KeepUpStyle.accent)
             Text(verbatim: String(format: localized("profile.streakFormat %lld", locale), Int64(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))))
@@ -293,14 +327,6 @@ struct ProfileView: View {
         .padding(.horizontal, 11)
         .padding(.vertical, 7)
         .background(.white.opacity(0.82), in: Capsule())
-
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            let days = ProfileDuration.dayCount(since: model.snapshot.profile?.createdAt ?? context.date, now: context.date)
-            Text(String(format: localized("profile.journey %lld", locale), Int64(days)))
-                .font(.subheadline)
-                .foregroundStyle(.primary.opacity(0.72))
-                .accessibilityIdentifier("profile.journey")
-        }
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -399,30 +425,59 @@ struct ProfileView: View {
 }
 
 struct ProfileSettingsView: View {
-    @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
-    @State private var selectedLegalDocument: LegalDocument?
     @Default(.appLanguage) private var language
+    @Default(.firstWeekday) private var firstWeekdaySelection
     var body: some View {
         List {
-            Section {
-                NavigationLink { ProfileInfoView() } label: {
-                    HStack { Text("info.title"); Spacer(); Text(model.snapshot.profile?.nickname ?? "").foregroundStyle(.secondary) }
-                }.accessibilityIdentifier("profile.edit")
-            }
-            NavigationLink { LanguageSettingsView() } label: {
-                HStack {
-                    Text("settings.language")
-                    Spacer()
-                    Text(LocalizedStringKey((AppLanguage(rawValue: language) ?? .system).titleKey)).foregroundStyle(.secondary)
+            Menu {
+                ForEach(AppLanguage.allCases, id: \.rawValue) { item in
+                    Button { language = item.rawValue } label: {
+                        if language == item.rawValue {
+                            Label(LocalizedStringKey(item.titleKey), systemImage: "checkmark")
+                        } else {
+                            Text(LocalizedStringKey(item.titleKey))
+                        }
+                    }.accessibilityIdentifier("language.\(item.rawValue)")
                 }
-            }.accessibilityIdentifier("settings.language")
-            Section {
-                Button("legal.privacyPolicy") { selectedLegalDocument = .privacy }
-                    .accessibilityIdentifier("settings.privacyPolicy")
-                Button("legal.userAgreement") { selectedLegalDocument = .agreement }
-                    .accessibilityIdentifier("settings.userAgreement")
+            } label: {
+                HStack(spacing: 8) {
+                    Text("settings.language").foregroundStyle(Color.primary)
+                    Spacer()
+                    Text(LocalizedStringKey((AppLanguage(rawValue: language) ?? .system).titleKey))
+                        .foregroundStyle(Color.secondary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                }
+                .contentShape(Rectangle())
             }
+            .accessibilityIdentifier("settings.language")
+            Menu {
+                ForEach([2, 1], id: \.self) { weekday in
+                    Button { firstWeekdaySelection = weekday } label: {
+                        let title = LocalizedStringKey(weekday == 2 ? "settings.monday" : "settings.sunday")
+                        if WeekStartPreference.weekday(locale: locale, selection: firstWeekdaySelection) == weekday {
+                            Label(title, systemImage: "checkmark")
+                        } else {
+                            Text(title)
+                        }
+                    }.accessibilityIdentifier(weekday == 2 ? "firstWeekday.monday" : "firstWeekday.sunday")
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text("settings.firstWeekday").foregroundStyle(Color.primary)
+                    Spacer()
+                    Text(LocalizedStringKey(WeekStartPreference.weekday(locale: locale, selection: firstWeekdaySelection) == 2
+                        ? "settings.monday" : "settings.sunday"))
+                        .foregroundStyle(Color.secondary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("settings.firstWeekday")
         }.listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
@@ -433,39 +488,9 @@ struct ProfileSettingsView: View {
         }
         .toolbarBackground(.clear, for: .navigationBar)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .sheet(item: $selectedLegalDocument) { document in
-            LegalDocumentSafariView(document: document, locale: locale)
-        }.navigationTitle("profile.settings").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        .navigationTitle("profile.settings").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
     }
 }
-struct LanguageSettingsView: View {
-    @Default(.appLanguage) private var language
-    var body: some View {
-        List {
-            ForEach(AppLanguage.allCases, id: \.rawValue) { item in
-                Button { language = item.rawValue } label: {
-                    HStack {
-                        Text(LocalizedStringKey(item.titleKey)).foregroundStyle(.primary)
-                        Spacer()
-                        if language == item.rawValue { Image(systemName: "checkmark").foregroundStyle(KeepUpStyle.accent) }
-                    }
-                }.accessibilityIdentifier("language.\(item.rawValue)")
-            }
-        }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .scrollIndicators(.hidden)
-        .scrollEdgeEffectHidden(true, for: .all)
-        .background {
-            LinearGradient(colors: [KeepUpStyle.theme, .white], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-        }
-        .toolbarBackground(.clear, for: .navigationBar)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .navigationTitle("settings.language").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
-    }
-}
-
 private struct RewardGateRequest: Identifiable {
     let id = UUID()
     let feature: RewardedFeatureAccess.FeatureID

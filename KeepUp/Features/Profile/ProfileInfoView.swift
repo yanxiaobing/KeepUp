@@ -7,6 +7,8 @@ struct ProfileInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var nickname = ""
     @State private var nicknameFocused = false
+    @State private var motto = ""
+    @State private var mottoFocused = false
     @State private var pendingSource: ImageSource?
     @State private var sheetKind: MenuKind?
     @State private var metric: ProfileMetric?
@@ -15,6 +17,7 @@ struct ProfileInfoView: View {
     @State private var pendingSaves = 0
     @State private var saveTask: Task<Void, Never>?
     @State private var submittedNickname = ""
+    @State private var submittedMotto = ""
     @State private var initialized = false
     @State private var closeRequested = false
     @State private var saveError: String?
@@ -49,6 +52,18 @@ struct ProfileInfoView: View {
                                 }.font(.system(size: 16*s)).padding(.horizontal, 15*s).frame(height: 56*s)
                                     .background(Color(.secondarySystemGroupedBackground)).overlay(alignment: .bottom) { separator(s) }
                                     .contentShape(Rectangle()).onTapGesture { nicknameFocused = true }
+                                HStack(spacing: 6*s) {
+                                    Text("profile.motto").foregroundStyle(.primary)
+                                    Spacer()
+                                    ProfileNicknameField(text: $motto, focused: $mottoFocused,
+                                                         placeholder: localized("profile.defaultMotto", locale), scale: s,
+                                                         maxLength: 40, fieldIdentifier: "info.motto",
+                                                         selectAllOnFocus: true, settingsStyle: true, onCommit: commitMotto)
+                                        .frame(maxWidth: 220*s, minHeight: 56*s)
+                                    arrow(s)
+                                }.font(.system(size: 16*s)).padding(.horizontal, 15*s).frame(height: 56*s)
+                                    .background(Color(.secondarySystemGroupedBackground)).overlay(alignment: .bottom) { separator(s) }
+                                    .contentShape(Rectangle()).onTapGesture { mottoFocused = true }
                                 row("info.gender", s: s, showsSeparator: false) { blur(); sheetKind = .gender } value: {
                                     Text(LocalizedStringKey(profile.isMale ? "info.male" : "info.female"))
                                 }.accessibilityIdentifier("profile.info.gender")
@@ -106,6 +121,8 @@ struct ProfileInfoView: View {
             initialized = true
             nickname = profile.nickname
             submittedNickname = profile.nickname
+            motto = profile.motto ?? localized("profile.defaultMotto", locale)
+            submittedMotto = motto
         }
         .onChange(of: pendingSaves) { _, count in
             if count == 0, closeRequested, saveError == nil { dismiss() }
@@ -150,7 +167,9 @@ struct ProfileInfoView: View {
         // Commit marked text before opening a picker or leaving the page.
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         nicknameFocused = false
+        mottoFocused = false
         commitNickname()
+        commitMotto()
     }
     private func closeAfterSaving() {
         blur()
@@ -165,6 +184,14 @@ struct ProfileInfoView: View {
         submittedNickname = value
         save(.nickname(value))
     }
+    private func commitMotto() {
+        let value = motto.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { motto = submittedMotto; return }
+        motto = value
+        guard value != submittedMotto else { return }
+        submittedMotto = value
+        save(.motto(value))
+    }
     private func save(_ change: ProfileChange) {
         pendingSaves += 1
         let previous = saveTask
@@ -176,6 +203,10 @@ struct ProfileInfoView: View {
                 model.actionError = nil
                 closeRequested = false
                 if case .nickname = change { submittedNickname = profile.nickname }
+                if case .motto = change {
+                    submittedMotto = profile.motto ?? localized("profile.defaultMotto", locale)
+                    motto = submittedMotto
+                }
             }
             pendingSaves -= 1
         }

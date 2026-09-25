@@ -11,6 +11,7 @@ struct CalendarHomeView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Default(.monthMode) private var isMonthMode
+    @Default(.firstWeekday) private var firstWeekdaySelection
     @State private var showingTheme = false
     @State private var showingRunning = false
     @State private var presentedRecoveredRun = false
@@ -29,7 +30,7 @@ struct CalendarHomeView: View {
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = locale
-        calendar.firstWeekday = locale.identifier.hasPrefix("zh") ? 2 : 1
+        calendar.firstWeekday = WeekStartPreference.weekday(locale: locale, selection: firstWeekdaySelection)
         return calendar
     }
     private var selectedDay: LocalDay { LocalDay(date: selectedDate) }
@@ -413,7 +414,7 @@ struct CalendarHomeView: View {
     private func weeklyProgress(_ card: HabitCard) -> Int? {
         guard selectedDay == today,
               let target = model.snapshot.targets.first(where: { $0.cardID == card.id && $0.showsProgress }) else { return nil }
-        return target.completedDays(entries: model.snapshot.entries, day: selectedDay).count
+        return target.completedDays(entries: model.snapshot.entries, day: selectedDay, firstWeekday: calendar.firstWeekday).count
     }
 
     private func entryLabel(_ entry: CheckInEntry, card: HabitCard) -> String {

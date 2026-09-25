@@ -4,6 +4,8 @@ import Foundation
 extension Defaults.Keys {
     static let privacyAccepted = Key<Bool>("privacyAccepted", default: false, suite: AppPreferences.store)
     static let appLanguage = Key<String>("appLanguage", default: "system", suite: AppPreferences.store)
+    // 0 follows the app language; 1 is Sunday and 2 is Monday (Calendar weekday values).
+    static let firstWeekday = Key<Int>("firstWeekday", default: 0, suite: AppPreferences.store)
     static let monthMode = Key<Bool>("monthMode", default: false, suite: AppPreferences.store)
     static let themeID = Key<Int>("themeID", default: 0, suite: AppPreferences.store)
 }
@@ -35,6 +37,13 @@ enum AppPreferences {
     }
 
     static func reset() {
-        Defaults.reset(.privacyAccepted, .appLanguage, .monthMode, .themeID, .stepGoalChanges, .runningSettings)
+        Defaults.reset(.privacyAccepted, .appLanguage, .firstWeekday, .monthMode, .themeID, .stepGoalChanges, .runningSettings)
+    }
+}
+
+enum WeekStartPreference {
+    static func weekday(locale: Locale, selection: Int) -> Int {
+        if selection == 1 || selection == 2 { return selection }
+        return locale.identifier.hasPrefix("zh") ? 2 : 1
     }
 }
