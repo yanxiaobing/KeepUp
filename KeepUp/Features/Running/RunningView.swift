@@ -34,7 +34,7 @@ struct RunningView: View {
         NavigationStack {
             Group {
                 if let result {
-                    RunningResultPages(session: result, page: $resultPage, showingMap: $showingLiveMap)
+                    RunningResultPages(session: result, page: $resultPage)
                 }
                 else if let session = controller.session { activeSession(session) }
                 else { preparation }
@@ -63,9 +63,7 @@ struct RunningView: View {
                 if let result { RunningShareView(session: result, style: style) }
             }
             .fullScreenCover(isPresented: $showingLiveMap) {
-                if let result, result.kind.usesGPS {
-                    RunningDetailMapView(session: result)
-                } else if let session = controller.session, session.kind.usesGPS {
+                if let session = controller.session, session.kind.usesGPS {
                     liveMap(session)
                 }
             }

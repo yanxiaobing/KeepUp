@@ -55,18 +55,21 @@ import XCTest
             capture("KeepUp-Running-" + kind + "-Details-Chinese")
             app.buttons["running.page.0"].tap()
             if kind != "indoor" {
-                app.buttons["running.map.open"].tap()
-                XCTAssertTrue(app.buttons["running.map.close"].waitForExistence(timeout: 5))
-                XCTAssertTrue(app.maps.firstMatch.exists)
+                XCTAssertTrue(app.maps.firstMatch.waitForExistence(timeout: 5))
+                XCTAssertFalse(app.buttons["running.map.open"].exists)
+                XCTAssertFalse(app.buttons["running.map.close"].exists)
                 app.buttons["running.map.kilometers"].tap()
                 XCTAssertEqual(app.buttons["running.map.kilometers"].value as? String, "已显示")
                 app.buttons["running.map.places"].tap()
                 XCTAssertEqual(app.buttons["running.map.places"].value as? String, "已隐藏")
+                let map = app.maps.firstMatch
+                map.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.55))
+                    .press(forDuration: 0.1, thenDragTo: map.coordinate(withNormalizedOffset: CGVector(dx: 0.65, dy: 0.55)))
+                XCTAssertTrue(app.buttons["running.page.0"].isSelected)
                 app.buttons["running.map.fit"].tap()
                 capture("KeepUp-Running-" + kind + "-Map-Chinese")
-                app.buttons["running.map.close"].tap()
             }
-            app.swipeLeft()
+            app.buttons["running.page.1"].tap()
             XCTAssertTrue(app.staticTexts["running.result.distance"].waitForExistence(timeout: 5))
             app.terminate()
         }

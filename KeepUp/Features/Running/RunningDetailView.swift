@@ -8,7 +8,6 @@ struct RunningDetailView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var page = 0
-    @State private var showingMap = false
     @State private var editing = false
     @State private var shareStyle: RunningShareStyle?
     @State private var confirmingDelete = false
@@ -22,7 +21,7 @@ struct RunningDetailView: View {
     var body: some View {
         NavigationStack {
             RunningResultPages(session: session, content: currentEntry.map { model.snapshot.publishedContent(for: $0) },
-                               page: $page, showingMap: $showingMap)
+                               page: $page)
                 .navigationTitle(session.kind == .cycling ? "runningDetail.cyclingTitle" : "runningDetail.runningTitle")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(CalendarTheme.selected.color, for: .navigationBar)
@@ -47,7 +46,6 @@ struct RunningDetailView: View {
                     if let currentEntry, let card { EntryContentEditor(entry: currentEntry, card: card) }
                 }
                 .sheet(item: $shareStyle) { style in RunningShareView(session: session, style: style) }
-                .fullScreenCover(isPresented: $showingMap) { RunningDetailMapView(session: session) }
                 .confirmationDialog("entry.deleteConfirmation", isPresented: $confirmingDelete, titleVisibility: .visible) {
                     Button("action.delete", role: .destructive) { Task { await deleteRecord() } }
                         .accessibilityIdentifier("running.detail.confirmDelete")
@@ -74,13 +72,12 @@ struct RunningResultPages: View {
     let session: RunningSession
     var content: EntryContent? = nil
     @Binding var page: Int
-    @Binding var showingMap: Bool
 
     var body: some View {
         GeometryReader { geometry in
             let cityHeight = geometry.size.width * 272 / 750
             TabView(selection: $page) {
-                RunningResultOverview(session: session, showingMap: $showingMap).tag(0)
+                RunningResultOverview(session: session).tag(0)
                 RunningSessionSummary(session: session, content: content, bottomPadding: cityHeight + 16).tag(1)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -221,7 +218,6 @@ struct RunningDetailHeader: View {
 
 struct RunningResultOverview: View {
     let session: RunningSession
-    @Binding var showingMap: Bool
     var snapshotImage: UIImage? = nil
     var exporting = false
     @Environment(\.locale) private var locale
@@ -253,17 +249,14 @@ struct RunningResultOverview: View {
                             } else if exporting {
                                 Color(hex: 0xF6F6F6)
                             } else {
-                                RunningRouteMap(segments: session.segments, resultAverageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
+                                RunningResultInteractiveMap(session: session,
+                                                            averageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
                             }
-                        }.allowsHitTesting(false)
+                        }
                             .overlay {
                                 if session.segments.allSatisfy({ $0.isEmpty }) {
                                     Text("running.noRoute").font(.system(size: 14)).padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                                 }
-                            }
-                            .overlay {
-                                Button { showingMap = true } label: { Color.clear.contentShape(Rectangle()) }
-                                    .accessibilityLabel(Text("runningDetail.openMap")).accessibilityIdentifier("running.map.open")
                             }
                     } else {
                         RunningIndoorResultGraph(session: session, metrics: metrics, chartHeight: min(255, max(150, mapHeight - 75))).padding(20)
@@ -278,7 +271,8 @@ struct RunningResultOverview: View {
                             .background(RunningDetailStyle.color(session.kind), in: Capsule())
                         Text(RunningDetailStyle.date(session, locale: locale)).padding(.trailing, 5)
                     }.font(.system(size: 9)).foregroundStyle(.white).background(.black.opacity(0.5), in: Capsule())
-                        .padding(.trailing, 9).padding(.bottom, session.kind.usesGPS ? 42 : 12)
+                        .padding(.trailing, session.kind.usesGPS ? 5 : 9)
+                        .padding(.bottom, session.kind.usesGPS ? 22 : 12)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 15))
                     .padding(.horizontal, 15).padding(.top, 12)
@@ -299,6 +293,72 @@ struct RunningResultOverview: View {
             }
             Text(title).font(.system(size: 10)).lineLimit(1).minimumScaleFactor(0.8)
         }.frame(maxWidth: .infinity)
+    }
+}
+
+private struct RunningResultInteractiveMap: View {
+    let session: RunningSession
+    let averageSpeed: Double?
+    @State private var showsKilometers = false
+    @State private var showsPlaces = true
+    @State private var resetCamera = 0
+
+    // Mark the measured sample that first crosses each complete kilometer. Never bridge pauses.
+    private var kilometerPoints: [RunningPoint] {
+        var distance = 0.0
+        var points: [RunningPoint] = []
+        for segment in session.segments {
+            for (previous, point) in zip(segment, segment.dropFirst()) {
+                distance += previous.distance(to: point)
+                while distance >= Double(points.count + 1) * 1_000, points.count < session.splits.count {
+                    points.append(point)
+                }
+            }
+        }
+        return points
+    }
+
+    var body: some View {
+        RunningRouteMap(segments: session.segments,
+                        kilometerPoints: showsKilometers ? kilometerPoints : [],
+                        showsPlaces: showsPlaces,
+                        resetCamera: resetCamera,
+                        resultAverageSpeed: averageSpeed)
+            .overlay(alignment: .topTrailing) {
+                VStack(spacing: 8) {
+                    if !kilometerPoints.isEmpty {
+                        mapButton(showsKilometers ? "mappin.circle.fill" : "mappin.circle",
+                                  title: "runningDetail.kilometerMarkers", identifier: "running.map.kilometers",
+                                  value: showsKilometers ? "runningDetail.visible" : "runningDetail.hidden") {
+                            showsKilometers.toggle()
+                        }
+                    }
+                    mapButton("scope", title: "runningDetail.fitRoute", identifier: "running.map.fit") {
+                        resetCamera += 1
+                    }
+                    mapButton(showsPlaces ? "mappin.and.ellipse" : "map", title: "runningDetail.places",
+                              identifier: "running.map.places",
+                              value: showsPlaces ? "runningDetail.visible" : "runningDetail.hidden") {
+                        showsPlaces.toggle()
+                    }
+                }
+                .padding(10)
+            }
+    }
+
+    private func mapButton(_ symbol: String, title: LocalizedStringKey, identifier: String,
+                           value: LocalizedStringKey? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(Color(hex: 0x333333))
+                .frame(width: 36, height: 36)
+                .background(.regularMaterial, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(value ?? ""))
+        .accessibilityIdentifier(identifier)
     }
 }
 
@@ -377,73 +437,6 @@ struct RunningResultCurve: Shape {
             path.closeSubpath()
         }
         return path
-    }
-}
-
-struct RunningDetailMapView: View {
-    let session: RunningSession
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.locale) private var locale
-    @State private var showsKilometers = false
-    @State private var showsPlaces = true
-    @State private var resetCamera = 0
-
-    // Mark the measured sample that first crosses each complete kilometer. Never bridge pauses.
-    private var kilometerPoints: [RunningPoint] {
-        var distance = 0.0
-        var points: [RunningPoint] = []
-        for segment in session.segments {
-            for (previous, point) in zip(segment, segment.dropFirst()) {
-                distance += previous.distance(to: point)
-                while distance >= Double(points.count + 1) * 1_000, points.count < session.splits.count {
-                    points.append(point)
-                }
-            }
-        }
-        return points
-    }
-    var body: some View {
-        let metrics = RunningMetrics(session: session)
-        NavigationStack {
-            RunningRouteMap(segments: session.segments, kilometerPoints: showsKilometers ? kilometerPoints : [],
-                            showsPlaces: showsPlaces, resetCamera: resetCamera, resultAverageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
-                .overlay(alignment: .bottomTrailing) {
-                    VStack(spacing: 12) {
-                        if !kilometerPoints.isEmpty {
-                            Button { showsKilometers.toggle() } label: { Image(systemName: showsKilometers ? "mappin.circle.fill" : "mappin.circle") }
-                                .accessibilityLabel(Text("runningDetail.kilometerMarkers")).accessibilityValue(Text(showsKilometers ? "runningDetail.visible" : "runningDetail.hidden"))
-                                .accessibilityIdentifier("running.map.kilometers")
-                        }
-                        Button { resetCamera += 1 } label: { Image(systemName: "scope") }
-                            .accessibilityLabel(Text("runningDetail.fitRoute")).accessibilityIdentifier("running.map.fit")
-                        Button { showsPlaces.toggle() } label: { Image(systemName: showsPlaces ? "mappin.and.ellipse" : "map") }
-                            .accessibilityLabel(Text("runningDetail.places")).accessibilityValue(Text(showsPlaces ? "runningDetail.visible" : "runningDetail.hidden"))
-                            .accessibilityIdentifier("running.map.places")
-                    }.buttonStyle(.borderedProminent).tint(.white).foregroundStyle(Color(hex: 0x333333)).font(.system(size: 20))
-                        .padding(15)
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale)).font(.custom("DINCondensedC", size: 45))
-                            Text("running.kilometers").font(.system(size: 14))
-                        }
-                        HStack(alignment: .top, spacing: 16) {
-                            mapMetric(RunningDisplay.duration(metrics.elapsedSeconds), "running.duration")
-                            mapMetric(RunningDetailStyle.pace(session, metrics: metrics, locale: locale), session.kind == .cycling ? "runningDetail.speed" : "runningDetail.pace")
-                            mapMetric(metrics.roundedEnergyKilocalories.map(String.init) ?? "—", "runningDetail.kcal")
-                        }
-                    }.padding(20).foregroundStyle(.white).frame(maxWidth: .infinity, alignment: .leading).background(Color(hex: 0x333333))
-                }
-                .navigationTitle(RunningDetailStyle.date(session, locale: locale)).navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { dismiss() }.accessibilityIdentifier("running.map.close") } }
-        }
-    }
-    private func mapMetric(_ value: String, _ title: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(value).font(.custom("DINCondensedC", size: 22)).lineLimit(1).minimumScaleFactor(0.7)
-            Text(title).font(.system(size: 12)).foregroundStyle(.white.opacity(0.7))
-        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

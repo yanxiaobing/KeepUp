@@ -82,7 +82,7 @@ enum RunningShareStyle: String, Identifiable {
                         RunningSharePoster(session: session, metrics: metrics, mapImage: mapImage,
                                            splits: splits, page: index, pageCount: pages.count)
                     case .overview:
-                        RunningResultOverview(session: session, showingMap: .constant(false), snapshotImage: mapImage, exporting: true)
+                        RunningResultOverview(session: session, snapshotImage: mapImage, exporting: true)
                             .frame(height: 724)
                     case .details:
                         VStack(spacing: 0) {
