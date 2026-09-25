@@ -74,21 +74,24 @@ enum RunningShareStyle: Equatable {
         for (index, splits) in pages.enumerated() {
             try Task.checkCancellation()
             let page: RunningShareArtifact.Page = try autoreleasepool {
-            let poster = Group {
-                switch style {
-                case .report:
-                    RunningSharePoster(session: session, metrics: metrics, mapImage: mapImage,
-                                       splits: splits, page: index, pageCount: pages.count)
-                case .overview:
-                    RunningResultOverview(session: session, showingMap: .constant(false), snapshotImage: mapImage, exporting: true)
-                        .frame(height: 724)
-                case .details:
-                    VStack(spacing: 0) {
-                        RunningDetailHeader(session: session, metrics: metrics)
-                        RunningSplitsSection(session: session, metrics: metrics).padding(.horizontal, 15)
-                        RunningChartsSection(session: session, metrics: metrics).padding(.horizontal, 15)
-                    }.background(.white)
+            let poster = VStack(spacing: 0) {
+                Group {
+                    switch style {
+                    case .report:
+                        RunningSharePoster(session: session, metrics: metrics, mapImage: mapImage,
+                                           splits: splits, page: index, pageCount: pages.count)
+                    case .overview:
+                        RunningResultOverview(session: session, showingMap: .constant(false), snapshotImage: mapImage, exporting: true)
+                            .frame(height: 724)
+                    case .details:
+                        VStack(spacing: 0) {
+                            RunningDetailHeader(session: session, metrics: metrics)
+                            RunningSplitsSection(session: session, metrics: metrics).padding(.horizontal, 15)
+                            RunningChartsSection(session: session, metrics: metrics).padding(.horizontal, 15)
+                        }.background(.white)
+                    }
                 }
+                RunningShareBrandFooter(date: RunningDetailStyle.date(session, locale: locale))
             }
                 .environment(\.locale, locale)
                 .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
@@ -127,6 +130,23 @@ enum RunningShareStyle: Equatable {
         return stride(from: 0, to: splits.count, by: splitsPerPage).map { start in
             Array(splits[start..<min(start + splitsPerPage, splits.count)])
         }
+    }
+}
+
+/// Match the white KeepUp/date strip used by other detail sharing posters.
+private struct RunningShareBrandFooter: View {
+    let date: String
+
+    var body: some View {
+        HStack {
+            Text(verbatim: "KeepUp").font(.system(size: 21, weight: .bold))
+            Spacer()
+            Text(verbatim: date).font(.system(size: 12)).foregroundStyle(.secondary)
+        }
+        .foregroundStyle(Color(hex: 0x222222))
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(.white)
     }
 }
 

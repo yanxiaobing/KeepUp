@@ -48,9 +48,9 @@ struct RunningSplitsSection: View {
                         Spacer()
                         Text(LocalizedStringKey(expanded ? "runningDetail.collapseSplits" : "runningDetail.expandSplits"))
                         Image(expanded ? "card_indoor_ic_up" : "card_indoor_ic_down").resizable().scaledToFit().frame(width: 12, height: 12)
-                    }.font(.system(size: 12)).foregroundStyle(Color(hex: 0x48484D)).frame(height: 90)
+                    }.font(.system(size: 12)).foregroundStyle(Color(hex: 0x48484D)).frame(height: 48)
                 }.buttonStyle(.plain).accessibilityIdentifier("running.splits.toggle")
-            } else { Color.clear.frame(height: 42) }
+            } else { Color.clear.frame(height: 16) }
             Divider()
         }
     }
@@ -131,6 +131,9 @@ struct RunningChartsSection: View {
                     }
                 }.font(.system(size: 13)).lineLimit(1).minimumScaleFactor(0.7)
             }.frame(height: 31).padding(.top, 20).padding(.bottom, 20)
+            Text(LocalizedStringKey(isAltitude ? "runningDetail.altitudeAxis" : "runningDetail.cadenceAxis"))
+                .font(.system(size: 12)).foregroundStyle(Color(hex: 0x98989E))
+                .padding(.bottom, 6)
             if points.isEmpty {
                 VStack(spacing: 8) {
                     Spacer()
@@ -201,7 +204,6 @@ private struct RunningDetailPlot: View {
                     RunningResultCurve(points: coordinates, baseline: 156, filled: false)
                         .stroke(color, lineWidth: 2)
                 }
-                Text(LocalizedStringKey(altitude ? "runningDetail.altitudeAxis" : "runningDetail.cadenceAxis"))
                 Text("runningDetail.timeAxis").frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }.font(.system(size: 14)).foregroundStyle(Color(hex: 0x222222).opacity(0.5))
         }

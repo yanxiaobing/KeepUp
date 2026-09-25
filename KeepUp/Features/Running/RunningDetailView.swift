@@ -85,8 +85,11 @@ struct RunningResultPages: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background(alignment: .top) {
-                CardDetailThemeBackground()
-                    .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
+                Group {
+                    if page == 0 { CardDetailThemeBackground() }
+                    else { Color.white }
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
             }
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 0) {
@@ -136,7 +139,8 @@ struct RunningSessionSummary: View {
                     }.padding(15)
                 }
             }.padding(.bottom, 20)
-        }.background(.white).foregroundStyle(Color(hex: 0x222222))
+        }.background { Color.white.ignoresSafeArea(edges: .bottom) }
+            .foregroundStyle(Color(hex: 0x222222))
             .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
             .accessibilityIdentifier("running.result")
     }
@@ -204,7 +208,7 @@ struct RunningResultOverview: View {
                 }.foregroundStyle(.white).frame(height: 58)
                     .background(Color(white: 44/255).opacity(0.85), in: RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal, 15).padding(.top, 10)
-                ZStack(alignment: .bottomTrailing) {
+                Group {
                     if session.kind.usesGPS {
                         Group {
                             if let snapshotImage {
@@ -228,13 +232,18 @@ struct RunningResultOverview: View {
                         RunningIndoorResultGraph(session: session, metrics: metrics, chartHeight: min(255, max(150, mapHeight - 75))).padding(20)
                             .frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(hex: 0xF6F6F6))
                     }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: mapHeight)
+                .overlay(alignment: .bottomTrailing) {
                     HStack(spacing: 4) {
                         Text(LocalizedStringKey(session.kind.titleKey)).padding(.horizontal, 5).padding(.vertical, 3)
                             .background(RunningDetailStyle.color(session.kind), in: Capsule())
                         Text(RunningDetailStyle.date(session, locale: locale)).padding(.trailing, 5)
                     }.font(.system(size: 9)).foregroundStyle(.white).background(.black.opacity(0.5), in: Capsule())
                         .padding(.trailing, 9).padding(.bottom, session.kind.usesGPS ? 42 : 12)
-                }.frame(height: mapHeight).clipShape(RoundedRectangle(cornerRadius: 15))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 15))
                     .padding(.horizontal, 15).padding(.top, 12)
                 Spacer(minLength: 0)
             }

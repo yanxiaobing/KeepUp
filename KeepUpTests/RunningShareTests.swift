@@ -140,7 +140,7 @@ private func shareFixture(kind: RunningKind = .outdoor, kilometers: Int = 2, tai
         #expect(source.calls == 1)
         #expect(result.mapStatus == (style == .overview ? .map : .notNeeded))
         #expect(result.pages[0].previewImage() != nil)
-        if style == .overview { #expect(result.pages[0].size.height == 724) }
+        if style == .overview { #expect(result.pages[0].size.height > 724 && result.pages[0].size.height < 820) }
         Attachment.record(Array(try Data(contentsOf: result.pages[0].url)), named: "running-selected-page-\(page).png")
     }
 }
