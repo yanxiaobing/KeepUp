@@ -22,15 +22,28 @@ struct CalendarCardRibbon: View {
         Text(verbatim: text).font(.custom("HelveticaNeue-Light", size: 12))
             .foregroundStyle(.white).fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, 6).frame(height: 18)
-            .background {
-                HStack(spacing: 0) {
-                    CalendarCardPalette.color(color)
-                    Image(color).resizable().frame(width: 10)
-                }
-            }
-            .overlay(alignment: .leading) {
-                Image("homepage_tag_light").resizable().frame(width: 6, height: 18)
-            }
+            .background(CalendarRibbonShape().fill(CalendarCardPalette.color(color)))
+    }
+}
+
+private struct CalendarRibbonShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let cornerRadius: CGFloat = 5
+        let tailRadius: CGFloat = 10
+        let circleControl: CGFloat = 0.55228475
+        return Path { path in
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY + cornerRadius))
+            path.addCurve(to: CGPoint(x: rect.minX + cornerRadius, y: rect.minY),
+                          control1: CGPoint(x: rect.minX, y: rect.minY + cornerRadius * (1 - circleControl)),
+                          control2: CGPoint(x: rect.minX + cornerRadius * (1 - circleControl), y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - tailRadius))
+            path.addCurve(to: CGPoint(x: rect.maxX - tailRadius, y: rect.maxY),
+                          control1: CGPoint(x: rect.maxX, y: rect.maxY - tailRadius * (1 - circleControl)),
+                          control2: CGPoint(x: rect.maxX - tailRadius * (1 - circleControl), y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.closeSubpath()
+        }
     }
 }
 
