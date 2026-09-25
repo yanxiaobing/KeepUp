@@ -78,18 +78,22 @@ struct RunningResultPages: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let cityHeight = geometry.size.width * 272 / 750
             TabView(selection: $page) {
                 RunningResultOverview(session: session, showingMap: $showingMap).tag(0)
-                RunningSessionSummary(session: session, content: content).tag(1)
+                VStack(spacing: 0) {
+                    RunningSessionSummary(session: session, content: content)
+                        .frame(height: max(0, geometry.size.height - cityHeight - 16))
+                    Spacer(minLength: 0)
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .tag(1)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background(alignment: .top) {
-                Group {
-                    if page == 0 { CardDetailThemeBackground() }
-                    else { Color.white }
-                }
-                .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
+                CardDetailThemeBackground()
+                    .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
             }
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 0) {
@@ -121,7 +125,7 @@ struct RunningSessionSummary: View {
         let metrics = RunningMetrics(session: session)
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                RunningDetailHeader(session: session, metrics: metrics)
+                RunningDetailHeader(session: session, metrics: metrics, usesThemeColors: true)
                 RunningSplitsSection(session: session, metrics: metrics).padding(.horizontal, 15)
                 RunningChartsSection(session: session, metrics: metrics).padding(.horizontal, 15)
                 if let content, !content.isEmpty {
@@ -139,8 +143,7 @@ struct RunningSessionSummary: View {
                     }.padding(15)
                 }
             }.padding(.bottom, 20)
-        }.background { Color.white.ignoresSafeArea(edges: .bottom) }
-            .foregroundStyle(Color(hex: 0x222222))
+        }.foregroundStyle(Color(hex: 0x222222))
             .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
             .accessibilityIdentifier("running.result")
     }
@@ -149,14 +152,22 @@ struct RunningSessionSummary: View {
 struct RunningDetailHeader: View {
     let session: RunningSession
     let metrics: RunningMetrics
+    var usesThemeColors = false
     @Environment(\.locale) private var locale
+    private var primaryTextColor: Color {
+        usesThemeColors ? CalendarTheme.selected.detailTextColor : Color(hex: 0x222222)
+    }
+    private var secondaryTextColor: Color {
+        usesThemeColors ? CalendarTheme.selected.detailTextColor.opacity(0.65) : Color(hex: 0x98989E)
+    }
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center) {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale))
-                        .font(.custom("DINCondensedC", size: 50)).accessibilityIdentifier("running.result.distance")
-                    Text("running.kilometers").font(.system(size: 16)).foregroundStyle(Color(hex: 0x69696F))
+                        .font(.custom("DINCondensedC", size: 50)).foregroundStyle(primaryTextColor)
+                        .accessibilityIdentifier("running.result.distance")
+                    Text("running.kilometers").font(.system(size: 16)).foregroundStyle(secondaryTextColor)
                 }.padding(.leading, 15)
                 Spacer(minLength: 8)
                 Text(LocalizedStringKey(session.kind.titleKey)).font(.system(size: 15))
@@ -165,7 +176,7 @@ struct RunningDetailHeader: View {
                     .accessibilityIdentifier("running.result.kind")
             }.padding(.top, 15)
             Text(RunningDetailStyle.date(session, locale: locale)).font(.system(size: 14))
-                .foregroundStyle(Color(hex: 0x98989E)).padding(.horizontal, 15)
+                .foregroundStyle(secondaryTextColor).padding(.horizontal, 15)
             HStack(alignment: .top) {
                 metric(RunningDisplay.duration(metrics.elapsedSeconds), "running.duration", alignment: .leading)
                 metric(RunningDetailStyle.pace(session, metrics: metrics, locale: locale), session.kind == .cycling ? "runningDetail.speed" : "runningDetail.pace", alignment: .center)
@@ -176,8 +187,9 @@ struct RunningDetailHeader: View {
     }
     private func metric(_ value: String, _ title: LocalizedStringKey, alignment: HorizontalAlignment, identifier: String = "") -> some View {
         VStack(alignment: alignment, spacing: 3) {
-            Text(value).font(.custom("DINCondensedC", size: 22)).lineLimit(1).minimumScaleFactor(0.7).accessibilityIdentifier(identifier)
-            Text(title).font(.system(size: 14)).foregroundStyle(Color(hex: 0x98989E))
+            Text(value).font(.custom("DINCondensedC", size: 22)).foregroundStyle(primaryTextColor)
+                .lineLimit(1).minimumScaleFactor(0.7).accessibilityIdentifier(identifier)
+            Text(title).font(.system(size: 14)).foregroundStyle(secondaryTextColor)
         }.frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : alignment == .trailing ? .trailing : .center)
     }
 }
