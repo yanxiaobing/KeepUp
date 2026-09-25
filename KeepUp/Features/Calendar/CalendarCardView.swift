@@ -67,17 +67,9 @@ struct CalendarTicketCard: View {
         ZStack {
             Color.white
             if card.id == "punchcard.1" {
-                ZStack {
-                    Circle().stroke(Color(hex: 0xE6E6E6), lineWidth: 5 * scale)
-                    if let count = steps?.steps ?? entry?.quantity.map(Int.init), let goal = steps?.goal ?? stepGoal, goal > 0 {
-                        Circle().trim(from: 0, to: min(1, CGFloat(count) / CGFloat(goal)))
-                            .stroke(Color(hex: 0xDBD91E), style: StrokeStyle(lineWidth: 5 * scale, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                    }
-                    Text((steps?.steps ?? entry?.quantity.map(Int.init)).map { $0.formatted(.number.grouping(.never)) } ?? "—")
-                        .font(.system(size: 16 * scale)).foregroundStyle(Color(hex: 0x69696F))
-                        .minimumScaleFactor(0.6).lineLimit(1).padding(5)
-                }.frame(width: 63 * scale, height: 63 * scale).offset(y: -9 * scale)
+                StepsCalendarProgressRing(count: steps?.steps ?? entry?.quantity.map(Int.init),
+                                          goal: steps?.goal ?? stepGoal, scale: scale)
+                    .offset(y: -9 * scale)
             } else if let wake {
                 WakeUpClock(time: wake.time, timeZoneID: wake.timeZoneID, compact: true)
                     .frame(width: 72*scale, height: 72*scale).offset(y: -9*scale)
@@ -112,6 +104,50 @@ struct CalendarTicketCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 5 * scale, style: .circular))
             .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
             .accessibilityElement(children: .combine)
+    }
+}
+
+private struct StepsCalendarProgressRing: View {
+    let count: Int?
+    let goal: Int?
+    let scale: CGFloat
+
+    private var progress: CGFloat {
+        guard let count, let goal, goal > 0 else { return 0 }
+        return min(1, max(0, CGFloat(count) / CGFloat(goal)))
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(.white)
+                .overlay { Circle().stroke(Color(hex: 0x54DAC7), lineWidth: 1 * scale) }
+                .shadow(color: Color(hex: 0x00C0FF).opacity(0.4), radius: 3 * scale, y: 1 * scale)
+            Circle().stroke(Color(hex: 0xCEF3EE), lineWidth: 6 * scale)
+                .padding(5 * scale)
+            Circle().trim(from: 0, to: progress)
+                .stroke(
+                    AngularGradient(colors: [Color(hex: 0xDBD91E), Color(hex: 0x35E7BF),
+                                             Color(hex: 0x23A3D2), Color(hex: 0xDBD91E)], center: .center),
+                    style: StrokeStyle(lineWidth: 6 * scale, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .padding(5 * scale)
+                .animation(.easeInOut(duration: 1), value: progress)
+            Circle().fill(Color(hex: 0xF3F3F3)).padding(9 * scale)
+            Text(count.map { $0.formatted(.number.grouping(.never)) } ?? "—")
+                .font(.system(size: 16 * scale))
+                .foregroundStyle(Color(hex: 0x69696F))
+                .lineLimit(1).minimumScaleFactor(0.6)
+                .padding(12 * scale)
+                .contentTransition(.numericText())
+            if progress >= 0.97 {
+                Circle().fill(Color(hex: 0xDBD91E))
+                    .frame(width: 4.5 * scale, height: 4.5 * scale)
+                    .offset(y: -31.5 * scale)
+            }
+        }
+        .frame(width: 73 * scale, height: 73 * scale)
     }
 }
 

@@ -44,13 +44,24 @@ struct CalendarHomeView: View {
     }
 
     private var dayEntries: [CheckInEntry] { model.entries(on: selectedDay) }
-    private var daySchedules: [ScheduledCard] { model.snapshot.schedules.filter { $0.day == selectedDay } }
+    private var daySchedules: [ScheduledCard] {
+        model.snapshot.schedules.filter { $0.day == selectedDay && ($0.cardID != "punchcard.1" || measuredStepCard == nil) }
+    }
+    private var measuredStepCard: HabitCard? {
+        guard selectedDay <= today,
+              let measurement = model.snapshot.steps[selectedDay.rawValue], measurement.checkInDeleted != true,
+              !dayEntries.contains(where: { $0.cardID == "punchcard.1" }),
+              model.snapshot.targets.contains(where: { $0.cardID == "punchcard.1" && $0.isPinned }),
+              !model.snapshot.archivedCardIDs.contains("punchcard.1") else { return nil }
+        return model.snapshot.cards.first { $0.id == "punchcard.1" }
+    }
     private var pendingCards: [HabitCard] {
         guard selectedDay == today else { return [] }
         let recorded = Set(dayEntries.map(\.cardID))
         let scheduled = Set(daySchedules.map(\.cardID))
         return model.snapshot.targets.filter { $0.isPinned }.compactMap { target in
             guard !recorded.contains(target.cardID), !scheduled.contains(target.cardID),
+                  !(target.cardID == "punchcard.1" && measuredStepCard != nil),
                   !model.snapshot.archivedCardIDs.contains(target.cardID) else { return nil }
             return model.snapshot.cards.first { $0.id == target.cardID }
         }
@@ -209,7 +220,9 @@ struct CalendarHomeView: View {
                     .frame(maxWidth: .infinity).padding(14)
             } else {
                 let start = calendar.date(byAdding: .day, value: -monthOffset, to: monthStart)!
-                let daysWithRecords = Set(model.snapshot.entries.map(\.day))
+                let measuredStepDays = model.isStepCardEnabled
+                    ? model.snapshot.steps.values.filter { $0.checkInDeleted != true }.map(\.day) : []
+                let daysWithRecords = Set(model.snapshot.entries.map(\.day)).union(measuredStepDays)
                 let plannedDays = Set(model.snapshot.schedules.filter { $0.day >= today }.map(\.day))
                 let weekdays = calendar.veryShortStandaloneWeekdaySymbols
                 HStack(spacing: 0) {
@@ -286,6 +299,16 @@ struct CalendarHomeView: View {
                                 actions: menuActions(card: card, entry: entry), tap: { detail = entry }) {
                                 CalendarTicketCard(card: card, scale: scale, entry: entry, wake: model.snapshot.wakeUps[entry.id], progress: weeklyProgress(card), steps: model.snapshot.steps[entry.day.rawValue], stepGoal: StepsGoal.value(on: entry.day))
                             }
+                        }
+                    }
+                    if let card = measuredStepCard, let measurement = model.snapshot.steps[selectedDay.rawValue] {
+                        CalendarInteractiveCard(
+                            identifier: selectedDay == today ? "target.pending.punchcard.1" : "steps.measurement.\(selectedDay.rawValue)",
+                            label: localized(card.titleKey, locale) + ", " + measurement.steps.formatted(.number.locale(locale)),
+                            actions: selectedDay == today ? menuActions(card: card) : [],
+                            tap: { pendingDay = selectedDay; pendingCard = card }
+                        ) {
+                            CalendarTicketCard(card: card, scale: scale, steps: measurement, stepGoal: measurement.goal)
                         }
                     }
                     ForEach(daySchedules) { schedule in

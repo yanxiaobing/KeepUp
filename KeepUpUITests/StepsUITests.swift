@@ -179,6 +179,25 @@ import XCTest
         shot.name = "KeepUp-Steps-Pending-English"; shot.lifetime = .keepAlways; add(shot)
     }
 
+    func testMeasuredStepCardAppearsForPastDayBeforeGoal() {
+        let app = launch(mode: "zero")
+        openSteps(app)
+        app.buttons["steps.close"].tap()
+        if app.buttons["catalog.close"].exists { app.buttons["catalog.close"].tap() }
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: .now)!
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: yesterday)
+        let day = String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
+        let dateButton = app.buttons["day.\(day)"]
+        if !dateButton.isHittable { app.buttons["calendar.previousWeek"].tap() }
+        XCTAssertTrue(dateButton.waitForExistence(timeout: 5))
+        dateButton.tap()
+        let measurement = app.buttons["steps.measurement.\(day)"]
+        XCTAssertTrue(measurement.waitForExistence(timeout: 5))
+        measurement.tap()
+        XCTAssertTrue(app.buttons["steps.close"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["steps.count"].label, "0")
+    }
+
     func testLhasaDetailsStayFixedAfterVerticalSwipes() {
         let app = launch(mode: "ready", language: "zh-Hans", themeID: 9)
         openSteps(app)
