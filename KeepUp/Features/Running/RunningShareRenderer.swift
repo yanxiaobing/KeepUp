@@ -200,7 +200,7 @@ private struct RunningSharePoster: View {
                             .background(Color(white: 0.96), in: RoundedRectangle(cornerRadius: 8))
                     }
                 } else {
-                    metric(RunningDisplay.cadence(steps: session.steps, seconds: metrics.elapsedSeconds, locale: locale), title: "running.averageCadence")
+                    metric(RunningDetailStyle.number(metrics.averageCadenceStepsPerMinute, locale: locale), title: "running.averageCadence")
                     Text("running.indoorDistanceHint").font(.system(size: 11)).foregroundStyle(.secondary).padding(.top, 8)
                 }
                 RunningChartsSection(session: session, metrics: metrics)

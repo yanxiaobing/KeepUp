@@ -125,7 +125,7 @@ struct RunningChartsSection: View {
                     if !isAltitude {
                         Rectangle().fill(Color(hex: 0xDCDCDC)).frame(width: 1, height: 13).padding(.horizontal, 5)
                         Text("running.cadence").foregroundStyle(Color(hex: 0x98989E))
-                        Text(points.isEmpty ? "—" : RunningDisplay.cadence(steps: session.steps, seconds: metrics.elapsedSeconds, locale: locale))
+                        Text(RunningDetailStyle.number(metrics.averageCadenceStepsPerMinute, locale: locale))
                             .foregroundStyle(RunningDetailStyle.color(session.kind))
                             .accessibilityIdentifier("running.result.cadence")
                     }

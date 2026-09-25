@@ -33,6 +33,7 @@ struct RunningMetrics: Sendable {
     let altitudeSeries: [RunningMetricPoint]
     let maximumSpeedKilometersPerHour: Double?
     let maximumCadenceStepsPerMinute: Double?
+    let averageCadenceStepsPerMinute: Double?
     let minimumAltitudeMeters: Double?
     let maximumAltitudeMeters: Double?
     let ascentMeters: Double?
@@ -105,6 +106,9 @@ struct RunningMetrics: Sendable {
             }
         } else {
             for (segmentIndex, samples) in session.segments.enumerated() {
+                // PunchCard estimates outdoor cadence from GPS distance using a 0.8 m stride.
+                // Keep the minute buckets within each recorded segment so pauses never join a curve.
+                var cadenceMinutes: [Int: (distance: Double, duration: Double, timestamp: Date)] = [:]
                 var altitudeAnchor: RunningPoint?
                 altitudeGroup += 1
                 for sample in samples {
@@ -126,7 +130,23 @@ struct RunningMetrics: Sendable {
                     guard duration.isFinite, duration > 0, duration <= 30, distance.isFinite, distance >= 0,
                           distance <= session.kind.maximumSpeedMetersPerSecond * duration + max(10, sample.horizontalAccuracy + previous.horizontalAccuracy) else { continue }
                     speeds.append(point(value: distance / duration * 3.6, date: sample.timestamp, segment: segmentIndex, index: speeds.count))
+                    if session.kind == .outdoor {
+                        let minuteOffset = sample.timestamp.timeIntervalSince(session.startedAt) / 60
+                        if minuteOffset.isFinite, (0..<Double(Int.max)).contains(minuteOffset) {
+                            let minute = max(1, Int(ceil(minuteOffset)))
+                            var bucket = cadenceMinutes[minute] ?? (distance: 0, duration: 0, timestamp: sample.timestamp)
+                            bucket.distance += distance
+                            bucket.duration += duration
+                            bucket.timestamp = sample.timestamp
+                            cadenceMinutes[minute] = bucket
+                        }
+                    }
                     recordEnergy(duration: duration, distance: distance)
+                }
+                for minute in cadenceMinutes.keys.sorted() {
+                    guard let bucket = cadenceMinutes[minute], bucket.duration > 0 else { continue }
+                    cadences.append(point(value: ceil(bucket.distance / 0.8 / bucket.duration * 60),
+                                          date: bucket.timestamp, segment: segmentIndex, index: cadences.count))
                 }
             }
         }
@@ -135,6 +155,12 @@ struct RunningMetrics: Sendable {
         altitudeSeries = altitudes
         maximumSpeedKilometersPerHour = speeds.map(\.value).max()
         maximumCadenceStepsPerMinute = cadences.map(\.value).max()
+        if !cadences.isEmpty, elapsedSeconds > 0 {
+            let steps = session.kind == .outdoor ? distanceMeters / 0.8 : Double(session.steps)
+            averageCadenceStepsPerMinute = steps / elapsedSeconds * 60
+        } else {
+            averageCadenceStepsPerMinute = nil
+        }
         minimumAltitudeMeters = altitudes.map(\.value).min()
         maximumAltitudeMeters = altitudes.map(\.value).max()
         ascentMeters = altitudePairs > 0 ? ascent : nil

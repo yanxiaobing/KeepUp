@@ -103,6 +103,28 @@ private func metricGPS(_ seconds: Double, latitude: Double = 31, altitude: Doubl
     #expect(metrics.cadenceSeries.isEmpty)
 }
 
+@Test func outdoorCadenceUsesGPSMinuteBucketsWithoutJoiningPausedSegments() {
+    var session = RunningSession(startedAt: metricsOrigin, kind: .outdoor)
+    session.segments = [
+        [metricGPS(0), metricGPS(30, latitude: 31.00025), metricGPS(60, latitude: 31.0005)],
+        [metricGPS(600, latitude: 40), metricGPS(630, latitude: 40.00025), metricGPS(660, latitude: 40.0005)]
+    ]
+    session.distanceMeters = session.segments.reduce(0) { total, segment in
+        total + zip(segment, segment.dropFirst()).reduce(0) { $0 + $1.0.distance(to: $1.1) }
+    }
+    session.pause(at: metricsOrigin.addingTimeInterval(60))
+    session.resume(at: metricsOrigin.addingTimeInterval(600))
+    session.finish(at: metricsOrigin.addingTimeInterval(660))
+
+    let metrics = RunningMetrics(session: session)
+    #expect(metrics.elapsedSeconds == 120)
+    #expect(metrics.cadenceSeries.count == 2)
+    #expect(metrics.cadenceSeries[0].segmentIndex != metrics.cadenceSeries[1].segmentIndex)
+    #expect(metrics.cadenceSeries[1].timeOffsetSeconds == 660)
+    #expect(metrics.maximumCadenceStepsPerMinute == metrics.cadenceSeries.map(\.value).max())
+    #expect(abs((metrics.averageCadenceStepsPerMinute ?? 0) - session.distanceMeters / 0.8 / 120 * 60) < 0.001)
+}
+
 @Test func altitudeMetricsFilterUncertainSamplesAndNeverBridgeMissingDataOrPauses() {
     var session = RunningSession(startedAt: metricsOrigin)
     session.segments = [[
