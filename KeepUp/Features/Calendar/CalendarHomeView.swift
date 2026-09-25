@@ -13,6 +13,7 @@ struct CalendarHomeView: View {
     @Default(.monthMode) private var isMonthMode
     @State private var showingTheme = false
     @State private var showingRunning = false
+    @State private var presentedRecoveredRun = false
     @State private var scheduleDetail: ScheduledCard?
     @State private var detail: CheckInEntry?
     @State private var pendingDay = LocalDay(date: .now)
@@ -136,6 +137,12 @@ struct CalendarHomeView: View {
             .tint(Color(white: 0.2))
             .fullScreenCover(isPresented: $showingTheme) { ThemeListView() }
             .fullScreenCover(isPresented: $showingRunning) { RunningView() }
+            .onAppear {
+                guard !presentedRecoveredRun, model.running.isRecovered,
+                      model.running.session != nil else { return }
+                presentedRecoveredRun = true
+                showingRunning = true
+            }
             .fullScreenCover(item: $pendingCard) { card in
                 if card.id == "punchcard.1" { StepsView(day: pendingDay) }
                 else if ["punchcard.2", "punchcard.96"].contains(card.id) { RunningView(kind: card.id == "punchcard.96" ? .cycling : .outdoor) }
