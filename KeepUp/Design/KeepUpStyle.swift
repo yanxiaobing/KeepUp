@@ -64,6 +64,8 @@ struct EntryRowView: View {
     @Environment(\.locale) private var locale
     let entry: CheckInEntry
     let card: HabitCard
+    var steps: StepRecord? = nil
+    var stepGoal: Int? = nil
     var content = EntryContent()
     var hasDraft = false
     var scale: CGFloat = 1
@@ -81,7 +83,7 @@ struct EntryRowView: View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: action) {
                 HStack(alignment: .top, spacing: 12 * scale) {
-                    CalendarTicketCard(card: card, scale: 1, entry: entry)
+                    CalendarTicketCard(card: card, scale: 1, entry: entry, steps: steps, stepGoal: stepGoal)
                         .transformEffect(CGAffineTransform(scaleX: avatarScale, y: avatarScale))
                         .frame(width: 88 * avatarScale, height: 116 * avatarScale, alignment: .topLeading)
                         .offset(y: 2 * scale)

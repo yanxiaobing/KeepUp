@@ -31,7 +31,11 @@ struct HistoryView: View {
                                 Section {
                                     ForEach(model.entries(on: day)) { entry in
                                         if let card = model.card(for: entry) {
-                                            EntryRowView(entry: entry, card: card, content: model.snapshot.publishedContent(for: entry), hasDraft: model.snapshot.content[entry.id]?.draft != nil) {
+                                            EntryRowView(entry: entry, card: card,
+                                                         steps: model.snapshot.steps[entry.day.rawValue],
+                                                         stepGoal: StepsGoal.value(on: entry.day),
+                                                         content: model.snapshot.publishedContent(for: entry),
+                                                         hasDraft: model.snapshot.content[entry.id]?.draft != nil) {
                                                 detail = entry
                                             }
                                                 .contextMenu {
