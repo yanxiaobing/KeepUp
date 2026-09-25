@@ -55,7 +55,7 @@ struct CalendarHomeView: View {
         }
     }
     private var showsAddCard: Bool {
-        selectedDay > today || selectedDay < LocalDay(date: calendar.date(byAdding: .day, value: -1, to: today.date(in: .current))!)
+        selectedDay > today || selectedDay < today
     }
     var body: some View {
         Group {
