@@ -148,7 +148,9 @@ struct KeepUpApp: App {
             return
         }
         // Monitoring never requests permission; RootView waits for the home screen, or StepsView requests it explicitly.
-        stepMonitor.refresh { await model.saveSteps($0) }
+        stepMonitor.refresh(earliestDay: model.snapshot.profile.map { LocalDay(date: $0.createdAt) }) {
+            await model.saveSteps($0)
+        }
     }
 
 }

@@ -12,6 +12,11 @@ enum StepsGoal {
         return value
     }
 
+    static func measurementGoal(on day: LocalDay, today: LocalDay,
+                                changes: [String: Int] = Defaults[.stepGoalChanges]) -> Int? {
+        value(on: day, changes: changes) ?? (day < today ? value(on: today, changes: changes) : nil)
+    }
+
     static func updated(_ changes: [String: Int], value: Int, now: Date, timeZone: TimeZone) -> [String: Int] {
         guard choices.contains(value) else { return changes }
         if let latest = changes.keys.max(), changes[latest] == value { return changes }

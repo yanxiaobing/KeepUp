@@ -115,7 +115,10 @@ final class AppModel {
     func saveSteps(_ reading: StepReading) async -> Bool {
         guard isStepCardEnabled else { return true }
         do {
-            try await repository.saveSteps(reading, goal: StepsGoal.value(on: reading.day), now: .now)
+            // The first target also applies to the six days backfilled when
+            // the pedometer card is added, as in PunchCard.
+            let goal = StepsGoal.measurementGoal(on: reading.day, today: LocalDay(date: .now))
+            try await repository.saveSteps(reading, goal: goal, now: .now)
             await load()
             return true
         } catch {

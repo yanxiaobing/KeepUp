@@ -18,11 +18,12 @@ struct StepReading: Sendable, Equatable {
 }
 
 enum StepsDateRange {
-    static func recentDays(now: Date, timeZone: TimeZone) -> [LocalDay] {
+    static func recentDays(now: Date, timeZone: TimeZone, earliestDay: LocalDay? = nil) -> [LocalDay] {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: -$0, to: now) }
             .map { LocalDay(date: $0, timeZone: timeZone) }
+            .filter { day in earliestDay.map { day >= $0 } ?? true }
     }
 
     static func interval(for day: LocalDay, now: Date, timeZone: TimeZone) -> DateInterval? {

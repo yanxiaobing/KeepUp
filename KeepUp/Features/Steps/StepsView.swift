@@ -193,7 +193,10 @@ struct StepsView: View {
     }
 
     private func refresh(requestPermission: Bool = false) {
-        controller.refresh(requestPermission: requestPermission, includeIntraday: true) { await model.saveSteps($0) }
+        controller.refresh(requestPermission: requestPermission, includeIntraday: true,
+                           earliestDay: model.snapshot.profile.map { LocalDay(date: $0.createdAt) }) {
+            await model.saveSteps($0)
+        }
     }
 }
 

@@ -12,6 +12,8 @@ private func stepsDay(_ value: String) -> LocalDay { LocalDay(rawValue: value)! 
     #expect(days.count == 7)
     #expect(days.first == stepsDay("2026-03-09"))
     #expect(days.last == stepsDay("2026-03-03"))
+    #expect(StepsDateRange.recentDays(now: now, timeZone: stepsZone, earliestDay: stepsDay("2026-03-07")) ==
+            [stepsDay("2026-03-09"), stepsDay("2026-03-08"), stepsDay("2026-03-07")])
     let interval = try #require(StepsDateRange.interval(for: stepsDay("2026-03-08"), now: now, timeZone: stepsZone))
     let expectedDuration: TimeInterval = 23 * 3_600
     #expect(interval.duration == expectedDuration)
@@ -33,6 +35,7 @@ private func stepsDay(_ value: String) -> LocalDay { LocalDay(rawValue: value)! 
     #expect(StepsGoal.value(on: today, changes: changed) == 5_000)
     #expect(StepsGoal.value(on: stepsDay("2026-03-09"), changes: changed) == 8_000)
     #expect(StepsGoal.value(on: stepsDay("2026-03-07"), changes: changed) == nil)
+    #expect(StepsGoal.measurementGoal(on: stepsDay("2026-03-07"), today: today, changes: changed) == 5_000)
     #expect(StepsGoal.updated(changed, value: 5_500, now: now, timeZone: stepsZone) == changed)
 }
 
@@ -75,6 +78,21 @@ private func waitForSteps(_ condition: () -> Bool) async {
         try? await Task.sleep(for: .milliseconds(1))
     }
     #expect(condition())
+}
+
+@Test @MainActor func stepSyncBackfillsOnlySinceProfileCreation() async {
+    let now = stepsDay("2026-03-09").date(in: stepsZone)
+    let source = ControlledStepSource()
+    let controller = StepsController(day: stepsDay("2026-03-09"), source: source, now: now)
+    var saved: [LocalDay] = []
+    controller.refresh(now: now, timeZone: stepsZone, earliestDay: stepsDay("2026-03-07")) {
+        saved.append($0.day)
+        return true
+    }
+    await waitForSteps { saved.count == 3 }
+    #expect(saved == [stepsDay("2026-03-09"), stepsDay("2026-03-08"), stepsDay("2026-03-07")])
+    #expect(source.queryCount == 3)
+    controller.stop()
 }
 
 @Test @MainActor func deniedStepsNeverQueryOrPersistZero() async {

@@ -39,6 +39,7 @@ final class StepsController {
     }
 
     func refresh(requestPermission: Bool = false, includeIntraday: Bool = false, now: Date = .now, timeZone: TimeZone = .current,
+                 earliestDay: LocalDay? = nil,
                  save: @escaping @MainActor (StepReading) async -> Bool) {
         stop()
         let token = generation
@@ -56,7 +57,7 @@ final class StepsController {
         state = .loading
         task = Task { [weak self] in
             guard let self else { return }
-            let days = StepsDateRange.recentDays(now: now, timeZone: timeZone)
+            let days = StepsDateRange.recentDays(now: now, timeZone: timeZone, earliestDay: earliestDay)
             let requested = days.contains(selectedDay) ? [selectedDay] + days.filter { $0 != selectedDay } : days
             for day in requested {
                 guard generation == token, !Task.isCancelled else { return }
