@@ -18,6 +18,7 @@ private func metricGPS(_ seconds: Double, latitude: Double = 31, altitude: Doubl
     #expect(decoded.weightKilograms == nil)
     #expect(decoded.energyAlgorithmVersion == nil)
     #expect(decoded.segments.first?.first?.altitude == nil)
+    #expect(decoded.segments.first?.first?.activeElapsedSeconds == nil)
     let metrics = RunningMetrics(session: decoded)
     #expect(metrics.speedSeries.isEmpty)
     #expect(metrics.cadenceSeries.isEmpty)
@@ -65,8 +66,9 @@ private func metricGPS(_ seconds: Double, latitude: Double = 31, altitude: Doubl
     #expect(metrics.speedSeries[0].segmentIndex != metrics.speedSeries[1].segmentIndex)
     #expect(metrics.speedSeries[1].timeOffsetSeconds == 600)
     #expect(metrics.elapsedSeconds == 300)
-    #expect(metrics.maximumCadenceStepsPerMinute == 240)
-    #expect(metrics.cadenceSeries[1].value == 180)
+    #expect(metrics.cadenceSeries.map(\.value) == [0, 0, 800, 0, 300])
+    #expect(metrics.maximumCadenceStepsPerMinute == 800)
+    #expect(metrics.averageCadenceStepsPerMinute == 220)
     #expect(abs((metrics.maximumSpeedKilometersPerHour ?? 0) - 10.8) < 0.0001)
     #expect(metrics.estimatedEnergyKilocalories != nil)
     #expect(metrics.altitudeSeries.isEmpty)
@@ -103,7 +105,7 @@ private func metricGPS(_ seconds: Double, latitude: Double = 31, altitude: Doubl
     #expect(metrics.cadenceSeries.isEmpty)
 }
 
-@Test func outdoorCadenceUsesGPSMinuteBucketsWithoutJoiningPausedSegments() {
+@Test func outdoorCadenceUsesPunchCardMinuteEndpointsAndZeroFillsMissingMinutes() {
     var session = RunningSession(startedAt: metricsOrigin, kind: .outdoor)
     session.segments = [
         [metricGPS(0), metricGPS(30, latitude: 31.00025), metricGPS(60, latitude: 31.0005)],
@@ -119,13 +121,13 @@ private func metricGPS(_ seconds: Double, latitude: Double = 31, altitude: Doubl
     let metrics = RunningMetrics(session: session)
     #expect(metrics.elapsedSeconds == 120)
     #expect(metrics.cadenceSeries.count == 2)
-    #expect(metrics.cadenceSeries[0].segmentIndex != metrics.cadenceSeries[1].segmentIndex)
-    #expect(metrics.cadenceSeries[1].timeOffsetSeconds == 660)
+    #expect(metrics.cadenceSeries.map(\.timeOffsetSeconds) == [60, 120])
+    #expect(metrics.cadenceSeries.allSatisfy { $0.segmentIndex == 0 })
     #expect(metrics.maximumCadenceStepsPerMinute == metrics.cadenceSeries.map(\.value).max())
-    #expect(abs((metrics.averageCadenceStepsPerMinute ?? 0) - session.distanceMeters / 0.8 / 120 * 60) < 0.001)
+    #expect(metrics.averageCadenceStepsPerMinute == floor(metrics.cadenceSeries.reduce(0) { $0 + $1.value } / 2))
 }
 
-@Test func altitudeMetricsFilterUncertainSamplesAndNeverBridgeMissingDataOrPauses() {
+@Test func altitudeMetricsAverageEachMinuteAndUsePunchCardAscent() {
     var session = RunningSession(startedAt: metricsOrigin)
     session.segments = [[
         metricGPS(0, altitude: 100, accuracy: 2),
@@ -137,14 +139,39 @@ private func metricGPS(_ seconds: Double, latitude: Double = 31, altitude: Doubl
     ], [metricGPS(100, altitude: 1_000, accuracy: 2), metricGPS(110, altitude: 1_000, accuracy: 2)]]
     session.updatedAt = metricsOrigin.addingTimeInterval(110)
     let metrics = RunningMetrics(session: session)
-    #expect(metrics.altitudeSeries.count == 7)
-    #expect(metrics.minimumAltitudeMeters == 100)
+    #expect(metrics.altitudeSeries.map(\.value) == [142, 1_000])
+    #expect(metrics.minimumAltitudeMeters == 142)
     #expect(metrics.maximumAltitudeMeters == 1_000)
-    #expect(metrics.ascentMeters == 8)
-    #expect(metrics.altitudeSeries[2].segmentIndex != metrics.altitudeSeries[3].segmentIndex)
-    #expect(metrics.altitudeSeries[4].segmentIndex != metrics.altitudeSeries[5].segmentIndex)
+    #expect(metrics.ascentMeters == 858)
     session.segments = [[metricGPS(0, altitude: 100, accuracy: -1)], [metricGPS(20, altitude: 200, accuracy: 5)]]
-    #expect(RunningMetrics(session: session).ascentMeters == nil)
+    #expect(RunningMetrics(session: session).altitudeSeries.map(\.value) == [200, 200])
+    #expect(RunningMetrics(session: session).ascentMeters == 0)
+}
+
+@Test func missingMinuteUsesOverallAltitudeAverageAndZeroCadence() {
+    var session = RunningSession(startedAt: metricsOrigin, kind: .outdoor)
+    session.segments = [[
+        metricGPS(10, altitude: 100, accuracy: 2),
+        metricGPS(20, latitude: 31.0001, altitude: 100, accuracy: 2),
+        metricGPS(130, latitude: 31.0002, altitude: 130, accuracy: 2),
+        metricGPS(140, latitude: 31.0003, altitude: 130, accuracy: 2)
+    ]]
+    session.updatedAt = metricsOrigin.addingTimeInterval(180)
+    let metrics = RunningMetrics(session: session)
+    #expect(metrics.altitudeSeries.map(\.value) == [100, 115, 130])
+    #expect(metrics.ascentMeters == 30)
+    #expect(metrics.cadenceSeries.count == 3)
+    #expect(metrics.cadenceSeries[1].value == 0)
+    #expect(metrics.cadenceSeries[0].value > 0)
+    #expect(metrics.cadenceSeries[2].value > 0)
+}
+
+@Test func pausedOutdoorFixtureDoesNotCompressFinalMinuteIntoCadenceSpike() {
+    let session = RunningDetailFixtures.make(kind: .outdoor)
+    let metrics = RunningMetrics(session: session)
+    #expect(metrics.cadenceSeries.count == Int(ceil(metrics.elapsedSeconds / 60)))
+    #expect((metrics.maximumCadenceStepsPerMinute ?? 0) < 300)
+    #expect((metrics.maximumCadenceStepsPerMinute ?? 0) > 150)
 }
 
 @Test func historicalEnergyRequiresCapturedWeightVersionAndMeasurements() {

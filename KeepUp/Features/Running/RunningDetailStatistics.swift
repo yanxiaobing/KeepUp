@@ -145,7 +145,8 @@ struct RunningChartsSection: View {
                 }.frame(maxWidth: .infinity, minHeight: 196)
                     .accessibilityIdentifier(identifier + ".missing")
             } else {
-                RunningDetailPlot(points: plottedPoints, altitude: isAltitude, color: color, locale: locale)
+                RunningDetailPlot(points: plottedPoints, altitude: isAltitude, color: color,
+                                  elapsedSeconds: metrics.elapsedSeconds, locale: locale)
                     .frame(height: 196)
                     .accessibilityLabel(Text(title))
                     .accessibilityIdentifier(identifier)
@@ -160,50 +161,69 @@ private struct RunningDetailPlot: View {
     let points: [RunningMetricPoint]
     let altitude: Bool
     let color: Color
+    let elapsedSeconds: Double
     let locale: Locale
     var body: some View {
         GeometryReader { geometry in
             let width = max(1, geometry.size.width - 29)
             let minimum = altitude ? (points.map(\.value).min() ?? 0) : 0
             let measuredMax = points.map(\.value).max() ?? 0
-            let maximum = altitude ? max(minimum + 1, measuredMax) : max(50, ceil(measuredMax / 50) * 50)
-            let duration = max(1, ceil((points.map(\.timeOffsetSeconds).max() ?? 0) / 60))
-            let ticks = altitude ? [minimum, measuredMax] : stride(from: 0.0, through: maximum, by: maximum / 4).map { $0 }
+            let maximum = max(1, measuredMax)
+            let duration = max(1, Int(min(10_000, ceil(max(0, elapsedSeconds) / 60))))
+            let stageCount = max(1, min(5, duration - 1))
+            let minuteOffset = max(1, duration / stageCount)
+            let cadenceTickStep = measuredMax > 1_000 ? 200.0 : measuredMax > 600 ? 150.0 : measuredMax > 300 ? 100.0 : 50.0
+            let ticks: [(value: Double, position: Double)] = altitude
+                ? [(minimum, 126), (measuredMax, 37)]
+                : (1...max(1, Int(min(20, measuredMax / cadenceTickStep)))).compactMap { index in
+                    let value = Double(index) * cadenceTickStep
+                    return value <= measuredMax ? (value, 156 - value / maximum * 134) : nil
+                }
             let y: (Double) -> Double = { value in
-                altitude ? 126 - (value - minimum) / (maximum - minimum) * 89 : 156 - value / maximum * 134
+                altitude ? (measuredMax > minimum ? 126 - (value - minimum) / (measuredMax - minimum) * 89 : 126)
+                    : 156 - value / maximum * 134
             }
             ZStack(alignment: .topLeading) {
                 Path { path in
                     path.move(to: CGPoint(x: 29, y: 22))
                     path.addLine(to: CGPoint(x: 29, y: 156))
                     path.addLine(to: CGPoint(x: geometry.size.width, y: 156))
-                    for value in ticks {
-                        path.move(to: CGPoint(x: 29, y: y(value)))
-                        path.addLine(to: CGPoint(x: 34, y: y(value)))
+                    for tick in ticks {
+                        path.move(to: CGPoint(x: 29, y: tick.position))
+                        path.addLine(to: CGPoint(x: 34, y: tick.position))
                     }
-                    for tick in 1...5 {
-                        let x = 29 + width * Double(tick) / 5
+                    for tick in 1...stageCount {
+                        let x = 29 + width * Double(tick * minuteOffset) / Double(duration)
                         path.move(to: CGPoint(x: x, y: 156))
                         path.addLine(to: CGPoint(x: x, y: 151))
                     }
                 }.stroke(Color(hex: 0xDCDCDC), lineWidth: 1)
-                ForEach(Array(ticks.enumerated()), id: \.offset) { _, value in
-                    Text(RunningDetailStyle.number(value, locale: locale)).frame(width: 25, alignment: .trailing)
-                        .position(x: 12.5, y: y(value))
+                ForEach(Array(ticks.enumerated()), id: \.offset) { _, tick in
+                    Text(RunningDetailStyle.number(tick.value, locale: locale)).frame(width: 25, alignment: .trailing)
+                        .font(.system(size: altitude ? 14 : 12)).lineLimit(1).minimumScaleFactor(0.8)
+                        .position(x: 12.5, y: tick.position)
                 }
-                ForEach(0...5, id: \.self) { tick in
-                    Text(RunningDetailStyle.number(duration * Double(tick) / 5, locale: locale))
-                        .position(x: 29 + width * Double(tick) / 5, y: 169)
+                ForEach(0...stageCount, id: \.self) { tick in
+                    let minute = tick * minuteOffset
+                    Text(RunningDetailStyle.number(Double(minute), locale: locale))
+                        .font(.system(size: altitude ? 14 : 12))
+                        .position(x: 29 + width * Double(minute) / Double(duration), y: 169)
                 }
-                ForEach(Array(Set(points.map(\.segmentIndex))).sorted(), id: \.self) { segment in
-                    let coordinates = points.filter { $0.segmentIndex == segment }.map {
-                        CGPoint(x: 29 + width * $0.timeOffsetSeconds / 60 / duration, y: y($0.value))
-                    }
-                    RunningResultCurve(points: coordinates, baseline: 156, filled: true)
-                        .fill(LinearGradient(colors: [color.opacity(0.35), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom))
-                    RunningResultCurve(points: coordinates, baseline: 156, filled: false)
-                        .stroke(color, lineWidth: 2)
+                let coordinates: [CGPoint] = points.enumerated().map { index, point in
+                    let x = index == 0 ? 30 : index == points.count - 1 ? geometry.size.width
+                        : 29 + width * point.timeOffsetSeconds / 60 / Double(duration)
+                    return CGPoint(x: x, y: y(point.value))
                 }
+                let curve = coordinates.count == 1
+                    ? [coordinates[0], CGPoint(x: geometry.size.width, y: coordinates[0].y)] : coordinates
+                RunningResultCurve(points: curve, baseline: 156, filled: true)
+                    .fill(LinearGradient(colors: altitude ? [Color(hex: 0xFFE4BB), .white.opacity(0.12)]
+                                                 : [Color(hex: 0xD1E2FC), .white.opacity(0)],
+                                         startPoint: .top, endPoint: .bottom))
+                RunningResultCurve(points: curve, baseline: 156, filled: false)
+                    .stroke(color, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    .shadow(color: altitude ? Color(hex: 0x9E6F08).opacity(0.5) : Color(hex: 0x85A7E7),
+                            radius: 0.5, x: 0, y: 0.5)
                 Text("runningDetail.timeAxis").frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }.font(.system(size: 14)).foregroundStyle(Color(hex: 0x222222).opacity(0.5))
         }

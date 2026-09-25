@@ -20,6 +20,8 @@ struct RunningPoint: Codable, Sendable, Equatable {
     var speed: Double = -1
     var altitude: Double? = nil
     var verticalAccuracy: Double? = nil
+    /// Active timer value at acquisition, matching PunchCard's per-GPS-point elapsed time.
+    var activeElapsedSeconds: Double? = nil
 
     var validAltitude: Double? {
         guard let altitude, altitude.isFinite, let verticalAccuracy,
@@ -167,18 +169,20 @@ struct RunningSession: Codable, Sendable, Equatable, Identifiable {
     mutating func append(_ point: RunningPoint, now: Date) -> Bool {
         guard kind.usesGPS, phase == .running, let activeSince, point.timestamp >= activeSince,
               point.isUsable(at: now) else { return false }
+        var recorded = point
+        recorded.activeElapsedSeconds = elapsed(at: point.timestamp)
         if let previous = segments.reversed().compactMap(\.last).first,
            point.timestamp <= previous.timestamp { return false }
         if segments.isEmpty { segments.append([]) }
         guard let previous = segments.last?.last else {
-            segments[segments.count - 1].append(point)
+            segments[segments.count - 1].append(recorded)
             updatedAt = now
             revision += 1
             return true
         }
         let interval = point.timestamp.timeIntervalSince(previous.timestamp)
         if interval > 30 {
-            segments.append([point])
+            segments.append([recorded])
             updatedAt = now
             revision += 1
             return true
@@ -188,7 +192,7 @@ struct RunningSession: Codable, Sendable, Equatable, Identifiable {
               !(point.speed >= 0 && point.speed < 0.5 && distance < max(5, point.horizontalAccuracy)),
               distance <= kind.maximumSpeedMetersPerSecond * interval + max(10, point.horizontalAccuracy + previous.horizontalAccuracy) else { return false }
         addDistance(distance, fromElapsed: elapsed(at: previous.timestamp), toElapsed: elapsed(at: point.timestamp))
-        segments[segments.count - 1].append(point)
+        segments[segments.count - 1].append(recorded)
         updatedAt = now
         revision += 1
         return true

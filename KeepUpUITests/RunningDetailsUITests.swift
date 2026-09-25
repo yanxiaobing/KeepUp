@@ -94,6 +94,7 @@ import XCTest
         reveal(element("running.chart.cadence", in: app), in: app)
         XCTAssertFalse(element("running.chart.cadence.missing", in: app).exists)
         XCTAssertNotEqual(app.staticTexts["running.result.cadence"].label, "0")
+        capture("KeepUp-Running-Details-Outdoor-Cadence-English")
         app.buttons["running.detail.share"].tap()
         XCTAssertTrue(element("running.share.ready", in: app).waitForExistence(timeout: 30))
         XCTAssertTrue(app.buttons["running.share.system"].isEnabled)

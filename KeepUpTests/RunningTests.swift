@@ -8,7 +8,7 @@ private func runPoint(_ seconds: Double, latitude: Double = 31, accuracy: Double
                  timestamp: runOrigin.addingTimeInterval(seconds), speed: speed)
 }
 
-@Test func runningPauseResumeExcludesBreakAndBreaksRoute() {
+@Test func runningPauseResumeExcludesBreakAndBreaksRoute() throws {
     var session = RunningSession(startedAt: runOrigin)
     let acceptedFirst = session.append(runPoint(0), now: runOrigin)
     #expect(acceptedFirst)
@@ -24,7 +24,11 @@ private func runPoint(_ seconds: Double, latitude: Double = 31, accuracy: Double
     #expect(acceptedResumedFirst)
     #expect(session.distanceMeters == distance)
     #expect(session.segments.count == 2)
+    #expect(session.segments[0].last?.activeElapsedSeconds == 10)
+    #expect(session.segments[1].first?.activeElapsedSeconds == 21)
     #expect(session.elapsed(at: runOrigin.addingTimeInterval(105)) == 25)
+    let restored = try JSONDecoder().decode(RunningSession.self, from: JSONEncoder().encode(session))
+    #expect(restored.segments[1].first?.activeElapsedSeconds == 21)
 }
 
 @Test func runningFiltersInvalidStaleAndImpossibleGPS() {

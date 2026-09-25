@@ -4,7 +4,7 @@ struct RunningMetricPoint: Identifiable, Sendable, Equatable {
     var id: Int
     var segmentIndex: Int
     var timestamp: Date
-    /// Wall-clock offset preserves gaps between separately recorded segments.
+    /// Raw speed uses wall time; detail chart minute points use active time.
     var timeOffsetSeconds: Double
     var value: Double
 }
@@ -19,7 +19,7 @@ struct RunningMetricSplit: Identifiable, Sendable, Equatable {
     var speedKilometersPerHour: Double? { elapsedSeconds > 0 ? distanceMeters / elapsedSeconds * 3.6 : nil }
 }
 
-/// All detail, list and share surfaces use these measured values and the same historical weight snapshot.
+/// All detail, list and share surfaces use the same recorded samples and historical weight snapshot.
 struct RunningMetrics: Sendable {
     static let energyAlgorithmVersion = 1
     let elapsedSeconds: Double
@@ -70,9 +70,24 @@ struct RunningMetrics: Sendable {
         var altitudes: [RunningMetricPoint] = []
         var energy: Double = 0
         var energySamples = 0
-        var ascent: Double = 0
-        var altitudePairs = 0
-        var altitudeGroup = 0
+        let minuteCount = elapsedSeconds.isFinite && elapsedSeconds > 0
+            ? Int(min(10_000, ceil(elapsedSeconds / 60))) : 0
+        func minute(for elapsed: Double) -> Int? {
+            guard minuteCount > 0, elapsed.isFinite, elapsed >= 0 else { return nil }
+            return max(1, min(minuteCount, Int(min(Double(minuteCount), ceil(elapsed / 60)))))
+        }
+        func minutePoint(_ value: Double, minute: Int, index: Int) -> RunningMetricPoint {
+            let date = session.startedAt.addingTimeInterval(Double(minute) * 60)
+            return point(value: value, date: date, segment: 0, index: index)
+        }
+        var altitudeBuckets: [Int: (sum: Double, count: Int)] = [:]
+        var altitudeSum: Double = 0
+        var altitudeCount = 0
+        var outdoorEndpoints: [Int: (distance: Double, elapsed: Double)] = [:]
+        var outdoorDistance: Double = 0
+        var indoorRecords: [Int: Double] = [:]
+        var lastIndoorRecordElapsed: Double = 0
+        var lastIndoorRecordSteps = 0
         let recordedWeight: Double? = {
             guard session.energyAlgorithmVersion == Self.energyAlgorithmVersion,
                   let value = session.weightKilograms, value.isFinite, (5...200).contains(value) else { return nil }
@@ -98,31 +113,64 @@ struct RunningMetrics: Sendable {
                     guard sample.timestamp > previous.timestamp, duration.isFinite, duration > 0,
                           distance.isFinite, distance >= 0, distance <= 15 * duration + 10,
                           previous.steps >= 0, sample.steps >= previous.steps else { continue }
-                    let steps = sample.steps - previous.steps
                     speeds.append(point(value: distance / duration * 3.6, date: sample.timestamp, segment: segmentIndex, index: speeds.count))
-                    cadences.append(point(value: Double(steps) / duration * 60, date: sample.timestamp, segment: segmentIndex, index: cadences.count))
+                    // PunchCard records the step delta whenever at least another minute has elapsed.
+                    if sample.elapsedSeconds - lastIndoorRecordElapsed >= 60, minuteCount > 0 {
+                        let minute = max(1, min(minuteCount, Int(min(Double(minuteCount), floor(sample.elapsedSeconds / 60)))))
+                        indoorRecords[minute] = Double(sample.steps - lastIndoorRecordSteps)
+                        lastIndoorRecordElapsed = sample.elapsedSeconds
+                        lastIndoorRecordSteps = sample.steps
+                    }
                     recordEnergy(duration: duration, distance: distance)
                 }
             }
         } else {
+            // PunchCard stores active elapsed time on every GPS point. Existing KeepUp
+            // records have only timestamps, so allocate the session's known paused
+            // time to gaps between route segments before assigning chart minutes.
+            let occupiedSegments = session.segments.enumerated().compactMap { index, samples -> (index: Int, first: Date, last: Date)? in
+                guard let first = samples.first?.timestamp, let last = samples.last?.timestamp else { return nil }
+                return (index, first, last)
+            }
+            var pausedAtSegment = Array(repeating: 0.0, count: session.segments.count)
+            let activeDuration = elapsedSeconds
+            var pauseRemaining = max(0, end.timeIntervalSince(session.startedAt) - activeDuration)
+            var gaps: [(index: Int, duration: Double)] = []
+            if occupiedSegments.count > 1 {
+                for position in 1..<occupiedSegments.count {
+                    let previous = occupiedSegments[position - 1]
+                    let next = occupiedSegments[position]
+                    gaps.append((next.index, max(0, next.first.timeIntervalSince(previous.last))))
+                }
+            }
+            gaps.sort { $0.duration == $1.duration ? $0.index < $1.index : $0.duration > $1.duration }
+            for gap in gaps where pauseRemaining > 0 {
+                let paused = min(gap.duration, pauseRemaining)
+                pausedAtSegment[gap.index] = paused
+                pauseRemaining -= paused
+            }
+            var pauseBeforeSegment = Array(repeating: 0.0, count: session.segments.count)
+            var pauseSoFar: Double = 0
+            for index in session.segments.indices {
+                pauseSoFar += pausedAtSegment[index]
+                pauseBeforeSegment[index] = pauseSoFar
+            }
+            func activeOffset(_ sample: RunningPoint, segment: Int) -> Double {
+                if let measured = sample.activeElapsedSeconds, measured.isFinite, measured >= 0 {
+                    return min(activeDuration, measured)
+                }
+                return min(activeDuration, max(0, sample.timestamp.timeIntervalSince(session.startedAt) - pauseBeforeSegment[segment]))
+            }
             for (segmentIndex, samples) in session.segments.enumerated() {
-                // PunchCard estimates outdoor cadence from GPS distance using a 0.8 m stride.
-                // Keep the minute buckets within each recorded segment so pauses never join a curve.
-                var cadenceMinutes: [Int: (distance: Double, duration: Double, timestamp: Date)] = [:]
-                var altitudeAnchor: RunningPoint?
-                altitudeGroup += 1
                 for sample in samples {
-                    guard let altitude = sample.validAltitude else { altitudeAnchor = nil; altitudeGroup += 1; continue }
-                    altitudes.append(point(value: altitude, date: sample.timestamp, segment: altitudeGroup, index: altitudes.count))
-                    if let anchor = altitudeAnchor, let previousAltitude = anchor.validAltitude, sample.timestamp > anchor.timestamp {
-                        altitudePairs += 1
-                        let difference = altitude - previousAltitude
-                        let uncertainty = max(3, max(anchor.verticalAccuracy ?? 0, sample.verticalAccuracy ?? 0))
-                        if abs(difference) >= uncertainty {
-                            if difference > 0 { ascent += difference }
-                            altitudeAnchor = sample
-                        }
-                    } else { altitudeAnchor = sample }
+                    guard let altitude = sample.validAltitude,
+                          let minute = minute(for: activeOffset(sample, segment: segmentIndex)) else { continue }
+                    var bucket = altitudeBuckets[minute] ?? (sum: 0, count: 0)
+                    bucket.sum += altitude
+                    bucket.count += 1
+                    altitudeBuckets[minute] = bucket
+                    altitudeSum += altitude
+                    altitudeCount += 1
                 }
                 for (previous, sample) in zip(samples, samples.dropFirst()) {
                     let duration = sample.timestamp.timeIntervalSince(previous.timestamp)
@@ -131,23 +179,41 @@ struct RunningMetrics: Sendable {
                           distance <= session.kind.maximumSpeedMetersPerSecond * duration + max(10, sample.horizontalAccuracy + previous.horizontalAccuracy) else { continue }
                     speeds.append(point(value: distance / duration * 3.6, date: sample.timestamp, segment: segmentIndex, index: speeds.count))
                     if session.kind == .outdoor {
-                        let minuteOffset = sample.timestamp.timeIntervalSince(session.startedAt) / 60
-                        if minuteOffset.isFinite, (0..<Double(Int.max)).contains(minuteOffset) {
-                            let minute = max(1, Int(ceil(minuteOffset)))
-                            var bucket = cadenceMinutes[minute] ?? (distance: 0, duration: 0, timestamp: sample.timestamp)
-                            bucket.distance += distance
-                            bucket.duration += duration
-                            bucket.timestamp = sample.timestamp
-                            cadenceMinutes[minute] = bucket
+                        outdoorDistance += distance
+                        let elapsed = activeOffset(sample, segment: segmentIndex)
+                        if let minute = minute(for: elapsed) {
+                            outdoorEndpoints[minute] = (distance: outdoorDistance, elapsed: elapsed)
                         }
                     }
                     recordEnergy(duration: duration, distance: distance)
                 }
-                for minute in cadenceMinutes.keys.sorted() {
-                    guard let bucket = cadenceMinutes[minute], bucket.duration > 0 else { continue }
-                    cadences.append(point(value: ceil(bucket.distance / 0.8 / bucket.duration * 60),
-                                          date: bucket.timestamp, segment: segmentIndex, index: cadences.count))
+            }
+        }
+        if altitudeCount > 0 {
+            let fallback = ceil(altitudeSum / Double(altitudeCount))
+            for minute in 1...minuteCount {
+                let value = altitudeBuckets[minute].map { ceil($0.sum / Double($0.count)) } ?? fallback
+                altitudes.append(minutePoint(value, minute: minute, index: altitudes.count))
+            }
+        }
+        if session.kind == .outdoor, !outdoorEndpoints.isEmpty {
+            var previous = (distance: 0.0, elapsed: 0.0)
+            for minute in 1...minuteCount {
+                var value: Double = 0
+                if let endpoint = outdoorEndpoints[minute] {
+                    let duration = endpoint.elapsed - previous.elapsed
+                    let distance = endpoint.distance - previous.distance
+                    if duration > 0, distance >= 0 {
+                        let estimate = distance / 0.8 / duration * 60
+                        if estimate.isFinite { value = ceil(estimate) }
+                    }
+                    previous = endpoint
                 }
+                cadences.append(minutePoint(value, minute: minute, index: cadences.count))
+            }
+        } else if session.kind == .indoor, !indoorRecords.isEmpty {
+            for minute in 1...minuteCount {
+                cadences.append(minutePoint(indoorRecords[minute] ?? 0, minute: minute, index: cadences.count))
             }
         }
         speedSeries = speeds
@@ -155,15 +221,17 @@ struct RunningMetrics: Sendable {
         altitudeSeries = altitudes
         maximumSpeedKilometersPerHour = speeds.map(\.value).max()
         maximumCadenceStepsPerMinute = cadences.map(\.value).max()
-        if !cadences.isEmpty, elapsedSeconds > 0 {
-            let steps = session.kind == .outdoor ? distanceMeters / 0.8 : Double(session.steps)
-            averageCadenceStepsPerMinute = steps / elapsedSeconds * 60
-        } else {
+        if cadences.isEmpty {
             averageCadenceStepsPerMinute = nil
+        } else {
+            let divisor = session.kind == .indoor ? indoorRecords.keys.max() ?? minuteCount : minuteCount
+            averageCadenceStepsPerMinute = floor(cadences.reduce(0) { $0 + $1.value } / Double(max(1, divisor)))
         }
         minimumAltitudeMeters = altitudes.map(\.value).min()
         maximumAltitudeMeters = altitudes.map(\.value).max()
-        ascentMeters = altitudePairs > 0 ? ascent : nil
+        ascentMeters = altitudes.isEmpty ? nil : ceil(zip(altitudes, altitudes.dropFirst()).reduce(0) { total, pair in
+            total + max(0, pair.1.value - pair.0.value)
+        })
         estimatedEnergyKilocalories = energySamples > 0 && energy.isFinite ? energy : nil
     }
 }
