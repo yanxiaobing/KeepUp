@@ -81,19 +81,19 @@ struct RunningResultPages: View {
             let cityHeight = geometry.size.width * 272 / 750
             TabView(selection: $page) {
                 RunningResultOverview(session: session, showingMap: $showingMap).tag(0)
-                VStack(spacing: 0) {
-                    RunningSessionSummary(session: session, content: content)
-                        .frame(height: max(0, geometry.size.height - cityHeight - 16))
-                    Spacer(minLength: 0)
-                }
-                .frame(width: geometry.size.width, height: geometry.size.height)
-                .tag(1)
+                RunningSessionSummary(session: session, content: content, bottomPadding: cityHeight + 16).tag(1)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background(alignment: .top) {
                 CardDetailThemeBackground()
                     .frame(width: geometry.size.width, height: geometry.size.height + geometry.safeAreaInsets.bottom)
+            }
+            .overlay(alignment: .bottom) {
+                if page == 1 {
+                    RunningDetailCityOverlay(width: geometry.size.width, height: cityHeight)
+                        .offset(y: geometry.safeAreaInsets.bottom)
+                }
             }
             .overlay(alignment: .topTrailing) {
                 HStack(spacing: 0) {
@@ -119,6 +119,7 @@ struct RunningResultPages: View {
 struct RunningSessionSummary: View {
     let session: RunningSession
     var content: EntryContent? = nil
+    var bottomPadding: CGFloat = 20
     @Environment(\.locale) private var locale
 
     var body: some View {
@@ -142,10 +143,33 @@ struct RunningSessionSummary: View {
                         }
                     }.padding(15)
                 }
-            }.padding(.bottom, 20)
+            }.padding(.bottom, bottomPadding)
         }.foregroundStyle(Color(hex: 0x222222))
             .environment(\.timeZone, TimeZone(identifier: session.timeZoneID) ?? .current)
             .accessibilityIdentifier("running.result")
+    }
+}
+
+private struct RunningDetailCityOverlay: View {
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            LinearGradient(stops: [
+                .init(color: .white.opacity(0), location: 0),
+                .init(color: .white.opacity(0.06), location: 0.25),
+                .init(color: .white.opacity(0.3), location: 0.55),
+                .init(color: .white.opacity(0.7), location: 0.8),
+                .init(color: .white, location: 1)
+            ], startPoint: .top, endPoint: .bottom)
+            Image(CalendarTheme.selected.transparentCityImage)
+                .resizable().scaledToFit()
+                .frame(width: width, height: height)
+        }
+        .frame(width: width, height: height)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
