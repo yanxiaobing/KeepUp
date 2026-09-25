@@ -146,7 +146,7 @@ struct CalendarHomeView: View {
                         .accessibilityIdentifier("tab.profile")
                 }
             }
-            .tint(Color(white: 0.2))
+            .tint(KeepUpStyle.navigationTint)
             .fullScreenCover(isPresented: $showingTheme) { ThemeListView() }
             .fullScreenCover(isPresented: $showingRunning) { RunningView() }
             .onAppear {

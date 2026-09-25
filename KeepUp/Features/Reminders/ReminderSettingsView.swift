@@ -16,6 +16,7 @@ struct ReminderSettingsView: View {
     @State private var timePicker = false
     @State private var error: String?
     private let ink = Color(red: 105/255, green: 104/255, blue: 111/255)
+    private var deletesTarget: Bool { value.isEmpty && !original.isEmpty }
     init(card: HabitCard, target: CardTarget?) {
         self.card = card
         let initial = target ?? CardTarget(cardID: card.id)
@@ -78,10 +79,14 @@ struct ReminderSettingsView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button { if value != original { confirmingDiscard = true } else { dismiss() } } label: { Image(systemName: "chevron.left") }
                         .accessibilityLabel(Text("action.back")).accessibilityIdentifier("reminder.close")
+                        .tint(KeepUpStyle.navigationTint)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(value.isEmpty && !original.isEmpty ? "action.delete" : "action.save") { Task { await save() } }
-                        .disabled(saving || value == original).accessibilityIdentifier("reminder.save")
+                    Button { Task { await save() } } label: { Image(systemName: deletesTarget ? "trash" : "checkmark") }
+                        .disabled(saving || value == original)
+                        .accessibilityLabel(Text(LocalizedStringKey(deletesTarget ? "action.delete" : "action.save")))
+                        .accessibilityIdentifier("reminder.save")
+                        .tint(deletesTarget ? .red : KeepUpStyle.navigationTint)
                 }
             }
             .confirmationDialog("reminder.discardQuestion", isPresented: $confirmingDiscard, titleVisibility: .visible) {
@@ -90,7 +95,12 @@ struct ReminderSettingsView: View {
             }
             .sheet(isPresented: $timePicker) {
                 VStack {
-                    HStack { Spacer(); Button("action.done") { timePicker = false }.padding().accessibilityIdentifier("reminder.timeDone") }
+                    HStack {
+                        Spacer()
+                        Button { timePicker = false } label: { Image(systemName: "checkmark") }
+                            .padding().accessibilityLabel(Text("action.done"))
+                            .accessibilityIdentifier("reminder.timeDone").tint(KeepUpStyle.navigationTint)
+                    }
                     DatePicker("reminder.time", selection: Binding(get: {
                         Calendar.current.date(from: DateComponents(hour: value.hour, minute: value.minute)) ?? .now
                     }, set: { date in value.hour = Calendar.current.component(.hour, from: date); value.minute = Calendar.current.component(.minute, from: date) }), displayedComponents: .hourAndMinute)
@@ -196,7 +206,7 @@ struct ReminderListView: View {
                 if scenePhase == .active { authorizationStatus = await ReminderScheduler.shared.authorizationStatus() }
             }.background(Color(white: 246/255)).navigationTitle("profile.alarms").navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { dismiss() }.accessibilityIdentifier("reminder.listClose") } }
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button { dismiss() } label: { Image(systemName: "xmark") }.accessibilityLabel(Text("action.close")).accessibilityIdentifier("reminder.listClose").tint(KeepUpStyle.navigationTint) } }
                 .fullScreenCover(item: $selected) { card in ReminderSettingsView(card: card, target: model.snapshot.targets.first { $0.cardID == card.id }) }
         }
     }

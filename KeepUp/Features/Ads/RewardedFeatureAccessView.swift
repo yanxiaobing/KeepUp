@@ -51,7 +51,9 @@ struct RewardedFeatureAccessView: View {
                 .navigationTitle("ads.reward.title").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { finish(.cancelled) }.disabled(false).accessibilityIdentifier("reward.close")
+                        Button { finish(.cancelled) } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("reward.close")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
                 .fullScreenCover(isPresented: $showMembership, onDismiss: {

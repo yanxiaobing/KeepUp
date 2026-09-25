@@ -95,12 +95,14 @@ struct StepsView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button { dismiss() } label: { Image(systemName: "xmark") }
                             .accessibilityLabel(Text("action.close")).accessibilityIdentifier("steps.close")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         if savedEntry != nil {
                             Button { editing = true } label: { Image(systemName: KeepUpStyle.editContentSymbol) }
                                 .accessibilityLabel(Text("content.edit"))
                                 .accessibilityIdentifier("steps.editContent")
+                                .tint(KeepUpStyle.navigationTint)
                         }
                         Button {
                             let style = selectedStyle
@@ -111,12 +113,13 @@ struct StepsView: View {
                             shareImage = StepsShareImage(style: style, image: image)
                         } label: { Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24) }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("steps.share").disabled(count == nil)
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
                 .sheet(isPresented: $showingHistory, onDismiss: { refresh() }) {
                     NavigationStack {
                         ScrollView { history.padding(.top, 20) }.navigationTitle("steps.recent")
-                            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { showingHistory = false } } }
+                            .toolbar { ToolbarItem(placement: .cancellationAction) { Button { showingHistory = false } label: { Image(systemName: "xmark") }.accessibilityLabel(Text("action.close")).tint(KeepUpStyle.navigationTint) } }
                     }
                     .fullScreenCover(item: $historyDay) { selection in StepsView(day: selection.day, followsToday: false) }
                 }

@@ -54,7 +54,9 @@ struct RunningSettingsView: View {
                 .navigationTitle("runningSettings.title").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { dismiss() }.accessibilityIdentifier("runningSettings.close")
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel(Text("action.close")).accessibilityIdentifier("runningSettings.close")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
         }.tint(Color(hex: 0xD5A900))

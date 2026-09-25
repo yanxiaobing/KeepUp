@@ -27,9 +27,14 @@ struct WeightTargetView: View {
                 }.background(Color(white: 246/255))
             }.navigationTitle(editing ? "weight.setTarget" : "profile.weightTarget").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button { if editing && model.snapshot.weightTarget != nil { editing = false } else { dismiss() } } label: { Image(systemName: "chevron.left") }.disabled(busy).accessibilityIdentifier("weightTarget.close") }
+                    ToolbarItem(placement: .cancellationAction) { Button { if editing && model.snapshot.weightTarget != nil { editing = false } else { dismiss() } } label: { Image(systemName: "chevron.left") }.disabled(busy).accessibilityIdentifier("weightTarget.close").tint(KeepUpStyle.navigationTint) }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(editing ? "action.save" : "weight.reset") { if editing { Task { await save() } } else { reset = true } }.disabled(busy || (editing && initial == target)).accessibilityIdentifier("weightTarget.save")
+                        Button { if editing { Task { await save() } } else { reset = true } } label: {
+                            Image(systemName: editing ? "checkmark" : "arrow.counterclockwise")
+                        }.disabled(busy || (editing && initial == target))
+                            .accessibilityLabel(Text(LocalizedStringKey(editing ? "action.save" : "weight.reset")))
+                            .accessibilityIdentifier("weightTarget.save")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
                 .onAppear { guard !ready else { return }; initialize(); editing = model.snapshot.weightTarget == nil; ready = true }
@@ -42,7 +47,7 @@ struct WeightTargetView: View {
                         DatePicker("weight.endDate", selection: $end,
                                    in: Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: .now))!...Calendar.current.date(byAdding: .year, value: 1, to: .now)!, displayedComponents: .date)
                             .datePickerStyle(.wheel).labelsHidden().environment(\.calendar, Calendar(identifier: .gregorian)).accessibilityIdentifier("weightTarget.datePicker")
-                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("action.done") { datePicker = false }.accessibilityIdentifier("weightTarget.dateDone") } }
+                            .toolbar { ToolbarItem(placement: .confirmationAction) { Button { datePicker = false } label: { Image(systemName: "checkmark") }.accessibilityLabel(Text("action.done")).accessibilityIdentifier("weightTarget.dateDone").tint(KeepUpStyle.navigationTint) } }
                     }.presentationDetents([.height(300)])
                 }
                 .alert("error.title", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) { Button("action.ok") {} } message: { Text(LocalizedStringKey(error ?? "error.storage")) }

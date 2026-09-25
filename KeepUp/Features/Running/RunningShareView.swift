@@ -56,6 +56,7 @@ struct RunningShareView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button { dismiss() } label: { Image(systemName: "xmark") }
                             .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.share.close")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
                 .safeAreaInset(edge: .bottom) {

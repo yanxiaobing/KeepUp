@@ -31,12 +31,14 @@ struct RunningDetailView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button { dismiss() } label: { Image(systemName: "xmark") }
                             .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.result.close")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         if currentEntry != nil && card != nil {
                             Button { editing = true } label: { Image(systemName: KeepUpStyle.editContentSymbol) }
                                 .accessibilityLabel(Text("content.edit"))
                                 .accessibilityIdentifier("running.detail.editContent")
+                                .tint(KeepUpStyle.navigationTint)
                         }
                         Button {
                             shareRequest = RunningShareRequest(style: RunningShareStyle(page: page),
@@ -44,6 +46,7 @@ struct RunningDetailView: View {
                         } label: {
                             Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24)
                         }.accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.detail.share")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
                 .fullScreenCover(isPresented: $editing) {

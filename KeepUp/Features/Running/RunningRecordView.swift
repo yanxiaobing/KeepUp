@@ -34,6 +34,7 @@ struct RunningRecordView: View {
                             ToolbarItem(placement: .cancellationAction) {
                                 Button { dismiss() } label: { Image(systemName: "xmark") }
                                     .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.result.close")
+                                    .tint(KeepUpStyle.navigationTint)
                             }
                         }
                 }

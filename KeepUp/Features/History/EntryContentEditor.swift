@@ -16,6 +16,7 @@ struct EntryContentEditor: View {
     @State private var photoError = false
     @FocusState private var focused: Bool
     private enum PhotoSource: String, Identifiable { case library, camera, crop; var id: String { rawValue } }
+    private var savesDeletion: Bool { content.isEmpty && !model.snapshot.publishedContent(for: entry).isEmpty }
 
     var body: some View {
         NavigationStack {
@@ -47,15 +48,19 @@ struct EntryContentEditor: View {
             .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("action.cancel") {
+                    Button {
                         focused = false
                         if content != initial { showCancel = true } else { dismiss() }
-                    }.disabled(busy).accessibilityIdentifier("content.cancel")
+                    } label: { Image(systemName: "xmark") }
+                        .disabled(busy).accessibilityLabel(Text("action.cancel")).accessibilityIdentifier("content.cancel")
+                        .tint(KeepUpStyle.navigationTint)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(content.isEmpty && !model.snapshot.publishedContent(for: entry).isEmpty ? "action.delete" : "action.save") { save(asDraft: false) }
+                    Button { save(asDraft: false) } label: { Image(systemName: savesDeletion ? "trash" : "checkmark") }
                         .disabled(busy || (content.isEmpty && model.snapshot.publishedContent(for: entry).isEmpty))
+                        .accessibilityLabel(Text(LocalizedStringKey(savesDeletion ? "action.delete" : "action.save")))
                         .accessibilityIdentifier("content.save")
+                        .tint(savesDeletion ? .red : KeepUpStyle.navigationTint)
                 }
             }
             .onAppear {

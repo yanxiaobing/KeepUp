@@ -42,7 +42,9 @@ struct RunningStatisticsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("action.close") { dismiss() }.accessibilityIdentifier("running.stats.close")
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
+                        .accessibilityLabel(Text("action.close")).accessibilityIdentifier("running.stats.close")
+                        .tint(KeepUpStyle.navigationTint)
                 }
             }
             .fullScreenCover(item: $detail) { entry in

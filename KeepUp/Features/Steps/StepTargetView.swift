@@ -35,10 +35,14 @@ struct StepTargetView: View {
                 .navigationTitle("steps.targetSettings").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("action.close") { dismiss() }.disabled(saving).accessibilityIdentifier("stepsTarget.close")
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
+                            .disabled(saving).accessibilityLabel(Text("action.close")).accessibilityIdentifier("stepsTarget.close")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("action.save") { Task { await save() } }.disabled(saving).accessibilityIdentifier("stepsTarget.save")
+                        Button { Task { await save() } } label: { Image(systemName: "checkmark") }
+                            .disabled(saving).accessibilityLabel(Text("action.save")).accessibilityIdentifier("stepsTarget.save")
+                            .tint(KeepUpStyle.navigationTint)
                     }
                 }
                 .onAppear { selection = changes.keys.max().flatMap { changes[$0] } ?? 5_000 }

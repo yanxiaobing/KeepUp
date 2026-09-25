@@ -41,9 +41,14 @@ struct ScheduledCardView: View {
                 }.padding(.horizontal, 20*s)
             }.background(.white).navigationTitle("schedule.title").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button { if changed { discarding = true } else { dismiss() } } label: { Image(systemName: "chevron.left") }.accessibilityIdentifier("schedule.close") }
+                    ToolbarItem(placement: .cancellationAction) { Button { if changed { discarding = true } else { dismiss() } } label: { Image(systemName: "chevron.left") }.accessibilityIdentifier("schedule.close").tint(KeepUpStyle.navigationTint) }
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        if future { Button(existing == nil ? "action.save" : "schedule.update") { Task { await save() } }.disabled(busy || !changed || note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || note.utf16.count > 140).accessibilityIdentifier("schedule.save") }
+                        if future {
+                            Button { Task { await save() } } label: { Image(systemName: "checkmark") }
+                                .disabled(busy || !changed || note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || note.utf16.count > 140)
+                                .accessibilityLabel(Text(LocalizedStringKey(existing == nil ? "action.save" : "schedule.update")))
+                                .accessibilityIdentifier("schedule.save").tint(KeepUpStyle.navigationTint)
+                        }
                         if existing != nil { Button(role: .destructive) { deleting = true } label: { Image(systemName: "trash") }.disabled(busy).accessibilityIdentifier("schedule.delete") }
                     }
                 }

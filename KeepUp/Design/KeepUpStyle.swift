@@ -3,6 +3,7 @@ import SwiftUI
 /// PunchCard's default Departure theme and its original action / card colors.
 enum KeepUpStyle {
     static let accent = Color(red: 1, green: 100/255, blue: 64/255)
+    static let navigationTint = Color(white: 0.2)
     static var theme: Color { CalendarTheme.selected.color }
     static var day: Color { CalendarTheme.selected.dayColor }
     static let card = Color(red: 93/255, green: 197/255, blue: 220/255)
