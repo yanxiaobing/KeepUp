@@ -8,8 +8,9 @@ struct RunningDetailView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var page = 0
+    @State private var mapPresentation = RunningMapPresentation()
     @State private var editing = false
-    @State private var shareStyle: RunningShareStyle?
+    @State private var shareRequest: RunningShareRequest?
     @State private var confirmingDelete = false
     @State private var deleting = false
     @State private var deleteFailed = false
@@ -21,7 +22,7 @@ struct RunningDetailView: View {
     var body: some View {
         NavigationStack {
             RunningResultPages(session: session, content: currentEntry.map { model.snapshot.publishedContent(for: $0) },
-                               page: $page)
+                               page: $page, mapPresentation: $mapPresentation)
                 .navigationTitle(session.kind == .cycling ? "runningDetail.cyclingTitle" : "runningDetail.runningTitle")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(CalendarTheme.selected.color, for: .navigationBar)
@@ -37,7 +38,10 @@ struct RunningDetailView: View {
                                 .accessibilityLabel(Text("content.edit"))
                                 .accessibilityIdentifier("running.detail.editContent")
                         }
-                        Button { shareStyle = RunningShareStyle(page: page) } label: {
+                        Button {
+                            shareRequest = RunningShareRequest(style: RunningShareStyle(page: page),
+                                                                 presentation: mapPresentation)
+                        } label: {
                             Image("card_detail_ic_share").renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24)
                         }.accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.detail.share")
                     }
@@ -45,7 +49,9 @@ struct RunningDetailView: View {
                 .fullScreenCover(isPresented: $editing) {
                     if let currentEntry, let card { EntryContentEditor(entry: currentEntry, card: card) }
                 }
-                .sheet(item: $shareStyle) { style in RunningShareView(session: session, style: style) }
+                .sheet(item: $shareRequest) { request in
+                    RunningShareView(session: session, style: request.style, presentation: request.presentation)
+                }
                 .confirmationDialog("entry.deleteConfirmation", isPresented: $confirmingDelete, titleVisibility: .visible) {
                     Button("action.delete", role: .destructive) { Task { await deleteRecord() } }
                         .accessibilityIdentifier("running.detail.confirmDelete")
@@ -72,12 +78,13 @@ struct RunningResultPages: View {
     let session: RunningSession
     var content: EntryContent? = nil
     @Binding var page: Int
+    @Binding var mapPresentation: RunningMapPresentation
 
     var body: some View {
         GeometryReader { geometry in
             let cityHeight = geometry.size.width * 272 / 750
             TabView(selection: $page) {
-                RunningResultOverview(session: session).tag(0)
+                RunningResultOverview(session: session, mapPresentation: $mapPresentation).tag(0)
                 RunningSessionSummary(session: session, content: content, bottomPadding: cityHeight + 16).tag(1)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -218,14 +225,25 @@ struct RunningDetailHeader: View {
 
 struct RunningResultOverview: View {
     let session: RunningSession
+    var mapPresentation: Binding<RunningMapPresentation>? = nil
     var snapshotImage: UIImage? = nil
     var exporting = false
     @Environment(\.locale) private var locale
+
+    static let exportSize = CGSize(width: 390, height: 724)
+
+    static func mapHeight(in size: CGSize, safeAreaBottom: CGFloat = 0) -> CGFloat {
+        max(220, size.height - size.width * 272 / 750 - 159 + safeAreaBottom)
+    }
+
+    static var exportMapSize: CGSize {
+        CGSize(width: exportSize.width - 30, height: mapHeight(in: exportSize))
+    }
+
     var body: some View {
         let metrics = RunningMetrics(session: session)
         GeometryReader { geometry in
-            let cityHeight = geometry.size.width * 272 / 750
-            let mapHeight = max(220, geometry.size.height - cityHeight - 159 + geometry.safeAreaInsets.bottom)
+            let mapHeight = Self.mapHeight(in: geometry.size, safeAreaBottom: geometry.safeAreaInsets.bottom)
             VStack(spacing: 0) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(RunningDisplay.distance(metrics.distanceMeters, locale: locale)).font(.custom("DINCondensedC", size: 45))
@@ -250,7 +268,8 @@ struct RunningResultOverview: View {
                                 Color(hex: 0xF6F6F6)
                             } else {
                                 RunningResultInteractiveMap(session: session,
-                                                            averageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 })
+                                                            averageSpeed: metrics.averageSpeedKilometersPerHour.map { $0 / 3.6 },
+                                                            presentation: mapPresentation ?? .constant(.init()))
                             }
                         }
                             .overlay {
@@ -299,51 +318,44 @@ struct RunningResultOverview: View {
 private struct RunningResultInteractiveMap: View {
     let session: RunningSession
     let averageSpeed: Double?
-    @State private var showsKilometers = false
-    @State private var showsPlaces = true
+    @Binding var presentation: RunningMapPresentation
     @State private var resetCamera = 0
 
-    // Mark the measured sample that first crosses each complete kilometer. Never bridge pauses.
-    private var kilometerPoints: [RunningPoint] {
-        var distance = 0.0
-        var points: [RunningPoint] = []
-        for segment in session.segments {
-            for (previous, point) in zip(segment, segment.dropFirst()) {
-                distance += previous.distance(to: point)
-                while distance >= Double(points.count + 1) * 1_000, points.count < session.splits.count {
-                    points.append(point)
-                }
-            }
-        }
-        return points
-    }
+    private var kilometerPoints: [RunningPoint] { RunningMapPresentation.kilometerPoints(session: session) }
 
     var body: some View {
-        RunningRouteMap(segments: session.segments,
-                        kilometerPoints: showsKilometers ? kilometerPoints : [],
-                        showsPlaces: showsPlaces,
-                        resetCamera: resetCamera,
-                        resultAverageSpeed: averageSpeed)
+        GeometryReader { geometry in
+            let route = RunningShareRoute(session: session)
+            RunningRouteMap(segments: session.segments,
+                            kilometerPoints: presentation.showsKilometers ? kilometerPoints : [],
+                            showsPlaces: presentation.showsPlaces,
+                            resetCamera: resetCamera,
+                            fittedRouteRect: route.isEmpty ? nil : route.mapRect(for: geometry.size),
+                            restoredCamera: presentation.camera,
+                            onCameraChange: { presentation.camera = $0 },
+                            resultAverageSpeed: averageSpeed)
             .overlay(alignment: .topTrailing) {
                 VStack(spacing: 8) {
                     if !kilometerPoints.isEmpty {
-                        mapButton(showsKilometers ? "mappin.circle.fill" : "mappin.circle",
+                        mapButton(presentation.showsKilometers ? "mappin.circle.fill" : "mappin.circle",
                                   title: "runningDetail.kilometerMarkers", identifier: "running.map.kilometers",
-                                  value: showsKilometers ? "runningDetail.visible" : "runningDetail.hidden") {
-                            showsKilometers.toggle()
+                                  value: presentation.showsKilometers ? "runningDetail.visible" : "runningDetail.hidden") {
+                            presentation.showsKilometers.toggle()
                         }
                     }
                     mapButton("scope", title: "runningDetail.fitRoute", identifier: "running.map.fit") {
+                        presentation.camera = nil
                         resetCamera += 1
                     }
-                    mapButton(showsPlaces ? "mappin.and.ellipse" : "map", title: "runningDetail.places",
+                    mapButton(presentation.showsPlaces ? "mappin.and.ellipse" : "map", title: "runningDetail.places",
                               identifier: "running.map.places",
-                              value: showsPlaces ? "runningDetail.visible" : "runningDetail.hidden") {
-                        showsPlaces.toggle()
+                              value: presentation.showsPlaces ? "runningDetail.visible" : "runningDetail.hidden") {
+                        presentation.showsPlaces.toggle()
                     }
                 }
                 .padding(10)
             }
+        }
     }
 
     private func mapButton(_ symbol: String, title: LocalizedStringKey, identifier: String,
@@ -353,9 +365,10 @@ private struct RunningResultInteractiveMap: View {
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(Color(hex: 0x333333))
                 .frame(width: 36, height: 36)
-                .background(.regularMaterial, in: Circle())
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: Circle())
         .accessibilityLabel(Text(title))
         .accessibilityValue(Text(value ?? ""))
         .accessibilityIdentifier(identifier)
@@ -454,6 +467,9 @@ struct RunningRouteMap: View {
     var kilometerPoints: [RunningPoint] = []
     var showsPlaces = false
     var resetCamera = 0
+    var fittedRouteRect: MKMapRect? = nil
+    var restoredCamera: RunningMapCameraState? = nil
+    var onCameraChange: ((RunningMapCameraState) -> Void)? = nil
 
     var resultAverageSpeed: Double? = nil
 
@@ -512,7 +528,15 @@ struct RunningRouteMap: View {
             }
         } else {
             mapSurface
-                .onAppear { updateCamera() }
+                .onAppear {
+                    if let restoredCamera {
+                        cameraPosition = .camera(MapCamera(centerCoordinate: restoredCamera.center,
+                                                           distance: restoredCamera.distance,
+                                                           heading: restoredCamera.heading,
+                                                           pitch: restoredCamera.pitch))
+                    } else if let fittedRouteRect { cameraPosition = .rect(fittedRouteRect) }
+                    else { updateCamera() }
+                }
                 .onChange(of: currentPoint?.timestamp) { _, _ in updateCamera() }
         }
     }
@@ -562,9 +586,21 @@ struct RunningRouteMap: View {
         ))
             .mapControlVisibility(isPreparation ? .hidden : .automatic)
             .accessibilityValue(Text(LocalizedStringKey(usesSatellite ? "runningSettings.satellite" : "runningSettings.standard")))
-            .onChange(of: resetCamera) { _, _ in cameraPosition = .automatic }
+            .onChange(of: resetCamera) { _, _ in
+                cameraPosition = fittedRouteRect.map(MapCameraPosition.rect) ?? .automatic
+            }
             .onMapCameraChange(frequency: .continuous) { context in
                 if isPreparation { preparationVisibleRect = context.rect }
+                if let onCameraChange, context.camera.distance.isFinite, context.camera.distance > 0,
+                   CLLocationCoordinate2DIsValid(context.camera.centerCoordinate),
+                   context.rect.width.isFinite, context.rect.height.isFinite,
+                   context.rect.width > 0, context.rect.height > 0 {
+                    onCameraChange(RunningMapCameraState(center: context.camera.centerCoordinate,
+                                                         distance: context.camera.distance,
+                                                         heading: context.camera.heading,
+                                                         pitch: context.camera.pitch,
+                                                         visibleRect: context.rect))
+                }
             }
     }
 

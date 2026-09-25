@@ -41,6 +41,12 @@ enum RunningShareStyle: String, Identifiable {
     init(page: Int) { self = page == 0 ? .overview : .details }
 }
 
+struct RunningShareRequest: Identifiable {
+    let id = UUID()
+    let style: RunningShareStyle
+    let presentation: RunningMapPresentation
+}
+
 @MainActor final class RunningShareRenderer {
     static let splitsPerPage = 20
     private let snapshotSource: any RunningShareSnapshotSource
@@ -49,22 +55,26 @@ enum RunningShareStyle: String, Identifiable {
         self.snapshotSource = snapshotSource
     }
 
-    func render(session: RunningSession, locale: Locale, satellite: Bool = false, style: RunningShareStyle = .report) async throws -> RunningShareArtifact {
+    func render(session: RunningSession, locale: Locale, satellite: Bool = false,
+                style: RunningShareStyle = .report,
+                presentation: RunningMapPresentation = .init()) async throws -> RunningShareArtifact {
         let metrics = RunningMetrics(session: session)
         let route = RunningShareRoute(session: session)
-        let mapSize = style == .overview ? CGSize(width: 360, height: 518) : CGSize(width: 342, height: 230)
+        let mapSize = style == .overview ? RunningResultOverview.exportMapSize : CGSize(width: 342, height: 230)
         let status: RunningShareArtifact.MapStatus
         let mapImage: UIImage?
         if !session.kind.usesGPS || style == .details {
             status = .notNeeded; mapImage = nil
         } else if route.isEmpty {
             status = .empty; mapImage = nil
-        } else if let snapshot = await snapshotSource.snapshot(route: route, size: mapSize, satellite: satellite) {
+        } else if let snapshot = await snapshotSource.snapshot(route: route, size: mapSize, satellite: satellite,
+                                                              presentation: presentation) {
             status = .map; mapImage = snapshot
         } else {
             try Task.checkCancellation()
             status = .schematic
-            mapImage = RunningShareMapDrawing.schematic(route: route, size: mapSize, locale: locale)
+            mapImage = RunningShareMapDrawing.schematic(route: route, size: mapSize, locale: locale,
+                                                        presentation: presentation)
         }
         try Task.checkCancellation()
         let pages: [[RunningMetricSplit]] = style == .report ? Self.splitPages(metrics.splits) : [style == .details ? Self.detailSplits(metrics) : []]
@@ -83,7 +93,7 @@ enum RunningShareStyle: String, Identifiable {
                                            splits: splits, page: index, pageCount: pages.count)
                     case .overview:
                         RunningResultOverview(session: session, snapshotImage: mapImage, exporting: true)
-                            .frame(height: 724)
+                            .frame(height: RunningResultOverview.exportSize.height)
                     case .details:
                         VStack(spacing: 0) {
                             RunningDetailHeader(session: session, metrics: metrics)

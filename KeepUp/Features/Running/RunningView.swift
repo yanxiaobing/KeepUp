@@ -10,8 +10,9 @@ struct RunningView: View {
     @State private var confirmingFinish = false
     @State private var result: RunningSession?
     @State private var showingSettings = false
-    @State private var shareStyle: RunningShareStyle?
+    @State private var shareRequest: RunningShareRequest?
     @State private var resultPage = 1
+    @State private var resultMapPresentation = RunningMapPresentation()
     @State private var showingLiveMap = false
     @State private var settingsKindAtOpen: RunningKind?
     @State private var visible = false
@@ -34,7 +35,8 @@ struct RunningView: View {
         NavigationStack {
             Group {
                 if let result {
-                    RunningResultPages(session: result, page: $resultPage)
+                    RunningResultPages(session: result, page: $resultPage,
+                                       mapPresentation: $resultMapPresentation)
                 }
                 else if let session = controller.session { activeSession(session) }
                 else { preparation }
@@ -54,13 +56,18 @@ struct RunningView: View {
                 }
                 if result != nil {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button { shareStyle = RunningShareStyle(page: resultPage) } label: { Image(systemName: "square.and.arrow.up") }
+                        Button {
+                            shareRequest = RunningShareRequest(style: RunningShareStyle(page: resultPage),
+                                                                 presentation: resultMapPresentation)
+                        } label: { Image(systemName: "square.and.arrow.up") }
                             .accessibilityLabel(Text("entry.share")).accessibilityIdentifier("running.result.share")
                     }
                 }
             }
-            .sheet(item: $shareStyle) { style in
-                if let result { RunningShareView(session: result, style: style) }
+            .sheet(item: $shareRequest) { request in
+                if let result {
+                    RunningShareView(session: result, style: request.style, presentation: request.presentation)
+                }
             }
             .fullScreenCover(isPresented: $showingLiveMap) {
                 if let session = controller.session, session.kind.usesGPS {
@@ -692,7 +699,10 @@ struct RunningView: View {
             return
         }
         await controller.finish()
-        if controller.session == nil, controller.errorKey == nil { result = controller.lastFinishedSession }
+        if controller.session == nil, controller.errorKey == nil {
+            resultMapPresentation = .init()
+            result = controller.lastFinishedSession
+        }
     }
 
     private func openSettings() {

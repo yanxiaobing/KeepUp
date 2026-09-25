@@ -93,6 +93,26 @@ import XCTest
         XCTAssertTrue(app.scrollViews["running.share.style.details"].waitForExistence(timeout: 5))
     }
 
+    func testOutdoorOverviewShareShowsMapPreview() {
+        let app = launch(kind: "outdoor", chinese: true, themeID: 12)
+        openRecord(kind: "outdoor", in: app)
+        app.buttons["running.page.0"].tap()
+        app.buttons["running.map.kilometers"].tap()
+        XCTAssertEqual(app.buttons["running.map.kilometers"].value as? String, "已显示")
+        app.buttons["running.map.places"].tap()
+        XCTAssertEqual(app.buttons["running.map.places"].value as? String, "已隐藏")
+        let map = app.maps.firstMatch
+        map.pinch(withScale: 1.5, velocity: 1)
+        map.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.55))
+            .press(forDuration: 1, thenDragTo: map.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)))
+        Thread.sleep(forTimeInterval: 2)
+        capture("KeepUp-Running-Overview-Map-Before-Share")
+        app.buttons["running.detail.share"].tap()
+        XCTAssertTrue(app.scrollViews["running.share.style.overview"].waitForExistence(timeout: 5))
+        XCTAssertTrue(element("running.share.ready", in: app).waitForExistence(timeout: 30))
+        capture("KeepUp-Running-Overview-Map-Share")
+    }
+
     func testOutdoorSplitsExpandAndSharePreviewContainsFullActivity() {
         let app = launch(kind: "outdoor")
         openRecord(kind: "outdoor", in: app)

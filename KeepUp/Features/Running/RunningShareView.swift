@@ -5,6 +5,7 @@ import Photos
 struct RunningShareView: View {
     let session: RunningSession
     var style: RunningShareStyle = .report
+    var presentation: RunningMapPresentation = .init()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
     @Default(.runningSettings) private var settings
@@ -97,7 +98,9 @@ struct RunningShareView: View {
         rendering = true
         defer { if renderID == id { rendering = false } }
         do {
-            let result = try await RunningShareRenderer().render(session: session, locale: locale, satellite: settings.satelliteMap, style: style)
+            let result = try await RunningShareRenderer().render(session: session, locale: locale,
+                                                                  satellite: settings.satelliteMap, style: style,
+                                                                  presentation: presentation)
             guard !Task.isCancelled, renderID == id else { return }
             artifact = result
         } catch is CancellationError {

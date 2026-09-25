@@ -3,8 +3,10 @@ import SwiftUI
 /// Shared geometry from XBCalendarCell, including the top-left result ribbon.
 enum CalendarCardPalette {
     static let pending = "babdc2"
-    static func completed(_ card: HabitCard) -> String {
+    static func completed(_ card: HabitCard, entry: CheckInEntry? = nil) -> String {
         switch card.id {
+        case "punchcard.2": entry?.runningKind == .indoor ? "bf5cdb" : "ff6440"
+        case "punchcard.96": "5866e3"
         case "punchcard.50": "f5d039"
         case "punchcard.63": "5fdcc9"
         default: "5fc6dc"
@@ -18,7 +20,7 @@ struct CalendarCardRibbon: View {
     let color: String
     var body: some View {
         Text(verbatim: text).font(.custom("HelveticaNeue-Light", size: 12))
-            .foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.7)
+            .foregroundStyle(.white).fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, 6).frame(height: 18)
             .background {
                 HStack(spacing: 0) {
@@ -43,7 +45,7 @@ struct CalendarTicketCard: View {
     var steps: StepRecord? = nil
     var stepGoal: Int? = nil
     @Environment(\.locale) private var locale
-    private var tint: String { entry == nil && card.id != "punchcard.1" ? CalendarCardPalette.pending : CalendarCardPalette.completed(card) }
+    private var tint: String { entry == nil && card.id != "punchcard.1" ? CalendarCardPalette.pending : CalendarCardPalette.completed(card, entry: entry) }
     private var ribbon: String? {
         if card.id == "punchcard.1" { return nil }
         if let badge { return badge }
@@ -84,9 +86,6 @@ struct CalendarTicketCard: View {
                     .lineLimit(1).minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity).frame(height: 18).background(CalendarCardPalette.color(tint))
             }
-            .overlay(alignment: .topLeading) {
-                if let ribbon { CalendarCardRibbon(text: ribbon, color: tint).frame(maxWidth: 88*scale, alignment: .leading) }
-            }
             .overlay(alignment: .topTrailing) {
                 if reminder && entry == nil { Image("card_detail_ic_clock").resizable().frame(width: 16, height: 16).padding(3) }
             }
@@ -104,6 +103,9 @@ struct CalendarTicketCard: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 5 * scale, style: .circular))
             .shadow(color: .black.opacity(0.05), radius: 4, y: 1)
+            .overlay(alignment: .topLeading) {
+                if let ribbon { CalendarCardRibbon(text: ribbon, color: tint) }
+            }
             .accessibilityElement(children: .combine)
     }
 }

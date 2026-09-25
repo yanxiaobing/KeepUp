@@ -1,4 +1,5 @@
 import Foundation
+import MapKit
 import UIKit
 import Testing
 @testable import KeepUp
@@ -6,16 +7,48 @@ import Testing
 @MainActor private final class FakeRunningShareSnapshotSource: RunningShareSnapshotSource {
     var calls = 0
     var satellites: [Bool] = []
+    var sizes: [CGSize] = []
+    var presentations: [RunningMapPresentation] = []
+    var routes: [RunningShareRoute] = []
     var succeeds = false
-    func snapshot(route: RunningShareRoute, size: CGSize, satellite: Bool) async -> UIImage? {
+    func snapshot(route: RunningShareRoute, size: CGSize, satellite: Bool,
+                  presentation: RunningMapPresentation) async -> UIImage? {
         calls += 1
         satellites.append(satellite)
+        sizes.append(size)
+        presentations.append(presentation)
+        routes.append(route)
         guard succeeds else { return nil }
         return UIGraphicsImageRenderer(size: size).image { context in
             UIColor.lightGray.setFill()
             context.fill(CGRect(origin: .zero, size: size))
         }
     }
+}
+
+@Test @MainActor func runningShareUsesEditedMapPresentation() async throws {
+    let source = FakeRunningShareSnapshotSource()
+    source.succeeds = true
+    var session = shareFixture(kilometers: 1)
+    let start = session.startedAt
+    session.segments = [[
+        RunningPoint(latitude: 37.33, longitude: -122.03, horizontalAccuracy: 5, timestamp: start, speed: 3),
+        RunningPoint(latitude: 37.34, longitude: -122.03, horizontalAccuracy: 5, timestamp: start.addingTimeInterval(300), speed: 3)
+    ]]
+    let camera = RunningMapCameraState(center: CLLocationCoordinate2D(latitude: 37.335, longitude: -122.03),
+                                       distance: 1_200, heading: 35, pitch: 20,
+                                       visibleRect: MKMapRect(x: 1, y: 2, width: 3, height: 4))
+    let presentation = RunningMapPresentation(camera: camera, showsKilometers: true, showsPlaces: false)
+    _ = try await RunningShareRenderer(snapshotSource: source).render(session: session,
+                                                                      locale: Locale(identifier: "zh-Hans"),
+                                                                      style: .overview,
+                                                                      presentation: presentation)
+    #expect(source.presentations.count == 1)
+    #expect(source.presentations[0].showsKilometers)
+    #expect(!source.presentations[0].showsPlaces)
+    #expect(source.presentations[0].camera?.distance == 1_200)
+    #expect(source.presentations[0].camera?.heading == 35)
+    #expect(source.routes[0].kilometerPoints.count == 1)
 }
 
 private func shareFixture(kind: RunningKind = .outdoor, kilometers: Int = 2, tail: Double = 350, route: Bool = true) -> RunningSession {
@@ -139,6 +172,7 @@ private func shareFixture(kind: RunningKind = .outdoor, kilometers: Int = 2, tai
         #expect(result.pages.count == 1)
         #expect(source.calls == 1)
         #expect(result.mapStatus == (style == .overview ? .map : .notNeeded))
+        if style == .overview { #expect(source.sizes.last == RunningResultOverview.exportMapSize) }
         #expect(result.pages[0].previewImage() != nil)
         if style == .overview { #expect(result.pages[0].size.height > 724 && result.pages[0].size.height < 820) }
         Attachment.record(Array(try Data(contentsOf: result.pages[0].url)), named: "running-selected-page-\(page).png")

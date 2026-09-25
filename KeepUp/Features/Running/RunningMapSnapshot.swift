@@ -3,15 +3,52 @@ import UIKit
 
 /// Injectable boundary: unit tests never request network maps.
 @MainActor protocol RunningShareSnapshotSource {
-    func snapshot(route: RunningShareRoute, size: CGSize, satellite: Bool) async -> UIImage?
+    func snapshot(route: RunningShareRoute, size: CGSize, satellite: Bool,
+                  presentation: RunningMapPresentation) async -> UIImage?
+}
+
+struct RunningMapCameraState {
+    let center: CLLocationCoordinate2D
+    let distance: CLLocationDistance
+    let heading: CLLocationDirection
+    let pitch: CGFloat
+    let visibleRect: MKMapRect
+
+    var snapshotCamera: MKMapCamera {
+        MKMapCamera(lookingAtCenter: center, fromDistance: distance, pitch: pitch, heading: heading)
+    }
+}
+
+struct RunningMapPresentation {
+    var camera: RunningMapCameraState? = nil
+    var showsKilometers = false
+    var showsPlaces = true
+
+    static func kilometerPoints(session: RunningSession) -> [RunningPoint] {
+        var distance = 0.0
+        var points: [RunningPoint] = []
+        for segment in session.segments {
+            for (previous, point) in zip(segment, segment.dropFirst()) {
+                distance += previous.distance(to: point)
+                while distance >= Double(points.count + 1) * 1_000, points.count < session.splits.count {
+                    points.append(point)
+                }
+            }
+        }
+        return points
+    }
 }
 
 struct RunningShareRoute {
     let segments: [[CLLocationCoordinate2D]]
     let coloredSegments: [([CLLocationCoordinate2D], UInt32)]
+    let kilometerPoints: [CLLocationCoordinate2D]
     var isEmpty: Bool { segments.allSatisfy(\.isEmpty) }
 
     init(session: RunningSession) {
+        kilometerPoints = RunningMapPresentation.kilometerPoints(session: session).map {
+            RunningMapCoordinates.displayCoordinate(forWGS84: CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude))
+        }
         let average = RunningMetrics(session: session).averageSpeedKilometersPerHour.map { $0 / 3.6 } ?? 0
         coloredSegments = session.segments.flatMap { segment in
             zip(segment, segment.dropFirst()).compactMap { previous, point in
@@ -62,17 +99,27 @@ struct RunningShareRoute {
 }
 
 @MainActor final class SystemRunningShareSnapshotSource: RunningShareSnapshotSource {
-    func snapshot(route: RunningShareRoute, size: CGSize, satellite: Bool) async -> UIImage? {
+    func snapshot(route: RunningShareRoute, size: CGSize, satellite: Bool,
+                  presentation: RunningMapPresentation) async -> UIImage? {
         guard !route.isEmpty, !Task.isCancelled else { return nil }
         let options = MKMapSnapshotter.Options()
-        options.mapRect = route.mapRect(for: size)
+        if let camera = presentation.camera {
+            if abs(camera.heading) > 1 || camera.pitch > 1 {
+                options.camera = camera.snapshotCamera
+            } else {
+                // A flat map's visible rect preserves the user's pan and zoom across poster sizes.
+                options.mapRect = camera.visibleRect
+            }
+        } else {
+            options.mapRect = route.mapRect(for: size)
+        }
         options.size = size
         options.scale = 2
         options.mapType = satellite ? .satellite : .standard
-        options.pointOfInterestFilter = .excludingAll
-        options.showsBuildings = false
+        options.pointOfInterestFilter = presentation.showsPlaces ? .includingAll : .excludingAll
+        options.showsBuildings = true
         options.traitCollection = UITraitCollection(userInterfaceStyle: .light)
-        let request = RunningSnapshotRequest(options: options, route: route)
+        let request = RunningSnapshotRequest(options: options, route: route, presentation: presentation)
         return await withTaskCancellationHandler {
             await request.start()
         } onCancel: {
@@ -84,13 +131,15 @@ struct RunningShareRoute {
 @MainActor private final class RunningSnapshotRequest {
     private let snapshotter: MKMapSnapshotter
     private let route: RunningShareRoute
+    private let presentation: RunningMapPresentation
     private var continuation: CheckedContinuation<UIImage?, Never>?
     private var deadline: Task<Void, Never>?
     private var completed = false
 
-    init(options: MKMapSnapshotter.Options, route: RunningShareRoute) {
+    init(options: MKMapSnapshotter.Options, route: RunningShareRoute, presentation: RunningMapPresentation) {
         snapshotter = MKMapSnapshotter(options: options)
         self.route = route
+        self.presentation = presentation
     }
 
     func start() async -> UIImage? {
@@ -107,7 +156,8 @@ struct RunningShareRoute {
             snapshotter.start { [weak self] snapshot, _ in
                 guard let self, !self.completed else { return }
                 self.finish(snapshot.map { snapshot in
-                    RunningShareMapDrawing.draw(size: snapshot.image.size, base: snapshot.image, route: self.route) {
+                    RunningShareMapDrawing.draw(size: snapshot.image.size, base: snapshot.image, route: self.route,
+                                                presentation: self.presentation) {
                         snapshot.point(for: $0)
                     }
                 })
@@ -131,11 +181,12 @@ struct RunningShareRoute {
 }
 
 @MainActor enum RunningShareMapDrawing {
-    static func schematic(route: RunningShareRoute, size: CGSize, locale: Locale) -> UIImage {
-        let rect = route.mapRect(for: size)
+    static func schematic(route: RunningShareRoute, size: CGSize, locale: Locale,
+                          presentation: RunningMapPresentation = .init()) -> UIImage {
+        let rect = presentation.camera?.visibleRect ?? route.mapRect(for: size)
         let world = MKMapRect.world.size.width
         let centerX = rect.midX
-        let image = draw(size: size, base: nil, route: route) { coordinate in
+        let image = draw(size: size, base: nil, route: route, presentation: presentation) { coordinate in
             var point = MKMapPoint(coordinate)
             point.x += ((centerX - point.x) / world).rounded() * world
             return CGPoint(x: (point.x - rect.minX) / rect.size.width * size.width,
@@ -152,6 +203,7 @@ struct RunningShareRoute {
     }
 
     static func draw(size: CGSize, base: UIImage?, route: RunningShareRoute,
+                     presentation: RunningMapPresentation = .init(),
                      project: (CLLocationCoordinate2D) -> CGPoint) -> UIImage {
         let format = UIGraphicsImageRendererFormat(); format.scale = 2
         return UIGraphicsImageRenderer(size: size, format: format).image { context in
@@ -165,7 +217,7 @@ struct RunningShareRoute {
             UIColor(red: 1, green: 0.39, blue: 0.25, alpha: 1).setStroke()
             for (segment, hex) in route.coloredSegments {
                 UIColor(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255, alpha: 1).setStroke()
-                let path = UIBezierPath(); path.lineWidth = 4; path.lineCapStyle = .round; path.lineJoinStyle = .round
+                let path = UIBezierPath(); path.lineWidth = 5; path.lineCapStyle = .round; path.lineJoinStyle = .round
                 for (index, coordinate) in segment.enumerated() {
                     if index == 0 { path.move(to: project(coordinate)) } else { path.addLine(to: project(coordinate)) }
                 }
@@ -183,6 +235,20 @@ struct RunningShareRoute {
             }
             marker(route.segments.first?.first, color: .systemGreen, asset: "run_result_start")
             marker(route.segments.last?.last, color: .systemOrange, asset: "run_result_end")
+            if presentation.showsKilometers {
+                for (index, coordinate) in route.kilometerPoints.enumerated() {
+                    let center = project(coordinate)
+                    let circle = UIBezierPath(ovalIn: CGRect(x: center.x - 12, y: center.y - 12, width: 24, height: 24))
+                    UIColor(red: 1, green: 100 / 255, blue: 64 / 255, alpha: 1).setFill()
+                    circle.fill()
+                    let number = String(index + 1) as NSString
+                    let font = UIFont.systemFont(ofSize: 12, weight: .bold)
+                    let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: UIColor.white]
+                    let textSize = number.size(withAttributes: attributes)
+                    number.draw(at: CGPoint(x: center.x - textSize.width / 2, y: center.y - textSize.height / 2),
+                                withAttributes: attributes)
+                }
+            }
             context.cgContext.restoreGState()
         }
     }
