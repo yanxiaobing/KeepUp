@@ -57,31 +57,122 @@ struct ThemeListView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
     @State private var selected: CalendarTheme?
+    private var current: CalendarTheme { CalendarTheme.selected }
+    private var alternatives: [CalendarTheme] { CalendarTheme.all.filter { $0.id != current.id } }
+
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
                 let s = geometry.size.width/375
-                ScrollView {
-                    LazyVStack(spacing: 10*s) {
-                        ForEach(CalendarTheme.all) { theme in
-                            Button { selected = theme } label: {
-                                Image(theme.city_image).resizable().frame(height: 136*s).background(.white)
-                                    .overlay(alignment: .topLeading) {
-                                        Text(verbatim: localized("theme.city.\(theme.id)", locale)).font(.system(size: 18*s, weight: .bold)).foregroundStyle(Color(white: 34/255).opacity(0.8))
-                                            .padding(.horizontal, 15*s).padding(.top, 10*s)
+                let cityHeight = geometry.size.width * 272/750
+                ZStack(alignment: .top) {
+                    ZStack(alignment: .bottom) {
+                        LinearGradient(stops: [
+                            .init(color: current.color, location: 0),
+                            .init(color: .white, location: 0.72)
+                        ], startPoint: .top, endPoint: .bottom)
+                        Image(current.transparentCityImage)
+                            .resizable().scaledToFit()
+                            .frame(width: geometry.size.width, height: cityHeight)
+                    }
+                    .ignoresSafeArea()
+                    .accessibilityHidden(true)
+
+                    ScrollView {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12*s), count: 2), spacing: 18*s) {
+                            ForEach(alternatives) { theme in
+                                Button { selected = theme } label: {
+                                    VStack(spacing: 7*s) {
+                                        ThemePageThumbnail(theme: theme, width: (geometry.size.width - 42*s)/2)
+                                        Text(verbatim: localized("theme.city.\(theme.id)", locale))
+                                            .font(.system(size: 14*s, weight: .medium))
+                                            .foregroundStyle(Color(white: 0.2))
+                                            .lineLimit(1)
                                     }
-                            }.buttonStyle(.plain).accessibilityIdentifier("theme.\(theme.id)")
+                                }.buttonStyle(.plain).accessibilityIdentifier("theme.\(theme.id)")
+                                    .accessibilityLabel(Text(verbatim: localized("theme.city.\(theme.id)", locale)))
+                            }
                         }
-                    }.padding(.vertical, 10*s)
-                }.background(Color(white: 0.96))
+                        .padding(.horizontal, 15*s)
+                        .padding(.top, 16*s)
+                        .padding(.bottom, 16*s)
+                    }
+                    .frame(height: max(0, geometry.size.height - cityHeight))
+                    .scrollIndicators(.hidden)
+                }
             }.navigationTitle("theme.list").navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(KeepUpStyle.theme, for: .navigationBar).toolbarBackground(.visible, for: .navigationBar)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action.close") { dismiss() }.accessibilityIdentifier("theme.close") } }
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button { dismiss() } label: {
+                            Image(systemName: "xmark")
+                        }
+                        .accessibilityLabel(Text("action.close"))
+                        .accessibilityIdentifier("theme.close")
+                    }
+                }
+                .tint(Color(white: 0.2))
                 .fullScreenCover(item: $selected) { theme in
                     ThemePreviewView(theme: theme) { Defaults[.themeID] = theme.id; selected = nil; dismiss() }
                         .presentationBackground(.ultraThinMaterial)
                 }
         }
+    }
+}
+
+private struct ThemePageThumbnail: View {
+    let theme: CalendarTheme
+    let width: CGFloat
+    @Environment(\.locale) private var locale
+
+    var body: some View {
+        let height = width * 1.42
+        let weekdays = locale.identifier.hasPrefix("zh")
+            ? ["一", "二", "三", "四", "五", "六", "日"]
+            : ["M", "T", "W", "T", "F", "S", "S"]
+        ZStack(alignment: .bottom) {
+            LinearGradient(stops: [
+                .init(color: theme.color, location: 0),
+                .init(color: .white, location: 0.78)
+            ], startPoint: .top, endPoint: .bottom)
+            Image(theme.transparentCityImage)
+                .resizable().scaledToFit()
+                .frame(width: width, height: width * 272/750)
+            VStack(spacing: width * 0.08) {
+                HStack {
+                    Text(Date.now.formatted(.dateTime.year().month(.abbreviated).locale(locale)))
+                        .font(.system(size: width * 0.085, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Spacer(minLength: 2)
+                    Image(systemName: "tshirt.fill")
+                        .font(.system(size: width * 0.075))
+                }
+                HStack(spacing: 0) {
+                    ForEach(0..<7) { day in
+                        Text(weekdays[day]).frame(maxWidth: .infinity)
+                    }
+                }
+                .font(.system(size: width * 0.05))
+                .foregroundStyle(.secondary)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: width * 0.07) {
+                    ForEach(1...35, id: \.self) { day in
+                        Text(day <= 31 ? String(format: "%02d", day) : "")
+                            .font(.system(size: width * 0.055, weight: .light))
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .foregroundStyle(Color(white: 0.3))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, width * 0.075)
+            .padding(.top, width * 0.08)
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.7)) }
+        .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+        .accessibilityHidden(true)
     }
 }
 
