@@ -26,7 +26,7 @@ struct HistoryView: View {
                     }.frame(maxWidth: .infinity).accessibilityIdentifier("history.empty")
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        LazyVStack(spacing: 0) {
                             ForEach(days, id: \.self) { day in
                                 Section {
                                     ForEach(model.entries(on: day)) { entry in
