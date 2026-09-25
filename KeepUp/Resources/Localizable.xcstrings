@@ -5736,36 +5736,19 @@
         }
       }
     },
-    "profile.ad" : {
-      "extractionState" : "stale",
+    "profile.activity" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Watch a video ad"
+            "value" : "Activity & reminders"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "观看视频广告"
-          }
-        }
-      }
-    },
-    "profile.adSubtitle" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Support new app icons 🔥"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "众筹买App图标🔥"
+            "value" : "运动与提醒"
           }
         }
       }
@@ -5820,6 +5803,23 @@
         }
       }
     },
+    "profile.goals" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My goals"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的目标"
+          }
+        }
+      }
+    },
     "profile.journey %lld" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5833,6 +5833,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "与你相遇的第%lld天"
+          }
+        }
+      }
+    },
+    "profile.more" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多"
           }
         }
       }
@@ -5923,7 +5940,6 @@
       }
     },
     "profile.personalInfo" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5940,7 +5956,6 @@
       }
     },
     "profile.premium" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

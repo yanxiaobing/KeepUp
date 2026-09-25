@@ -7,6 +7,7 @@ struct ProfileView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var showMembership = false
     @State private var showPersonalInfo = false
     @Default(.stepGoalChanges) private var stepGoalChanges
@@ -23,90 +24,104 @@ struct ProfileView: View {
     @State private var featureTask: Task<Void, Never>?
     @State private var privacyTask: Task<Void, Never>?
     private var entries: [CheckInEntry] { model.snapshot.entries }
+    private var profileNickname: String {
+        let nickname = model.snapshot.profile?.nickname ?? ""
+        return nickname.isEmpty ? localized("profile.nickname", locale) : nickname
+    }
 
     var body: some View {
         Group {
-            GeometryReader { geometry in
-                let scale = geometry.size.width / 375
-                ScrollView {
-                    VStack(spacing: 10 * scale) {
-                        header(scale: scale)
-                        VStack(spacing: 0) {
-                            row("profile.premium", subtitle: membership.isPremium ? "membership.active" : "profile.premiumSubtitle", image: "setting_ic_suggestion", scale: scale)
-                            row("profile.ad", subtitle: "profile.adSubtitle", image: "setting_ic_week_pre", scale: scale, showsSeparator: advertising.consent.privacyOptionsRequired)
-                            if advertising.consent.privacyOptionsRequired {
-                                Button("ads.privacyOptions", action: presentPrivacyOptions)
-                                    .font(.system(size: 14 * scale)).frame(maxWidth: .infinity, minHeight: 50 * scale)
-                                    .disabled(advertising.consent.isBusy || preparingFeature)
-                                    .accessibilityIdentifier("ads.privacyOptions")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    profileHeader
+                    VStack(alignment: .leading, spacing: 18) {
+                        section("profile.goals") {
+                            rowGroup {
+                                actionRow("profile.stepTarget", symbol: "figure.walk", value: stepGoalDescription, identifier: "profile.stepTarget") {
+                                    requestFeature(.stepGoal)
+                                }
+                                separator
+                                actionRow("profile.weightTarget", symbol: "scalemass", value: weightGoalDescription, identifier: "profile.weightTarget") {
+                                    requestFeature(.weightTarget)
+                                }
                             }
                         }
-                        .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
-                        .padding(.horizontal, 15 * scale)
-                        VStack(spacing: 0) {
-                            row("profile.weightTarget", subtitle: model.snapshot.weightTarget.map { String(format: "%.1fkg", $0.target) } ?? "profile.noTarget", image: "setting_ic_weight_target", scale: scale)
-                            row("profile.stepTarget", subtitle: StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges).map { String(format: localized("steps.goal %lld", locale), Int64($0)) } ?? "profile.noSteps", image: "setting_ic_walk_target", scale: scale)
-                            row("profile.alarms", subtitle: nil, image: "setting_ic_manageclock", scale: scale)
-                            row("runningStats.title", subtitle: nil, image: "figure.run", scale: scale, systemImage: true, showsSeparator: false)
+                        section("profile.activity") {
+                            rowGroup {
+                                actionRow("runningStats.title", symbol: "figure.run", identifier: "runningStats.title") { showRunningStatistics = true }
+                                separator
+                                actionRow("profile.alarms", symbol: "bell", identifier: "profile.alarms") { requestFeature(.reminders) }
+                            }
                         }
-                        .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
-                        .padding(.horizontal, 15 * scale)
-                        VStack(spacing: 0) {
-                            row("profile.review", subtitle: "profile.reviewSubtitle", image: "setting_ic_review", scale: scale)
-                            row("profile.contact", subtitle: "profile.contactSubtitle", image: "setting_ic_contact", scale: scale)
-                            HStack(spacing: 15 * scale) {
-                                Image("setting_ic_info").resizable().frame(width: 18 * scale, height: 18 * scale)
-                                Text("profile.version").font(.system(size: 14 * scale))
-                                Spacer()
-                                Text("V" + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"))
-                                    .font(.system(size: 13 * scale)).foregroundStyle(Color(white: 0.6)).padding(.trailing, 20 * scale)
-                            }.padding(.horizontal, 15 * scale).frame(height: 50 * scale)
+                        membershipCard
+                        section("profile.more") {
+                            rowGroup {
+                                NavigationLink { ProfileSettingsView() } label: {
+                                    rowLabel("profile.settings", symbol: "gearshape")
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(preparingFeature)
+                                .accessibilityIdentifier("profile.settings")
+                                separator
+                                actionRow("profile.review", symbol: "star", identifier: "profile.review") { pendingFeature = "profile.review" }
+                                separator
+                                actionRow("profile.contact", symbol: "envelope", identifier: "profile.contact") { pendingFeature = "profile.contact" }
+                                if advertising.consent.privacyOptionsRequired {
+                                    separator
+                                    actionRow("ads.privacyOptions", symbol: "hand.raised", identifier: "ads.privacyOptions") { presentPrivacyOptions() }
+                                        .disabled(advertising.consent.isBusy || preparingFeature)
+                                }
+                                separator
+                                HStack(spacing: 13) {
+                                    rowIcon("info.circle")
+                                    Text("profile.version")
+                                    Spacer(minLength: 8)
+                                    Text("V" + (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .font(.system(size: 15))
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 54)
+                            }
                         }
-                        .background(.white, in: RoundedRectangle(cornerRadius: 12 * scale))
-                        .padding(.horizontal, 15 * scale)
                     }
-                    .padding(.bottom, 16 * scale)
+                    .padding(.horizontal, 15)
                 }
-                .scrollIndicators(.hidden)
-                .scrollEdgeEffectHidden(true, for: .all)
+                .padding(.bottom, 28)
             }
-                .background {
-                    LinearGradient(colors: [KeepUpStyle.theme, .white], startPoint: .top, endPoint: .bottom)
-                        .ignoresSafeArea()
+            .scrollIndicators(.hidden)
+            .scrollEdgeEffectHidden(true, for: .all)
+            .background {
+                ZStack {
+                    Color.white
+                    LinearGradient(stops: [
+                        .init(color: KeepUpStyle.theme, location: 0),
+                        .init(color: KeepUpStyle.theme.opacity(0.06), location: 0.78)
+                    ], startPoint: .top, endPoint: .bottom)
                 }
-                .navigationTitle("nav.profile")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.clear, for: .navigationBar)
-                .toolbarBackground(.hidden, for: .navigationBar)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink { ProfileSettingsView() } label: {
-                            Image(systemName: "gearshape")
-                        }
-                        .tint(Color(white: 0.2))
-                        .disabled(preparingFeature)
-                        .accessibilityLabel(Text("settings.title"))
-                        .accessibilityIdentifier("profile.settings")
-                    }
+                .ignoresSafeArea()
+            }
+            .navigationTitle("nav.profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .fullScreenCover(item: $rewardGate, onDismiss: finishRewardGate) { request in
+                RewardedFeatureAccessView(feature: request.feature) { decision in
+                    rewardDecision = (request.feature, decision)
+                    rewardGate = nil
                 }
-                .fullScreenCover(item: $rewardGate, onDismiss: finishRewardGate) { request in
-                    RewardedFeatureAccessView(feature: request.feature) { decision in
-                        rewardDecision = (request.feature, decision)
-                        rewardGate = nil
-                    }
-                }
-                .alert("error.title", isPresented: $privacyError) {
-                    Button("action.ok") {}
-                } message: { Text("ads.privacyError") }
-                .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
-                .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
-                .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
-                .fullScreenCover(isPresented: $showRunningStatistics) { RunningStatisticsView() }
-                .navigationDestination(isPresented: $showPersonalInfo) { ProfileInfoView() }
-                .fullScreenCover(isPresented: $showMembership) { MembershipView(onClose: { showMembership = false }) }
-                .alert(Text(LocalizedStringKey(pendingFeature ?? "error.title")), isPresented: Binding(get: { pendingFeature != nil }, set: { if !$0 { pendingFeature = nil } })) {
-                    Button("action.ok") { pendingFeature = nil }
-                } message: { Text("feature.pending") }
+            }
+            .alert("error.title", isPresented: $privacyError) {
+                Button("action.ok") {}
+            } message: { Text("ads.privacyError") }
+            .fullScreenCover(isPresented: $showStepsTarget) { StepTargetView() }
+            .fullScreenCover(isPresented: $showWeightTarget) { WeightTargetView() }
+            .fullScreenCover(isPresented: $showReminders) { ReminderListView() }
+            .fullScreenCover(isPresented: $showRunningStatistics) { RunningStatisticsView() }
+            .navigationDestination(isPresented: $showPersonalInfo) { ProfileInfoView() }
+            .fullScreenCover(isPresented: $showMembership) { MembershipView(onClose: { showMembership = false }) }
+            .alert(Text(LocalizedStringKey(pendingFeature ?? "error.title")), isPresented: Binding(get: { pendingFeature != nil }, set: { if !$0 { pendingFeature = nil } })) {
+                Button("action.ok") { pendingFeature = nil }
+            } message: { Text("feature.pending") }
         }
         .onDisappear { if !isCurrentDestination() { invalidateFeatureContext() } }
         .onChange(of: isCurrentDestination()) { _, active in
@@ -195,72 +210,191 @@ struct ProfileView: View {
         }
     }
 
+    private var stepGoalDescription: String {
+        StepsGoal.value(on: LocalDay(date: .now), changes: stepGoalChanges)
+            .map { String(format: localized("steps.goal %lld", locale), Int64($0)) }
+            ?? localized("profile.noSteps", locale)
+    }
+
+    private var weightGoalDescription: String {
+        model.snapshot.weightTarget
+            .map { $0.target.formatted(.number.precision(.fractionLength(1)).locale(locale)) + " kg" }
+            ?? localized("profile.noTarget", locale)
+    }
+
     @ViewBuilder private var profileAvatar: some View {
-        if let data = model.snapshot.profile?.avatar, let image = UIImage(data: data) { Image(uiImage: image).resizable().scaledToFill().clipped() }
-        else { Image("user_default_head").resizable() }
+        if let data = model.snapshot.profile?.avatar, let image = UIImage(data: data) {
+            Image(uiImage: image).resizable().scaledToFill()
+        } else {
+            Image("user_default_head").resizable().scaledToFill()
+        }
     }
-    private func header(scale: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            Color.clear.frame(height: 100 * scale)
-            ZStack(alignment: .topLeading) {
-                Color.clear
-                Button { showPersonalInfo = true } label: {
-                    profileAvatar.frame(width: 70 * scale, height: 70 * scale)
-                        .clipShape(Circle()).overlay(Circle().stroke(.white, lineWidth: 2.5 * scale))
-                        .overlay(alignment: .bottomTrailing) { Image(model.snapshot.profile?.isMale == true ? "personal_ic_boy" : "personal_ic_girl").resizable().frame(width: 20 * scale, height: 20 * scale) }
-                }.disabled(preparingFeature).offset(x: 20 * scale, y: -35 * scale)
-                Button { showPersonalInfo = true } label: {
-                    let nickname = model.snapshot.profile?.nickname ?? ""
-                    Text(nickname.isEmpty ? localized("profile.nickname", locale) : nickname)
-                        .font(.system(size: 20 * scale, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1).minimumScaleFactor(0.7)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
+
+    private var profileHeader: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Button { showPersonalInfo = true } label: {
+                HStack(spacing: 14) {
+                    profileAvatar
+                        .frame(width: 66, height: 66)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 2))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(verbatim: profileNickname)
+                            .font(.system(.title3, design: .rounded, weight: .semibold))
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("profile.personalInfo")
+                            .font(.subheadline)
+                            .foregroundStyle(.primary.opacity(0.65))
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary.opacity(0.55))
+                        .accessibilityHidden(true)
                 }
-                .buttonStyle(.plain)
-                .disabled(preparingFeature)
-                .padding(.leading, 100 * scale)
-                .padding(.trailing, 20 * scale)
-                .offset(y: -27 * scale)
-                .accessibilityIdentifier("profile.nickname")
-                Text(verbatim: String(format: localized("profile.streakFormat %lld", locale), Int64(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))))
-                    .font(.system(size: 13 * scale, weight: .bold)).foregroundStyle(.white).padding(.horizontal, 3 * scale)
-                    .frame(height: 18 * scale).background(KeepUpStyle.accent, in: RoundedRectangle(cornerRadius: 2 * scale))
-                    .offset(x: 20 * scale, y: 50 * scale)
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    let profile = model.snapshot.profile
-                    let days = ProfileDuration.dayCount(since: profile?.createdAt ?? context.date, now: context.date)
-                    Text(String(format: localized("profile.journey %lld", locale), Int64(days)))
-                        .font(.system(size: 16 * scale)).lineLimit(1).minimumScaleFactor(0.7)
-                        .accessibilityIdentifier("profile.journey")
-                }
-                .padding(.leading, 100 * scale)
-                .padding(.trailing, 20 * scale)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .offset(y: 9 * scale)
-            }.frame(height: 90 * scale)
-        }.frame(height: 190 * scale)
-    }
-    private func row(_ title: String, subtitle: String?, image: String, scale: CGFloat, systemImage: Bool = false, showsSeparator: Bool = true) -> some View {
-        Button { if title == "profile.premium" { showMembership = true } else if title == "profile.stepTarget" { requestFeature(.stepGoal) } else if title == "profile.weightTarget" { requestFeature(.weightTarget) } else if title == "profile.alarms" { requestFeature(.reminders) } else if title == "runningStats.title" { showRunningStatistics = true } else { pendingFeature = title } } label: {
-            HStack(spacing: 15 * scale) {
-                Group {
-                    if systemImage { Image(systemName: image).resizable().scaledToFit().foregroundStyle(KeepUpStyle.accent) }
-                    else { Image(image).resizable() }
-                }.frame(width: 18 * scale, height: 18 * scale)
-                Text(LocalizedStringKey(title)).font(.system(size: 14 * scale))
-                Spacer(minLength: 0)
-                HStack(spacing: 6 * scale) {
-                    if let subtitle { Text(LocalizedStringKey(subtitle)).font(.system(size: 13 * scale)).foregroundStyle(Color(white: 0.6)).lineLimit(1).minimumScaleFactor(0.7) }
-                    Image("me_arrow_ic").resizable().frame(width: 14 * scale, height: 14 * scale)
-                }
-            }.padding(.horizontal, 15 * scale).frame(height: 50 * scale)
                 .contentShape(Rectangle())
-                .overlay(alignment: .bottom) {
-                    if showsSeparator { Color.black.opacity(0.15).frame(height: 1/3).padding(.horizontal, 15 * scale) }
+            }
+            .buttonStyle(.plain)
+            .disabled(preparingFeature)
+            .accessibilityIdentifier("profile.nickname")
+            .accessibilityLabel(Text(verbatim: profileNickname))
+
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 10) { profileMilestones }
+                } else {
+                    HStack(spacing: 14) { profileMilestones }
                 }
-        }.buttonStyle(.plain).disabled(preparingFeature).accessibilityIdentifier(title)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 22)
+        .padding(.bottom, 28)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(alignment: .top) {
+            Image("me_bg_title")
+                .resizable()
+                .scaledToFill()
+                .frame(height: 112)
+                .clipped()
+                .opacity(0.32)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder private var profileMilestones: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "flame.fill").foregroundStyle(KeepUpStyle.accent)
+            Text(verbatim: String(format: localized("profile.streakFormat %lld", locale), Int64(RecordStatistics.streak(entries: entries, today: LocalDay(date: .now)))))
+        }
+        .font(.subheadline.weight(.semibold))
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(.white.opacity(0.82), in: Capsule())
+
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            let days = ProfileDuration.dayCount(since: model.snapshot.profile?.createdAt ?? context.date, now: context.date)
+            Text(String(format: localized("profile.journey %lld", locale), Int64(days)))
+                .font(.subheadline)
+                .foregroundStyle(.primary.opacity(0.72))
+                .accessibilityIdentifier("profile.journey")
+        }
+    }
+
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(LocalizedStringKey(title))
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.primary.opacity(0.68))
+                .padding(.leading, 3)
+            content()
+        }
+    }
+
+    private var membershipCard: some View {
+        Button { showMembership = true } label: {
+            HStack(spacing: 13) {
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundStyle(KeepUpStyle.accent)
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("profile.premium").font(.subheadline.weight(.semibold))
+                    Text(LocalizedStringKey(membership.isPremium ? "membership.active" : "profile.premiumSubtitle"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 65)
+            .background(.white, in: RoundedRectangle(cornerRadius: 12))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .disabled(preparingFeature)
+        .accessibilityIdentifier("profile.premium")
+    }
+
+    private func rowGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0, content: content)
+            .background(.white, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var separator: some View {
+        Color.black.opacity(0.09).frame(height: 0.5).padding(.leading, 51).padding(.trailing, 16)
+    }
+
+    private func rowIcon(_ symbol: String) -> some View {
+        Image(systemName: symbol)
+            .font(.system(size: 18, weight: .regular))
+            .foregroundStyle(.primary.opacity(0.72))
+            .frame(width: 22)
+            .accessibilityHidden(true)
+    }
+
+    private func rowLabel(_ title: String, symbol: String, value: String? = nil) -> some View {
+        HStack(spacing: 13) {
+            rowIcon(symbol)
+            if dynamicTypeSize.isAccessibilitySize, let value {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(LocalizedStringKey(title))
+                    Text(verbatim: value).font(.footnote).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text(LocalizedStringKey(title))
+                Spacer(minLength: 6)
+                if let value {
+                    Text(verbatim: value)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 16)
+        .frame(minHeight: 54)
+        .contentShape(Rectangle())
+    }
+
+    private func actionRow(_ title: String, symbol: String, value: String? = nil, identifier: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) { rowLabel(title, symbol: symbol, value: value) }
+            .buttonStyle(.plain)
+            .disabled(preparingFeature)
+            .accessibilityIdentifier(identifier)
     }
 }
 
